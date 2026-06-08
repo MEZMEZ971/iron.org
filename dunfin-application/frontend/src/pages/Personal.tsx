@@ -1,0 +1,166 @@
+import { useUser } from "../context/UserContext";
+import { useUserProfile } from "../hooks/useUserProfile";
+import { useLocale } from "../i18n/LocaleContext";
+
+export default function Personal() {
+  const { t } = useLocale();
+  const { userId, displayName } = useUser();
+  const { profile, loading, error } = useUserProfile(userId);
+
+  const fund = profile?.fundAccount ?? 0;
+  const trading = profile?.tradingAccount ?? 0;
+  const total = fund + trading || 1;
+  const fundPct = (fund / total) * 100;
+
+  const todayPnl = profile?.todayPnl ?? 0;
+  const totalPnl = profile?.totalPnl ?? 0;
+
+  return (
+    <div className="space-y-4 pb-4">
+      <div className="glass-card rounded-2xl p-4">
+        <p className="text-[10px] uppercase tracking-wide text-df-faint">
+          {t("userId")}
+        </p>
+        <p className="mt-0.5 text-lg font-bold text-[#f0b90b]">{displayName}</p>
+        <p className="mt-1 truncate font-mono text-[10px] text-df-faint">{userId}</p>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <PnlCard
+            label={t("todayPnl")}
+            value={todayPnl}
+            positive={todayPnl >= 0}
+          />
+          <PnlCard
+            label={t("totalPnl")}
+            value={totalPnl}
+            positive={totalPnl >= 0}
+          />
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl p-4">
+        <h2 className="mb-3 text-sm font-bold text-df">{t("capitalDistribution")}</h2>
+        <div className="flex h-3 overflow-hidden rounded-full bg-df-inset">
+          <div
+            className="bg-[#00d4aa] transition-all"
+            style={{ width: `${fundPct}%` }}
+          />
+          <div
+            className="bg-[#f0b90b] transition-all"
+            style={{ width: `${100 - fundPct}%` }}
+          />
+        </div>
+        <div className="mt-2 flex justify-between text-xs">
+          <span className="text-[#00d4aa]">
+            {t("fundAccount")}: ${fund.toLocaleString()}
+          </span>
+          <span className="text-[#f0b90b]">
+            {t("tradingAccount")}: ${trading.toLocaleString()}
+          </span>
+        </div>
+      </div>
+
+      <div className="df-table-shell glass-card overflow-hidden rounded-2xl">
+        <h2 className="border-b border-df bg-df-table-head px-4 py-3 text-sm font-bold text-df">
+          {t("assetLedger")}
+        </h2>
+        {loading && !profile ? (
+          <p className="p-4 text-xs text-df-faint">{t("loading")}</p>
+        ) : error ? (
+          <p className="p-4 text-xs text-red-400">{error}</p>
+        ) : (
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-df-faint">
+                <th className="px-3 py-2 text-start font-medium">{t("asset")}</th>
+                <th className="px-2 py-2 text-end font-medium">{t("total")}</th>
+                <th className="px-2 py-2 text-end font-medium">{t("available")}</th>
+                <th className="px-3 py-2 text-end font-medium">{t("freeze")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {profile?.assets.map((a) => (
+                <tr key={a.symbol} className="border-t border-df hover:bg-df-hover">
+                  <td className="px-3 py-2.5 font-semibold text-df">{a.symbol}</td>
+                  <td className="px-2 py-2.5 text-end text-df-muted">
+                    {a.total.toLocaleString()}
+                  </td>
+                  <td className="px-2 py-2.5 text-end text-[#00d4aa]">
+                    {a.available.toLocaleString()}
+                  </td>
+                  <td className="px-3 py-2.5 text-end text-[#f0b90b]">
+                    {a.freeze.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="glass-card rounded-2xl p-4">
+        <h2 className="mb-3 text-sm font-bold text-df">{t("recentTransactions")}</h2>
+        <ul className="max-h-52 space-y-2 overflow-y-auto">
+          {!profile?.transactions.length && (
+            <li className="text-xs text-df-faint">{t("noTransactions")}</li>
+          )}
+          {profile?.transactions.map((tx) => (
+            <li
+              key={tx.id}
+              className="flex items-start justify-between gap-2 rounded-xl bg-df-inset px-3 py-2.5"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-df">{tx.type}</p>
+                <p className="text-[10px] text-df-faint">
+                  {new Date(tx.timestamp).toLocaleString()}
+                </p>
+                {tx.commission != null && (
+                  <p className="text-[10px] text-[#f0b90b]">
+                    {t("commission")}: {tx.commission}%
+                  </p>
+                )}
+              </div>
+              <div className="shrink-0 text-end">
+                <p className="text-xs font-bold text-df">
+                  {tx.amount.toLocaleString()} {tx.currency}
+                </p>
+                <span
+                  className={`text-[10px] ${
+                    tx.status === "Completed"
+                      ? "text-[#00d4aa]"
+                      : "text-[#f0b90b]"
+                  }`}
+                >
+                  {tx.status}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function PnlCard({
+  label,
+  value,
+  positive,
+}: {
+  label: string;
+  value: number;
+  positive: boolean;
+}) {
+  return (
+    <div className="rounded-xl bg-df-inset p-3">
+      <p className="text-[10px] text-df-faint">{label}</p>
+      <p
+        className={`mt-1 text-base font-bold ${
+          positive ? "text-[#00d4aa]" : "text-[#ef4444]"
+        }`}
+      >
+        {positive ? "+" : ""}${value.toLocaleString()}
+      </p>
+    </div>
+  );
+}

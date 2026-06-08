@@ -1,0 +1,53 @@
+{
+  "users": {
+    "user123": {
+      "depositAddress": "0x91519fe3b25a3747a02930f1F8f77A8910c46374",
+      "createdAt": "2026-06-02T11:30:16.431Z",
+      "deposits": []
+    },
+    "user_xx9x261h": {
+      "depositAddress": null,
+      "createdAt": "2026-06-02T13:19:30.356Z",
+      "deposits": [],
+      "referredBy": null,
+      "hasDeposited": false,
+      "walletBalance": 0,
+      "tradingCapital": 0,
+      "lockedCapital": 0,
+      "activeStrategy": null,
+      "last_trade_time": null,
+      "tradeHistory": []
+    },
+    "user_rlovpq7hk": {
+      "depositAddress": "0x92557e1E3be57b61535B79e46914543ec1a34349",
+      "createdAt": "2026-06-02T13:34:26.574Z",
+      "deposits": [],
+      "referredBy": null,
+      "hasDeposited": false,
+      "walletBalance": 0,
+      "onChainBalance": 0,
+      "tradingCapital": 0,
+      "lockedCapital": 0,
+      "activeStrategy": null,
+      "last_trade_time": null,
+      "tradeHistory": [],
+      "depositAddresses": {
+        "ERC20": {
+          "address": "0x92557e1E3be57b61535B79e46914543ec1a34349",
+          "txHash": "0xd2db26cba21aebf63de2d3a5adffaf5f87cba36944fef13206531cd66b94b071",
+          "updatedAt": "2026-06-02T13:59:27.092Z"
+        },
+        "BEP20": {
+          "address": "0x0B4cA0B107Abcf77412e491E93bb8D341441437f",
+          "txHash": "0xdd567832abe4adc60a6b317ad010f7fe6eeb851ae4e7e06ae397bd0f386a652f",
+          "updatedAt": "2026-06-02T14:00:52.814Z"
+        },
+        "TRC20": {
+          "address": "TQtkimiB8V5idubWgjvhHSJE8mX7YeHCqy",
+          "tron": true,
+          "updatedAt": "2026-06-02T14:00:56.392Z"
+        }
+      }
+    }
+  }
+}

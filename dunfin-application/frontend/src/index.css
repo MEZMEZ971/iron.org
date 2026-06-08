@@ -1,0 +1,646 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-gold: #f0b90b;
+  --color-gold-light: #fcd535;
+  --color-emerald: #00d4aa;
+  --color-emerald-alt: #22c55e;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "Inter", sans-serif;
+}
+
+/* Light mode (default vars when .dark is absent) */
+html {
+  --df-page: #f4f6f9;
+  --df-page-gradient-1: rgba(240, 185, 11, 0.06);
+  --df-page-gradient-2: rgba(0, 212, 170, 0.04);
+  --df-glass: rgba(255, 255, 255, 0.88);
+  --df-glass-solid: #ffffff;
+  --df-border: rgba(0, 0, 0, 0.06);
+  --df-border-strong: rgba(0, 0,  0, 0.1);
+  --df-text: #0f172a;
+  --df-text-muted: #475569;
+  --df-text-faint: #64748b;
+  --df-inset: rgba(15, 23, 42, 0.04);
+  --df-surface: #ffffff;
+  --df-nav: rgba(255, 255, 255, 0.95);
+  --df-sidebar: rgba(255, 255, 255, 0.92);
+  --df-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --df-accent-gold: #c9940a;
+  --df-accent-teal: #059669;
+  --df-on-accent: #0f172a;
+  --df-hover: rgba(15, 23, 42, 0.04);
+  --df-active-nav: rgba(240, 185, 11, 0.12);
+  --df-dropdown: #ffffff;
+  --df-table-head: #f1f5f9;
+  color-scheme: light;
+}
+
+/* Dark mode — premium cosmic identity */
+html.dark {
+  --df-page: #0a0e1a;
+  --df-page-gradient-1: rgba(240, 185, 11, 0.08);
+  --df-page-gradient-2: rgba(0, 212, 170, 0.04);
+  --df-glass: rgba(26, 31, 46, 0.65);
+  --df-glass-solid: rgba(26, 31, 46, 0.92);
+  --df-border: rgba(255, 255, 255, 0.05);
+  --df-border-strong: rgba(255, 255, 255, 0.1);
+  --df-text: #ffffff;
+  --df-text-muted: #94a3b8;
+  --df-text-faint: rgba(255, 255, 255, 0.45);
+  --df-inset: rgba(10, 14, 26, 0.5);
+  --df-surface: rgba(26, 31, 46, 0.65);
+  --df-nav: rgba(10, 14, 26, 0.95);
+  --df-sidebar: rgba(26, 31, 46, 0.65);
+  --df-shadow: none;
+  --df-accent-gold: #f0b90b;
+  --df-accent-teal: #00d4aa;
+  --df-on-accent: #0a0e1a;
+  --df-hover: rgba(255, 255, 255, 0.04);
+  --df-active-nav: rgba(245, 158, 11, 0.1);
+  --df-dropdown: rgba(26, 31, 46, 0.98);
+  --df-table-head: rgba(10, 14, 26, 0.45);
+  color-scheme: dark;
+}
+
+html,
+body {
+  transition:
+    background-color 300ms ease-in-out,
+    color 300ms ease-in-out;
+}
+
+html {
+  background-color: var(--df-page);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--df-page);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -30%, var(--df-page-gradient-1), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 50%, var(--df-page-gradient-2), transparent);
+  color: var(--df-text);
+  font-family: var(--font-sans);
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-arabic);
+}
+
+/* Semantic theme utilities */
+@utility bg-df-page {
+  background-color: var(--df-page);
+}
+
+@utility bg-df-glass {
+  background-color: var(--df-glass);
+}
+
+@utility bg-df-inset {
+  background-color: var(--df-inset);
+}
+
+@utility bg-df-nav {
+  background-color: var(--df-nav);
+}
+
+@utility bg-df-sidebar {
+  background-color: var(--df-sidebar);
+}
+
+@utility bg-df-surface {
+  background-color: var(--df-surface);
+}
+
+@utility bg-df-dropdown {
+  background-color: var(--df-dropdown);
+}
+
+@utility bg-df-table-head {
+  background-color: var(--df-table-head);
+}
+
+/* Data tables — crisp white/platinum in light mode */
+.df-table-shell {
+  background: var(--df-glass-solid);
+  border: 1px solid var(--df-border);
+  box-shadow: var(--df-shadow);
+  transition:
+    background-color 300ms ease-in-out,
+    border-color 300ms ease-in-out,
+    box-shadow 300ms ease-in-out;
+}
+
+html:not(.dark) .df-table-shell {
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.08),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.df-table-shell thead tr {
+  background: var(--df-table-head);
+}
+
+.df-table-shell tbody tr {
+  transition: background-color 200ms ease;
+}
+
+.df-table-shell tbody tr:hover {
+  background: var(--df-hover);
+}
+
+.hover\:bg-df-hover:hover {
+  background-color: var(--df-hover);
+}
+
+@utility text-df {
+  color: var(--df-text);
+}
+
+@utility text-df-muted {
+  color: var(--df-text-muted);
+}
+
+@utility text-df-faint {
+  color: var(--df-text-faint);
+}
+
+@utility border-df {
+  border-color: var(--df-border);
+}
+
+@utility border-df-strong {
+  border-color: var(--df-border-strong);
+}
+
+.glass-card {
+  background: var(--df-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--df-border);
+  box-shadow: var(--df-shadow);
+  transition:
+    background-color 300ms ease-in-out,
+    border-color 300ms ease-in-out,
+    box-shadow 300ms ease-in-out;
+}
+
+html:not(.dark) .glass-card {
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.glass-card-gold {
+  box-shadow:
+    0 0 0 1px rgba(240, 185, 11, 0.25),
+    0 8px 32px rgba(240, 185, 11, 0.08);
+}
+
+html:not(.dark) .glass-card-gold {
+  box-shadow:
+    0 0 0 1px rgba(201, 148, 10, 0.2),
+    0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+/* Map legacy white opacity text to theme in light mode */
+html:not(.dark) .text-white {
+  color: var(--df-text);
+}
+
+html:not(.dark) .text-white\/90 {
+  color: color-mix(in srgb, var(--df-text) 90%, transparent);
+}
+
+html:not(.dark) .text-white\/80 {
+  color: color-mix(in srgb, var(--df-text) 80%, transparent);
+}
+
+html:not(.dark) .text-white\/70 {
+  color: var(--df-text-muted);
+}
+
+html:not(.dark) .text-white\/60,
+html:not(.dark) .text-white\/55,
+html:not(.dark) .text-white\/50,
+html:not(.dark) .text-white\/45,
+html:not(.dark) .text-white\/40,
+html:not(.dark) .text-white\/35,
+html:not(.dark) .text-white\/25 {
+  color: var(--df-text-muted);
+}
+
+html:not(.dark) .border-white\/5,
+html:not(.dark) .border-white\/10 {
+  border-color: var(--df-border);
+}
+
+html:not(.dark) .bg-\[\#0a0e1a\],
+html:not(.dark) .bg-\[\#0a0e1a\]\/50,
+html:not(.dark) .bg-\[\#0a0e1a\]\/60,
+html:not(.dark) .bg-\[\#0a0e1a\]\/80,
+html:not(.dark) .bg-\[\#0a0e1a\]\/95 {
+  background-color: var(--df-inset) !important;
+}
+
+html:not(.dark) .hover\:bg-white\/\[0\.04\]:hover {
+  background-color: var(--df-hover) !important;
+}
+
+@keyframes bot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(240, 185, 11, 0.5);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 16px 4px rgba(240, 185, 11, 0.35);
+  }
+}
+
+.bot-pulse-dot {
+  animation: bot-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes glow-border {
+  0%,
+  100% {
+    border-color: rgba(0, 212, 170, 0.5);
+  }
+  50% {
+    border-color: rgba(0, 212, 170, 0.9);
+  }
+}
+
+.strategy-unlocked {
+  animation: glow-border 2.5s ease-in-out infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+/* Premium golden CTA hover — hardware-accelerated glow */
+.btn-golden-glow {
+  transform: translateZ(0);
+  will-change: box-shadow, filter;
+  transition:
+    box-shadow 300ms ease,
+    filter 300ms ease,
+    transform 300ms ease;
+}
+
+.btn-golden-glow:not(:disabled):hover {
+  box-shadow:
+    0 0 15px rgba(240, 185, 11, 0.5),
+    0 4px 20px rgba(240, 185, 11, 0.25);
+  filter: brightness(1.06);
+}
+
+.btn-golden-glow:not(:disabled):active {
+  transform: translateZ(0) scale(0.99);
+}
+
+/* Glassmorphic skeleton shimmer */
+@keyframes df-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.glass-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--df-inset) 0%,
+    color-mix(in srgb, var(--df-glass-solid) 92%, rgba(240, 185, 11, 0.12) 8%) 45%,
+    var(--df-inset) 90%
+  );
+  background-size: 200% 100%;
+  animation: df-shimmer 1.8s ease-in-out infinite;
+  border: 1px solid var(--df-border);
+}
+
+@keyframes df-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.df-content-enter {
+  animation: df-content-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Success transaction modal */
+@keyframes success-modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.success-modal-panel {
+  animation: success-modal-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes notice-toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notice-toast-enter {
+  animation: notice-toast-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes success-check-pop {
+  0% {
+    transform: scale(0) rotate(-12deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.12) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes success-check-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgba(0, 212, 170, 0.45));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(0, 212, 170, 0.85));
+  }
+}
+
+.success-check-icon {
+  animation:
+    success-check-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    success-check-glow 2.2s ease-in-out 0.55s infinite;
+}
+
+/* Cosmic 404 orbit accent */
+@keyframes not-found-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.not-found-orbit {
+  animation: not-found-orbit 24s linear infinite;
+}
+
+.not-found-cosmic {
+  background-color: #0a0e1a;
+  background-image:
+    radial-gradient(ellipse 100% 70% at 50% -20%, rgba(240, 185, 11, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 80%, rgba(0, 212, 170, 0.08), transparent 50%);
+  color: #ffffff;
+}
+
+.not-found-stars {
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 60% 70%, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1.5px 1.5px at 80% 20%, rgba(240, 185, 11, 0.4), transparent),
+    radial-gradient(1px 1px at 40% 90%, rgba(0, 212, 170, 0.3), transparent),
+    radial-gradient(1px 1px at 10% 60%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(1px 1px at 90% 50%, rgba(255, 255, 255, 0.22), transparent);
+  background-size: 100% 100%;
+  opacity: 0.85;
+}
+
+/* Lockbox ledger — AnimatedSafeBox micro-interactions */
+@keyframes lockbox-halo-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 12px rgba(245, 158, 11, 0.15),
+      0 0 28px rgba(0, 212, 170, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(245, 158, 11, 0.28),
+      0 0 36px rgba(0, 212, 170, 0.14);
+  }
+}
+
+@keyframes lockbox-metallic-gleam {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+@keyframes lockbox-micro-shake {
+  0%,
+  100% {
+    transform: perspective(420px) rotateY(-8deg) rotateX(4deg);
+  }
+  25% {
+    transform: perspective(420px) rotateY(-7deg) rotateX(3.5deg) translateX(0.5px);
+  }
+  75% {
+    transform: perspective(420px) rotateY(-9deg) rotateX(4.5deg) translateX(-0.5px);
+  }
+}
+
+.lockbox-safe-mount {
+  animation:
+    lockbox-halo-pulse 3.2s ease-in-out infinite,
+    lockbox-micro-shake 6s ease-in-out infinite;
+}
+
+.lockbox-safe-mount:hover,
+.lockbox-safe-mount:focus-visible,
+.lockbox-safe-active {
+  animation:
+    lockbox-halo-pulse 1.6s ease-in-out infinite,
+    lockbox-micro-shake 2.4s ease-in-out infinite;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+/* ROI profit simulator — cosmic range slider */
+.roi-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 10px;
+  border-radius: 9999px;
+  outline: none;
+  background: linear-gradient(
+    to right,
+    #0a0e1a 0%,
+    #1e293b 35%,
+    #334155 65%,
+    #475569 100%
+  );
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.roi-range[dir="rtl"] {
+  background: linear-gradient(
+    to left,
+    #0a0e1a 0%,
+    #1e293b 35%,
+    #334155 65%,
+    #475569 100%
+  );
+}
+
+.roi-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    rgba(240, 185, 11, 0.55) 0%,
+    rgba(240, 185, 11, 0.55) var(--roi-fill, 50%),
+    rgba(15, 23, 42, 0.9) var(--roi-fill, 50%),
+    rgba(15, 23, 42, 0.9) 100%
+  );
+}
+
+.roi-range[dir="rtl"]::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to left,
+    rgba(240, 185, 11, 0.55) 0%,
+    rgba(240, 185, 11, 0.55) var(--roi-fill, 50%),
+    rgba(15, 23, 42, 0.9) var(--roi-fill, 50%),
+    rgba(15, 23, 42, 0.9) 100%
+  );
+}
+
+.roi-range::-moz-range-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    rgba(240, 185, 11, 0.55) 0%,
+    rgba(240, 185, 11, 0.55) var(--roi-fill, 50%),
+    rgba(15, 23, 42, 0.9) var(--roi-fill, 50%),
+    rgba(15, 23, 42, 0.9) 100%
+  );
+}
+
+.roi-range[dir="rtl"]::-moz-range-track {
+  background: linear-gradient(
+    to left,
+    rgba(240, 185, 11, 0.55) 0%,
+    rgba(240, 185, 11, 0.55) var(--roi-fill, 50%),
+    rgba(15, 23, 42, 0.9) var(--roi-fill, 50%),
+    rgba(15, 23, 42, 0.9) 100%
+  );
+}
+
+.roi-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -6px;
+  border-radius: 50%;
+  border: 2px solid #fcd535;
+  background: radial-gradient(circle at 35% 30%, #fff7cc, #f0b90b 55%, #b8860b);
+  box-shadow:
+    0 0 12px rgba(240, 185, 11, 0.65),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roi-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fcd535;
+  background: radial-gradient(circle at 35% 30%, #fff7cc, #f0b90b 55%, #b8860b);
+  box-shadow:
+    0 0 12px rgba(240, 185, 11, 0.65),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.roi-range:active::-webkit-slider-thumb {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 18px rgba(252, 213, 53, 0.9),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes roi-yield-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
+
+.roi-yield-board {
+  animation: roi-yield-pulse 3s ease-in-out infinite;
+}
+
+.roi-yield-value {
+  animation: df-shimmer 4s ease-in-out infinite;
+  background-size: 200% auto;
+}
+
+.roi-tier-badge {
+  animation: lockbox-halo-pulse 3.5s ease-in-out infinite;
+}
+
+.lockbox-safe-gleam::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.22) 48%,
+    rgba(252, 213, 53, 0.35) 52%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  animation: lockbox-metallic-gleam 4.5s ease-in-out infinite;
+  pointer-events: none;
+}

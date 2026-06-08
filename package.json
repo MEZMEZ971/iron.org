@@ -1,0 +1,28 @@
+{
+  "name": "dunfin-project",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IRON monorepo: smart-forwarder contracts + dunfin-application",
+  "scripts": {
+    "server": "node dunfin-application/backend/server.cjs",
+    "dev:frontend": "npm run dev --prefix dunfin-application/frontend",
+    "build:frontend": "npm run build --prefix dunfin-application/frontend",
+    "test:trading": "node dunfin-application/backend/test-trading.cjs",
+    "test:uid": "node dunfin-application/backend/test-uid.cjs",
+    "test:contracts": "npm run test --prefix smart-forwarder",
+    "install:all": "npm install && npm install --prefix dunfin-application/backend && npm install --prefix dunfin-application/frontend && npm install --prefix smart-forwarder"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^7.0.0",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.7",
+    "@types/node": "^25.9.2",
+    "hardhat": "^3.8.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  },
+  "type": "module"
+}

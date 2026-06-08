@@ -1,0 +1,547 @@
+import type { Locale } from "../locales";
+import type { H5Key } from "./h5Overrides";
+
+type NonBaseLocale = Exclude<Locale, "en" | "ar">;
+
+/** Supplemental H5 strings merged after H5_OVERRIDES in buildLocaleTable. */
+export const H5_NEW_KEY_OVERRIDES: Record<
+  NonBaseLocale,
+  Partial<Record<H5Key, string>>
+> = {
+  ru: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Вы уже использовали бесплатное вращение сегодня. Возвращайтесь завтра!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Зарабатывайте на сети — ежедневные комиссии с доходов участников узла",
+    h5VipNetworkDesc:
+      "Получайте 6% комиссии с ежедневного дохода участников сетевых узлов в вашей партнёрской структуре поколений 1–3.",
+    h5DailyCommissionLabel: "ежедневная комиссия",
+    h5MarketsTitle: "Рынки",
+    h5TradeOnceADayWarning:
+      "Вы можете выбрать уровень для торговли только один раз в день.",
+    h5FastRecharge: "Быстрое пополнение",
+    h5ScanOrCopyAddress: "Сканируйте QR или скопируйте адрес для депозита",
+    h5TeamHubTitle: "Центр команды",
+    h5TeamCommission: "КОМИССИЯ КОМАНДЫ",
+    h5TeamTotalTurnover: "ОБЩИЙ ОБОРОТ КОМАНДЫ",
+    h5DailyVolume: "ДНЕВНОЙ ОБЪЁМ",
+    h5TeamHeadcount: "ЧИСЛЕННОСТЬ КОМАНДЫ",
+    h5NewRegistrationToday: "НОВЫЕ РЕГИСТРАЦИИ СЕГОДНЯ",
+    h5CommissionRebateTitle: "Комиссионный возврат по поколениям",
+    h5MemberId: "ID УЧАСТНИКА",
+    h5CopyInviteLinkBtn: "Скопировать ссылку приглашения",
+    h5MyInvitationCode: "МОЙ КОД ПРИГЛАШЕНИЯ",
+    h5MyInvitationLink: "МОЯ ССЫЛКА ПРИГЛАШЕНИЯ",
+    h5TradeMatrixDenied:
+      "Отказ в исполнении! Вы не соответствуете матрице квалификации. Нужен минимальный баланс {capital} USDT и {team} активных участников команды.",
+    h5TradeAutoTierPreview:
+      "Автовыбор: {strategy} · с кошелька будет заблокировано {amount} USDT.",
+  },
+  de: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Sie haben Ihren kostenlosen Dreh heute bereits genutzt. Kommen Sie morgen wieder!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Verdienen Sie mit Ihrem Netzwerk — tägliche Provisionen auf Einnahmen der Knotenmitglieder",
+    h5VipNetworkDesc:
+      "Erhalten Sie 6 % Provision auf die Tageseinnahmen von Netzwerkknotenmitgliedern in Ihrem Partnerbaum der Generationen 1–3.",
+    h5DailyCommissionLabel: "Tagesprovision",
+    h5MarketsTitle: "Märkte",
+    h5TradeOnceADayWarning:
+      "Sie können eine Handelsstufe nur einmal pro Tag wählen.",
+    h5FastRecharge: "Schnellaufladung",
+    h5ScanOrCopyAddress: "QR scannen oder Adresse zum Einzahlen kopieren",
+    h5TeamHubTitle: "Team-Hub",
+    h5TeamCommission: "TEAM-PROVISION",
+    h5TeamTotalTurnover: "GESAMTUMSATZ DES TEAMS",
+    h5DailyVolume: "TAGESVOLUMEN",
+    h5TeamHeadcount: "TEAMGRÖSSE",
+    h5NewRegistrationToday: "NEUE REGISTRIERUNGEN HEUTE",
+    h5CommissionRebateTitle: "Provisionsrückvergütung nach Generation",
+    h5MemberId: "MITGLIEDS-ID",
+    h5CopyInviteLinkBtn: "Einladungslink kopieren",
+    h5MyInvitationCode: "MEIN EINLADUNGSCODE",
+    h5MyInvitationLink: "MEIN EINLADUNGSLINK",
+    h5TradeMatrixDenied:
+      "Ausführung verweigert! Sie erfüllen die Qualifikationsmatrix nicht. Mindestens {capital} USDT Guthaben und {team} aktive Teammitglieder erforderlich.",
+    h5TradeAutoTierPreview:
+      "Automatisch: {strategy} · {amount} USDT werden aus Ihrer Wallet gesperrt.",
+  },
+  pt: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Você já usou sua rodada grátis hoje. Volte amanhã!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Ganhe com sua rede — comissões diárias sobre ganhos dos membros do nó",
+    h5VipNetworkDesc:
+      "Receba 6% de comissão sobre os ganhos diários dos membros do nó na sua árvore de afiliados das Gerações 1–3.",
+    h5DailyCommissionLabel: "comissão diária",
+    h5MarketsTitle: "Mercados",
+    h5TradeOnceADayWarning:
+      "Você só pode escolher um nível para negociar uma vez por dia.",
+    h5FastRecharge: "Recarga rápida",
+    h5ScanOrCopyAddress: "Escaneie o QR ou copie o endereço para depositar",
+    h5TeamHubTitle: "Hub da equipe",
+    h5TeamCommission: "COMISSÃO DA EQUIPE",
+    h5TeamTotalTurnover: "VOLUME TOTAL DA EQUIPE",
+    h5DailyVolume: "VOLUME DIÁRIO",
+    h5TeamHeadcount: "TAMANHO DA EQUIPE",
+    h5NewRegistrationToday: "NOVOS REGISTROS HOJE",
+    h5CommissionRebateTitle: "Rebate de comissão por geração",
+    h5MemberId: "ID DO MEMBRO",
+    h5CopyInviteLinkBtn: "Copiar link de convite",
+    h5MyInvitationCode: "MEU CÓDIGO DE CONVITE",
+    h5MyInvitationLink: "MEU LINK DE CONVITE",
+    h5TradeMatrixDenied:
+      "Execução negada! Você não atende à matriz de qualificação. São necessários no mínimo {capital} USDT de saldo e {team} membros ativos na equipe.",
+    h5TradeAutoTierPreview:
+      "Seleção automática: {strategy} · {amount} USDT serão bloqueados da sua carteira.",
+  },
+  es: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Ya has usado tu giro gratis hoy. ¡Vuelve mañana!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Gana con tu red — comisiones diarias sobre las ganancias de los miembros del nodo",
+    h5VipNetworkDesc:
+      "Recibe un 6% de comisión sobre las ganancias diarias de los miembros del nodo en tu árbol de afiliados de las Generaciones 1–3.",
+    h5DailyCommissionLabel: "comisión diaria",
+    h5MarketsTitle: "Mercados",
+    h5TradeOnceADayWarning:
+      "Solo puedes elegir un nivel para operar una vez al día.",
+    h5FastRecharge: "Recarga rápida",
+    h5ScanOrCopyAddress: "Escanea el QR o copia la dirección para depositar",
+    h5TeamHubTitle: "Centro del equipo",
+    h5TeamCommission: "COMISIÓN DEL EQUIPO",
+    h5TeamTotalTurnover: "VOLUMEN TOTAL DEL EQUIPO",
+    h5DailyVolume: "VOLUMEN DIARIO",
+    h5TeamHeadcount: "TAMAÑO DEL EQUIPO",
+    h5NewRegistrationToday: "NUEVOS REGISTROS HOY",
+    h5CommissionRebateTitle: "Reembolso de comisión por generación",
+    h5MemberId: "ID DE MIEMBRO",
+    h5CopyInviteLinkBtn: "Copiar enlace de invitación",
+    h5MyInvitationCode: "MI CÓDIGO DE INVITACIÓN",
+    h5MyInvitationLink: "MI ENLACE DE INVITACIÓN",
+    h5TradeMatrixDenied:
+      "¡Ejecución denegada! No cumple la matriz de calificación. Necesita un saldo mínimo de {capital} USDT y {team} miembros activos en el equipo.",
+    h5TradeAutoTierPreview:
+      "Selección automática: {strategy} · se bloquearán {amount} USDT de su billetera.",
+  },
+  fr: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Vous avez déjà utilisé votre tour gratuit aujourd'hui. Revenez demain !",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Gagnez avec votre réseau — commissions quotidiennes sur les gains des membres du nœud",
+    h5VipNetworkDesc:
+      "Recevez 6 % de commission sur les gains quotidiens des membres du réseau dans votre arbre d'affiliation des générations 1 à 3.",
+    h5DailyCommissionLabel: "commission quotidienne",
+    h5MarketsTitle: "Marchés",
+    h5TradeOnceADayWarning:
+      "Vous ne pouvez choisir un niveau de trading qu'une fois par jour.",
+    h5FastRecharge: "Recharge rapide",
+    h5ScanOrCopyAddress: "Scannez le QR ou copiez l'adresse pour déposer",
+    h5TeamHubTitle: "Hub d'équipe",
+    h5TeamCommission: "COMMISSION D'ÉQUIPE",
+    h5TeamTotalTurnover: "CHIFFRE D'AFFAIRES TOTAL DE L'ÉQUIPE",
+    h5DailyVolume: "VOLUME QUOTIDIEN",
+    h5TeamHeadcount: "EFFECTIF DE L'ÉQUIPE",
+    h5NewRegistrationToday: "NOUVELLES INSCRIPTIONS AUJOURD'HUI",
+    h5CommissionRebateTitle: "Ristourne de commission par génération",
+    h5MemberId: "ID MEMBRE",
+    h5CopyInviteLinkBtn: "Copier le lien d'invitation",
+    h5MyInvitationCode: "MON CODE D'INVITATION",
+    h5MyInvitationLink: "MON LIEN D'INVITATION",
+    h5TradeMatrixDenied:
+      "Exécution refusée ! Vous ne remplissez pas la matrice de qualification. Il faut un solde minimum de {capital} USDT et {team} membres actifs dans l'équipe.",
+    h5TradeAutoTierPreview:
+      "Sélection automatique : {strategy} · {amount} USDT seront bloqués depuis votre portefeuille.",
+  },
+  ja: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn: "本日の無料スピンは使用済みです。明日またお試しください。",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "ネットワークで収益 — ノードメンバーの収益に対する日次コミッション",
+    h5VipNetworkDesc:
+      "第1〜3世代のアフィリエイトツリー内のネットワークノードメンバーの日次収益に対して6%のコミッションを受け取ります。",
+    h5DailyCommissionLabel: "日次コミッション",
+    h5MarketsTitle: "マーケット",
+    h5TradeOnceADayWarning: "取引レベルは1日に1回のみ選択できます。",
+    h5FastRecharge: "クイックチャージ",
+    h5ScanOrCopyAddress: "QRをスキャンするかアドレスをコピーして入金",
+    h5TeamHubTitle: "チームハブ",
+    h5TeamCommission: "チームコミッション",
+    h5TeamTotalTurnover: "チーム総売上高",
+    h5DailyVolume: "日次出来高",
+    h5TeamHeadcount: "チーム人数",
+    h5NewRegistrationToday: "本日の新規登録",
+    h5CommissionRebateTitle: "世代別コミッションリベート",
+    h5MemberId: "メンバーID",
+    h5CopyInviteLinkBtn: "招待リンクをコピー",
+    h5MyInvitationCode: "招待コード",
+    h5MyInvitationLink: "招待リンク",
+    h5TradeMatrixDenied:
+      "実行が拒否されました。資格マトリックスを満たしていません。最低 {capital} USDT の残高と {team} 人のアクティブチームメンバーが必要です。",
+    h5TradeAutoTierPreview:
+      "自動選択: {strategy} · ウォレットから {amount} USDT がロックされます。",
+  },
+  ko: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn: "오늘 무료 스핀을 이미 사용했습니다. 내일 다시 오세요!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "네트워크로 수익 창출 — 노드 멤버 수익에 대한 일일 커미션",
+    h5VipNetworkDesc:
+      "1~3세대 제휴 트리의 네트워크 노드 멤버 일일 수익에 대해 6% 커미션을 받습니다.",
+    h5DailyCommissionLabel: "일일 커미션",
+    h5MarketsTitle: "마켓",
+    h5TradeOnceADayWarning: "거래 레벨은 하루에 한 번만 선택할 수 있습니다.",
+    h5FastRecharge: "빠른 충전",
+    h5ScanOrCopyAddress: "QR 스캔 또는 주소 복사 후 입금",
+    h5TeamHubTitle: "팀 허브",
+    h5TeamCommission: "팀 커미션",
+    h5TeamTotalTurnover: "팀 총 거래량",
+    h5DailyVolume: "일일 거래량",
+    h5TeamHeadcount: "팀 인원",
+    h5NewRegistrationToday: "오늘 신규 가입",
+    h5CommissionRebateTitle: "세대별 커미션 리베이트",
+    h5MemberId: "회원 ID",
+    h5CopyInviteLinkBtn: "초대 링크 복사",
+    h5MyInvitationCode: "내 초대 코드",
+    h5MyInvitationLink: "내 초대 링크",
+    h5TradeMatrixDenied:
+      "실행 거부! 자격 매트릭스를 충족하지 않습니다. 최소 {capital} USDT 잔액과 {team}명의 활성 팀 멤버가 필요합니다.",
+    h5TradeAutoTierPreview:
+      "자동 선택: {strategy} · 지갑에서 {amount} USDT가 잠깁니다.",
+  },
+  vi: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Bạn đã dùng lượt quay miễn phí hôm nay. Hãy quay lại vào ngày mai!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Kiếm từ mạng lưới — hoa hồng hàng ngày trên thu nhập thành viên nút",
+    h5VipNetworkDesc:
+      "Nhận 6% hoa hồng trên thu nhập hàng ngày của thành viên nút mạng trong cây giới thiệu Thế hệ 1–3.",
+    h5DailyCommissionLabel: "hoa hồng hàng ngày",
+    h5MarketsTitle: "Thị trường",
+    h5TradeOnceADayWarning:
+      "Bạn chỉ có thể chọn cấp giao dịch một lần mỗi ngày.",
+    h5FastRecharge: "Nạp nhanh",
+    h5ScanOrCopyAddress: "Quét QR hoặc sao chép địa chỉ để nạp tiền",
+    h5TeamHubTitle: "Trung tâm đội",
+    h5TeamCommission: "HOA HỒNG ĐỘI",
+    h5TeamTotalTurnover: "TỔNG DOANH SỐ ĐỘI",
+    h5DailyVolume: "KHỐI LƯỢNG NGÀY",
+    h5TeamHeadcount: "SỐ THÀNH VIÊN ĐỘI",
+    h5NewRegistrationToday: "ĐĂNG KÝ MỚI HÔM NAY",
+    h5CommissionRebateTitle: "Hoàn hoa hồng theo thế hệ",
+    h5MemberId: "ID THÀNH VIÊN",
+    h5CopyInviteLinkBtn: "Sao chép liên kết mời",
+    h5MyInvitationCode: "MÃ MỜI CỦA TÔI",
+    h5MyInvitationLink: "LIÊN KẾT MỜI CỦA TÔI",
+    h5TradeMatrixDenied:
+      "Từ chối thực thi! Bạn không đáp ứng ma trận đủ điều kiện. Cần tối thiểu {capital} USDT số dư và {team} thành viên nhóm đang hoạt động.",
+    h5TradeAutoTierPreview:
+      "Tự chọn: {strategy} · {amount} USDT sẽ bị khóa từ ví của bạn.",
+  },
+  fa: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "امروز از چرخش رایگان خود استفاده کرده‌اید. فردا بازگردید!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "از شبکه خود درآمد کسب کنید — کمیسیون روزانه بر درآمد اعضای گره",
+    h5VipNetworkDesc:
+      "۶٪ کمیسیون بر درآمد روزانه اعضای گره شبکه در درخت وابسته نسل ۱ تا ۳ دریافت کنید.",
+    h5DailyCommissionLabel: "کمیسیون روزانه",
+    h5MarketsTitle: "بازارها",
+    h5TradeOnceADayWarning:
+      "فقط یک‌بار در روز می‌توانید سطح معامله را انتخاب کنید.",
+    h5FastRecharge: "شارژ سریع",
+    h5ScanOrCopyAddress: "QR را اسکن کنید یا آدرس را برای واریز کپی کنید",
+    h5TeamHubTitle: "مرکز تیم",
+    h5TeamCommission: "کمیسیون تیم",
+    h5TeamTotalTurnover: "گردش کل تیم",
+    h5DailyVolume: "حجم روزانه",
+    h5TeamHeadcount: "تعداد اعضای تیم",
+    h5NewRegistrationToday: "ثبت‌نام‌های جدید امروز",
+    h5CommissionRebateTitle: "بازپرداخت کمیسیون بر اساس نسل",
+    h5MemberId: "شناسه عضو",
+    h5CopyInviteLinkBtn: "کپی لینک دعوت",
+    h5MyInvitationCode: "کد دعوت من",
+    h5MyInvitationLink: "لینک دعوت من",
+    h5TradeMatrixDenied:
+      "اجرا رد شد! معیارهای ماتریس را برآورده نمی‌کنید. حداقل {capital} USDT موجودی و {team} عضو فعال تیم لازم است.",
+    h5TradeAutoTierPreview:
+      "انتخاب خودکار: {strategy} · {amount} USDT از کیف پول شما قفل می‌شود.",
+  },
+  id: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Anda sudah menggunakan putaran gratis hari ini. Kembali besok!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Hasilkan dari jaringan Anda — komisi harian atas penghasilan anggota node",
+    h5VipNetworkDesc:
+      "Terima komisi 6% atas penghasilan harian anggota node jaringan di pohon afiliasi Generasi 1–3 Anda.",
+    h5DailyCommissionLabel: "komisi harian",
+    h5MarketsTitle: "Pasar",
+    h5TradeOnceADayWarning:
+      "Anda hanya dapat memilih level trading sekali sehari.",
+    h5FastRecharge: "Isi ulang cepat",
+    h5ScanOrCopyAddress: "Pindai QR atau salin alamat untuk deposit",
+    h5TeamHubTitle: "Pusat tim",
+    h5TeamCommission: "KOMISI TIM",
+    h5TeamTotalTurnover: "TOTAL PERPUTARAN TIM",
+    h5DailyVolume: "VOLUME HARIAN",
+    h5TeamHeadcount: "JUMLAH ANGGOTA TIM",
+    h5NewRegistrationToday: "PENDAFTARAN BARU HARI INI",
+    h5CommissionRebateTitle: "Rabat komisi per generasi",
+    h5MemberId: "ID ANGGOTA",
+    h5CopyInviteLinkBtn: "Salin tautan undangan",
+    h5MyInvitationCode: "KODE UNDANGAN SAYA",
+    h5MyInvitationLink: "TAUTAN UNDANGAN SAYA",
+    h5TradeMatrixDenied:
+      "Eksekusi ditolak! Anda tidak memenuhi matriks kualifikasi. Diperlukan saldo minimum {capital} USDT dan {team} anggota tim aktif.",
+    h5TradeAutoTierPreview:
+      "Pilihan otomatis: {strategy} · {amount} USDT akan dikunci dari dompet Anda.",
+  },
+  bn: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "আজ আপনি বিনামূল্যের স্পিন ব্যবহার করেছেন। আগামীকাল ফিরে আসুন!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "আপনার নেটওয়ার্ক থেকে আয় করুন — নোড সদস্যদের আয়ে দৈনিক কমিশন",
+    h5VipNetworkDesc:
+      "আপনার প্রজন্ম ১–৩ অ্যাফিলিয়েট ট্রিতে নেটওয়ার্ক নোড সদস্যদের দৈনিক আয়ের উপর ৬% কমিশন পান।",
+    h5DailyCommissionLabel: "দৈনিক কমিশন",
+    h5MarketsTitle: "বাজার",
+    h5TradeOnceADayWarning:
+      "আপনি দিনে একবারই ট্রেডিং লেভেল বেছে নিতে পারবেন।",
+    h5FastRecharge: "দ্রুত রিচার্জ",
+    h5ScanOrCopyAddress: "ডিপোজিটের জন্য QR স্ক্যান করুন বা ঠিকানা কপি করুন",
+    h5TeamHubTitle: "টিম হাব",
+    h5TeamCommission: "টিম কমিশন",
+    h5TeamTotalTurnover: "টিমের মোট টার্নওভার",
+    h5DailyVolume: "দৈনিক ভলিউম",
+    h5TeamHeadcount: "টিমের সদস্য সংখ্যা",
+    h5NewRegistrationToday: "আজকের নতুন নিবন্ধন",
+    h5CommissionRebateTitle: "প্রজন্ম অনুযায়ী কমিশন রিবেট",
+    h5MemberId: "সদস্য আইডি",
+    h5CopyInviteLinkBtn: "আমন্ত্রণ লিঙ্ক কপি করুন",
+    h5MyInvitationCode: "আমার আমন্ত্রণ কোড",
+    h5MyInvitationLink: "আমার আমন্ত্রণ লিঙ্ক",
+    h5TradeMatrixDenied:
+      "নিষ্পাদন প্রত্যাখ্যাত! আপনি যোগ্যতা ম্যাট্রিক্স পূরণ করেননি। সক্রিয় ট্রেডিংয়ের জন্য ন্যূনতম {capital} USDT ব্যালেন্স এবং {team} জন সক্রিয় দল সদস্য প্রয়োজন।",
+    h5TradeAutoTierPreview:
+      "স্বয়ংক্রিয় নির্বাচন: {strategy} · আপনার ওয়ালেট থেকে {amount} USDT লক হবে।",
+  },
+  gn: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Reipuru jepépe nde rembiapóke ko árape. Eju jey hína ko yára!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Eike nde redégui — comisión ára ára rehegua nodo mba'apohára rembiapóre",
+    h5VipNetworkDesc:
+      "Eguereko 6% comisión ára ára rehegua nodo mba'apohára rembiaporépe ne árbol afiliado Generación 1–3-pe.",
+    h5DailyCommissionLabel: "comisión ára ára",
+    h5MarketsTitle: "Mercado-kuéra",
+    h5TradeOnceADayWarning:
+      "Ikatu reiporavo peteĩ nivel comercio peteĩ jey árape.",
+    h5FastRecharge: "Recarga pya'ete",
+    h5ScanOrCopyAddress: "Escaneá QR térã emonguéra dirección depósito hag̃ua",
+    h5TeamHubTitle: "Centro equipo",
+    h5TeamCommission: "COMISIÓN EQUIPO",
+    h5TeamTotalTurnover: "VOLUMEN TOTAL EQUIPO",
+    h5DailyVolume: "VOLUMEN ÁRA ÁRA",
+    h5TeamHeadcount: "CANTIDAD MIEMBRO EQUIPO",
+    h5NewRegistrationToday: "REGISTRO PYAHU ÁRA ÁRA",
+    h5CommissionRebateTitle: "Rebate comisión por generación",
+    h5MemberId: "ID MIEMBRO",
+    h5CopyInviteLinkBtn: "Emonguéra enlace invitación",
+    h5MyInvitationCode: "CHE CÓDIGO INVITACIÓN",
+    h5MyInvitationLink: "CHE ENLACE INVITACIÓN",
+    h5TradeMatrixDenied:
+      "Ejecución denegada! Nde ndahechái matriz calificación. Tekotevẽ {capital} USDT saldo ha {team} miembro activo equipo.",
+    h5TradeAutoTierPreview:
+      "Auto: {strategy} · {amount} USDT oñemboguejáta ne billetera-gui.",
+  },
+  ay: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Jichhürun qhipüru yanapt'asiñamawa. Qhipüru kutam!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Red-manta qullqi churaña — uru uru comisión nodo miembro gananciampi",
+    h5VipNetworkDesc:
+      "6% comisión churaña uru uru gananciampi red nodo miembros Gen 1–3 árbol afiliado-ukampi.",
+    h5DailyCommissionLabel: "uru uru comisión",
+    h5MarketsTitle: "Mercado-naka",
+    h5TradeOnceADayWarning:
+      "Mä uru mä kuti nivel comercio ajllispa.",
+    h5FastRecharge: "Jank'aki recarga",
+    h5ScanOrCopyAddress: "QR escaneañani jan ukax dirección copiañ depósito",
+    h5TeamHubTitle: "Equipo centro",
+    h5TeamCommission: "EQUIPO COMISIÓN",
+    h5TeamTotalTurnover: "EQUIPO TOTAL VOLUMEN",
+    h5DailyVolume: "URU VOLUMEN",
+    h5TeamHeadcount: "EQUIPO MIEMBRO CANTIDAD",
+    h5NewRegistrationToday: "JICHHA REGISTRO MACHAQ",
+    h5CommissionRebateTitle: "Comisión rebate generación según",
+    h5MemberId: "MIEMBRO ID",
+    h5CopyInviteLinkBtn: "Invitación enlace copiaña",
+    h5MyInvitationCode: "NOQAJJA INVITACIÓN CÓDIGO",
+    h5MyInvitationLink: "NOQAJJA INVITACIÓN ENLACE",
+    h5TradeMatrixDenied:
+      "Ejecución janiw! Matriz ukanx jani churañkiti. {capital} USDT balance ha {team} miembro activo team ukax wakisi.",
+    h5TradeAutoTierPreview:
+      "Auto: {strategy} · {amount} USDT billetera-manta jist'antatawa.",
+  },
+  mi: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Kua hoki koe i whakamahi i tō huringa kore utu i tēnei rā. Hoki āpōpō!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Whiwhi mai i tō whatunga — komihana o ia rā i ngā whiwhinga mema pū",
+    h5VipNetworkDesc:
+      "Whiwhi 6% komihana i ngā whiwhinga o ia rā a ngā mema pū whatunga i roto i tō rākau afiliē Whakatupuranga 1–3.",
+    h5DailyCommissionLabel: "komihana o ia rā",
+    h5MarketsTitle: "Mākete",
+    h5TradeOnceADayWarning:
+      "Ka taea anake te kōwhiri i tētahi taumata hokohoko kotahi i te rā.",
+    h5FastRecharge: "Whakakī tere",
+    h5ScanOrCopyAddress: "Matawai QR, tārua rānei te wāhitau hei whakatakoto",
+    h5TeamHubTitle: "Pokapū kapa",
+    h5TeamCommission: "KOMIHANA KAPA",
+    h5TeamTotalTurnover: "TE TAUNOA KATOATANGA O TE KAPA",
+    h5DailyVolume: "RAUEMI O IA RĀ",
+    h5TeamHeadcount: "TAUNGA MEMA KAPA",
+    h5NewRegistrationToday: "RĒHITA HOU I TĒNEI RĀ",
+    h5CommissionRebateTitle: "Whakahokinga komihana mā te whakatupuranga",
+    h5MemberId: "ID MEMA",
+    h5CopyInviteLinkBtn: "Tāruatia te hono powhiri",
+    h5MyInvitationCode: "TAKU WAEHERE POWHIRI",
+    h5MyInvitationLink: "TAKU HONO POWHIRI",
+    h5TradeMatrixDenied:
+      "I whakakore te whakahaere! Kāore i tutuki te mātātoka whakaaetanga. Me {capital} USDT pūtea me {team} mema kapa hohe.",
+    h5TradeAutoTierPreview:
+      "Kōwhiri aunoa: {strategy} · ka maukati {amount} USDT mai i tō pūkoro.",
+  },
+  mn: {
+    h5WheelPrize0: "0.10 USDT",
+    h5WheelPrize1: "0.50 USDT",
+    h5WheelPrize2: "1.00 DADB",
+    h5WheelPrize3: "2.00 DADB",
+    h5WheelPrize4: "0.05 USDT",
+    h5WheelPrize5: "5.00 DADB",
+    h5SpinLimitEn:
+      "Та өнөөдөр үнэгүй эргэлтээ ашигласан байна. Маргааш ирнэ үү!",
+    h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+    h5VipNetworkTitle:
+      "Сүлжээгээсээ олоорой — зангилаа гишүүдийн орлогын өдөр тутмын шимтгэл",
+    h5VipNetworkDesc:
+      "1–3 үеийн түнш модны сүлжээний зангилаа гишүүдийн өдөр тутмын орлогын 6% шимтгэл аваарай.",
+    h5DailyCommissionLabel: "өдөр тутмын шимтгэл",
+    h5MarketsTitle: "Зах зээл",
+    h5TradeOnceADayWarning:
+      "Та өдөрт зөвхөн нэг удаа арилжааны түвшин сонгож болно.",
+    h5FastRecharge: "Түргэн цэнэглэлт",
+    h5ScanOrCopyAddress: "QR уншуулах эсвэл хаяг хуулж орлого хийх",
+    h5TeamHubTitle: "Багийн төв",
+    h5TeamCommission: "БАГИЙН ШИМТГЭЛ",
+    h5TeamTotalTurnover: "БАГИЙН НИЙТ ЭРГЭЛТ",
+    h5DailyVolume: "ӨДӨР ТУТМЫН ЭЗЛЭХ",
+    h5TeamHeadcount: "БАГИЙН ГИШҮҮДИЙН ТОО",
+    h5NewRegistrationToday: "ӨНӨӨДРИЙН ШИНЭ БҮРТГЭЛ",
+    h5CommissionRebateTitle: "Үеийн дагуу шимтгэлийн буцаан олголт",
+    h5MemberId: "ГИШҮҮНИЙ ID",
+    h5CopyInviteLinkBtn: "Урилгын холбоос хуулах",
+    h5MyInvitationCode: "МИНИЙ УРИЛГЫН КОД",
+    h5MyInvitationLink: "МИНИЙ УРИЛГЫН ХОЛБООС",
+    h5TradeMatrixDenied:
+      "Гүйцэтгэл татгалзлаа! Та нөхцөлийн матрицыг хангаагүй байна. Хамгийн багадаа {capital} USDT үлдэгдэл ба {team} идэвхтэй багийн гишүүн шаардлагатай.",
+    h5TradeAutoTierPreview:
+      "Автомат сонголт: {strategy} · таны түрийвчнээс {amount} USDT түгжигдэнэ.",
+  },
+};

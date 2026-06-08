@@ -1,0 +1,259 @@
+// IRON production schema — PostgreSQL
+// Run: npx prisma migrate dev --schema=./prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  PARTNER
+}
+
+enum KycStatus {
+  NONE
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum WithdrawalStatus {
+  PENDING_REVIEW
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum BalanceLedgerKind {
+  ADMIN_CREDIT
+  ADMIN_DEBIT
+}
+
+enum TransactionRecordType {
+  ADMIN_REWARD
+  ADMIN_DEDUCTION
+  LUCKY_WHEEL_REWARD
+  DEPOSIT_INTENT
+}
+
+enum TransactionRecordStatus {
+  SUCCESS
+  PENDING
+  FAILED
+}
+
+/// Core platform user (affiliate tree via self-referential relation)
+model User {
+  /// Internal primary key (opaque cuid-style string — never shown as member ID)
+  id               String    @id
+  /// Public member ID: cryptographically random 8-digit numeric string, non-sequential
+  uid              String    @unique
+  username         String?   @unique
+  email            String?   @unique
+  phone            String?   @unique
+  phoneCountryCode String?   @default("+1")
+  passwordHash         String?
+  paymentPasswordHash  String?
+  displayName          String?
+  role                 UserRole  @default(USER)
+  referralCode     String    @unique
+  referredById   String?
+  referredBy     User?     @relation("AffiliateTree", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals      User[]    @relation("AffiliateTree")
+
+  hasDeposited   Boolean   @default(false)
+  walletBalance  Decimal   @default(0) @db.Decimal(18, 6)
+  onChainBalance Decimal   @default(0) @db.Decimal(18, 6)
+  tradingCapital Decimal   @default(0) @db.Decimal(18, 6)
+  lockedCapital  Decimal   @default(0) @db.Decimal(18, 6)
+  activeStrategy Int?
+  lastTradeTime  DateTime?
+  /// When the current 5–10 min trading session ends (payout + unlock)
+  tradeSessionEndsAt DateTime?
+
+  monthlyTradingProceeds Decimal  @default(0) @db.Decimal(18, 6)
+  proceedsPeriodStart    DateTime @default(now())
+
+  depositAddress String?
+
+  kycStatus KycStatus @default(NONE)
+  /// When false, login and authenticated API access are blocked
+  accountActive Boolean @default(true)
+
+  /// Last daily lucky wheel spin (24h cooldown)
+  lastSpinDate        DateTime?
+  /// Proprietary DADB token balance from wheel and promos
+  customTokenBalance  Float     @default(0)
+
+  /// Last authenticated interaction (trade, deposit intent, withdrawal, login, etc.)
+  lastActivityAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notifications        Notification[]
+  balanceLedgerEntries BalanceLedgerEntry[]
+  transactionRecords   TransactionRecord[]
+  deposits         Deposit[]
+  trades           Trade[]
+  networkAddresses NetworkDepositAddress[]
+  kycSubmissions   KycSubmission[]
+  withdrawals      WithdrawalRecord[]
+
+  commissionReceived TeamCommissionPayout[] @relation("CommissionBeneficiary")
+  commissionSourced  TeamCommissionPayout[] @relation("CommissionSource")
+
+  @@index([referredById])
+  @@index([referralCode])
+  @@index([createdAt])
+}
+
+/// Upline commission credited when a downline member executes a trade
+model TeamCommissionPayout {
+  id                String   @id @default(cuid())
+  beneficiaryUserId String
+  beneficiary       User     @relation("CommissionBeneficiary", fields: [beneficiaryUserId], references: [id], onDelete: Cascade)
+  sourceUserId      String
+  sourceUser        User     @relation("CommissionSource", fields: [sourceUserId], references: [id], onDelete: Cascade)
+  generation        Int
+  amount            Decimal  @db.Decimal(18, 6)
+  tradeId           String?
+  executedAt        DateTime @default(now())
+
+  @@index([beneficiaryUserId])
+  @@index([beneficiaryUserId, executedAt])
+  @@index([sourceUserId])
+  @@index([generation])
+}
+
+/// AI strategy execution record (24h lock tracked on User.lastTradeTime)
+model Trade {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  capitalAmount         Decimal  @db.Decimal(18, 6)
+  strategyId            Int
+  teamActiveAtExecution Int      @default(0)
+  walletBalanceAfter    Decimal? @db.Decimal(18, 6)
+  executedAt            DateTime @default(now())
+
+  @@index([userId])
+  @@index([executedAt])
+}
+
+/// Admin balance adjustments (credit/debit) with audit trail
+model BalanceLedgerEntry {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind            BalanceLedgerKind
+  amount          Decimal           @db.Decimal(18, 6)
+  balanceAfter    Decimal           @db.Decimal(18, 6)
+  note            String?
+  performedById   String?
+  createdAt       DateTime          @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+/// Immutable admin balance adjustment audit (ink-on-paper ledger)
+model TransactionRecord {
+  id            String                  @id @default(cuid())
+  userId        String
+  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          TransactionRecordType
+  amount        Decimal                 @db.Decimal(18, 6)
+  status        TransactionRecordStatus @default(SUCCESS)
+  description   String?
+  performedById String?
+  createdAt     DateTime                @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+model Deposit {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Decimal  @db.Decimal(18, 6)
+  txHash    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model NetworkDepositAddress {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  network   String
+  address   String
+  txHash    String?
+  tron      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, network])
+  @@index([userId])
+}
+
+model KycSubmission {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  frontFileName String
+  backFileName  String
+  status           KycStatus @default(PENDING_REVIEW)
+  rejectionReason  String?
+  submittedAt      DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+/// In-app user notification (bilingual EN/AR payloads)
+model Notification {
+  id      String  @id @default(cuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titleEn String
+  titleAr String
+  bodyEn  String
+  bodyAr  String
+  kind    String  @default("SYSTEM")
+  read    Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, read])
+  @@index([userId, kind, createdAt])
+}
+
+model WithdrawalRecord {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency  String
+  network   String
+  address   String
+  amount    Decimal          @db.Decimal(18, 6)
+  fee       Decimal          @db.Decimal(18, 6)
+  netAmount Decimal          @db.Decimal(18, 6)
+  status           WithdrawalStatus @default(PROCESSING)
+  rejectionReason  String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([status])
+}
