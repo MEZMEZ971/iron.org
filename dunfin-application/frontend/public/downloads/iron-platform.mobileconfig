@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>FullScreen</key>
+      <true/>
+      <key>Icon</key>
+      <data></data>
+      <key>IsRemovable</key>
+      <true/>
+      <key>Label</key>
+      <string>IRON</string>
+      <key>PayloadDescription</key>
+      <string>Install IRON on your Home Screen for a native app-like experience.</string>
+      <key>PayloadDisplayName</key>
+      <string>IRON Web App</string>
+      <key>PayloadIdentifier</key>
+      <string>com.iron.platform.webclip</string>
+      <key>PayloadOrganization</key>
+      <string>IRON</string>
+      <key>PayloadType</key>
+      <string>com.apple.webClip.managed</string>
+      <key>PayloadUUID</key>
+      <string>4213b200-a05d-47bf-9df9-fdae888ebee8</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>Precomposed</key>
+      <true/>
+      <key>URL</key>
+      <string>https://iron-org.vercel.app</string>
+      <key>IgnoreManifestScope</key>
+      <true/>
+    </dict>
+  </array>
+  <key>PayloadDescription</key>
+  <string>Configures IRON as a home-screen web application.</string>
+  <key>PayloadDisplayName</key>
+  <string>IRON Platform</string>
+  <key>PayloadIdentifier</key>
+  <string>com.iron.platform.profile</string>
+  <key>PayloadOrganization</key>
+  <string>IRON</string>
+  <key>PayloadRemovalDisallowed</key>
+  <false/>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadUUID</key>
+  <string>f21e56c5-12c0-4378-b5c9-38641d082456</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+</dict>
+</plist>

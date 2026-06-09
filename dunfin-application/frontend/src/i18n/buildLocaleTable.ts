@@ -7,6 +7,7 @@ import { HELP_OVERRIDES } from "./localeCatalog/helpOverrides";
 import { H5_OVERRIDES } from "./localeCatalog/h5Overrides";
 import { H5_DEPOSIT_OVERRIDES } from "./localeCatalog/h5DepositOverrides";
 import { H5_NEW_KEY_OVERRIDES } from "./localeCatalog/h5OverridesNewKeys";
+import { SIDEBAR_DOWNLOAD_OVERRIDES } from "./localeCatalog/sidebarDownloadApkOverrides";
 
 type NonBaseLocale = Exclude<Locale, "en" | "ar">;
 
@@ -31,6 +32,7 @@ export function buildLocaleTable(
   const help = HELP_OVERRIDES[locale] ?? {};
   const adminActivity = ADMIN_ACTIVITY_OVERRIDES[locale] ?? {};
   const adminFinance = ADMIN_FINANCE_OVERRIDES[locale] ?? {};
+  const sidebarDownload = SIDEBAR_DOWNLOAD_OVERRIDES[locale] ?? {};
   return {
     ...en,
     ...h5,
@@ -38,5 +40,6 @@ export function buildLocaleTable(
     ...help,
     ...adminActivity,
     ...adminFinance,
+    ...sidebarDownload,
   } as Record<TranslationKey, string>;
 }

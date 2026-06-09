@@ -23,7 +23,7 @@ export function AppLayout() {
           <Header />
         </div>
 
-        <main className="flex-1 overflow-y-auto px-4 pb-[calc(4.75rem+env(safe-area-inset-bottom))] transition-all duration-300 ease-in-out md:px-8 md:pb-6">
+        <main className="flex-1 overflow-y-auto px-4 pb-[calc(6.25rem+env(safe-area-inset-bottom))] transition-all duration-300 ease-in-out md:px-8 md:pb-6">
           <div className="mx-auto w-full md:max-w-6xl md:py-2">
             <Outlet />
           </div>

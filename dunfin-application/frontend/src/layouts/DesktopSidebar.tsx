@@ -1,4 +1,5 @@
 ﻿import { NavLink, useNavigate } from "react-router-dom";
+import { AppDownloadLinks } from "../components/layout/ApkDownloadLink";
 import { IronLogo } from "../components/layout/IronLogo";
 import { ProThemeToggle } from "../components/theme/ProThemeToggle";
 import { DESKTOP_SIDEBAR_NAV } from "../config/navigation";
@@ -96,6 +97,9 @@ export function DesktopSidebar() {
             <span>{t("adminPortalTitle")}</span>
           </NavLink>
         )}
+        <div className="mt-2 border-t border-slate-200 pt-2 dark:border-slate-800/50">
+          <AppDownloadLinks variant="sidebar" />
+        </div>
       </nav>
 
       <div className="space-y-3 border-t border-slate-200 p-4 dark:border-slate-800/50">

@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-mock-apps": "node scripts/generate-mock-apps.cjs",
+    "postinstall": "node scripts/generate-mock-apps.cjs"
   },
   "dependencies": {
     "qrcode.react": "^4.2.0",

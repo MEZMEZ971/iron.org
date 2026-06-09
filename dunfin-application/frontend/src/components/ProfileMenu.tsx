@@ -7,13 +7,13 @@ import { useUser } from "../context/UserContext";
 import { LanguageSwitcherOverlay } from "../i18n/LanguageSwitcherOverlay";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
+import { AppDownloadLinks } from "./layout/ApkDownloadLink";
 import { useUserProfile } from "../hooks/useUserProfile";
 import {
   IconActivity,
   IconCertification,
   IconChevronEdge,
   IconCopy,
-  IconDownload,
   IconHelp,
   IconInvite,
   IconLanguage,
@@ -37,7 +37,6 @@ const MENU_ITEMS: MenuItem[] = [
   { key: "profileTeam", Icon: IconTeam, action: "navigate", path: "/team" },
   { key: "profileHelp", Icon: IconHelp, action: "navigate", path: "/help" },
   { key: "profileSetting", Icon: IconSettings, action: "navigate", path: "/settings" },
-  { key: "profileDownload", Icon: IconDownload, action: "placeholder" },
   { key: "profileSwitchLanguage", Icon: IconLanguage, action: "language" },
 ];
 
@@ -207,6 +206,9 @@ export function ProfileMenuContent({
                 </button>
               </li>
             ))}
+            <li className="px-1 pt-2">
+              <AppDownloadLinks variant="drawer" />
+            </li>
           </ul>
         </nav>
       </div>
