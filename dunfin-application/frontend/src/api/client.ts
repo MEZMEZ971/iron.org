@@ -56,7 +56,10 @@ import {
   getStoredToken,
 } from "../lib/authStorage";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+const baseURL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+export { baseURL as API_BASE_URL };
 
 export class ApiError extends Error {
   status: number;
@@ -120,7 +123,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, {
+    res = await fetch(`${baseURL}${path}`, {
       ...init,
       headers,
       credentials: "include",
