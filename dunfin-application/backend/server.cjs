@@ -235,10 +235,10 @@ app.post("/api/auth/register", async (req, res) => {
       error.code === "INVALID_USERNAME" ||
       error.code === "INVALID_EMAIL" ||
       error.code === "INVALID_PHONE" ||
-      error.code === "INVALID_PASSWORD" ||
-      error.code === "INVALID_INVITE"
+      error.code === "INVALID_PASSWORD"
         ? 400
-        : error.code === "UID_EXHAUSTED"
+        : error.code === "UID_EXHAUSTED" ||
+            error.code === "REFERRAL_CODE_EXHAUSTED"
           ? 503
           : 500;
     res.status(status).json({ error: error.message });

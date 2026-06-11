@@ -79,9 +79,9 @@ function generateUid() {
 }
 
 function generateReferralCode(userId) {
-  const base = userId.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6);
-  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `DF${base || "USER"}${suffix}`;
+  const crypto = require("crypto");
+  const suffix = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `IRON-${suffix}`;
 }
 
 module.exports = {

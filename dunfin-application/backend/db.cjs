@@ -5,6 +5,7 @@ const {
   generateReferralCode,
 } = require("./lib/userMapper.cjs");
 const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
+const { allocateUniqueReferralCode } = require("./lib/referralCodeGenerator.cjs");
 
 const userInclude = {
   deposits: { orderBy: { createdAt: "desc" } },
@@ -28,12 +29,14 @@ async function getOrCreateUser(userId, extras = {}) {
 
   if (!row) {
     const uid = extras.uid || (await allocateUniqueUid());
+    const referralCode =
+      extras.referralCode || (await allocateUniqueReferralCode());
     row = await prisma.user.create({
       data: {
         id: userId,
         uid,
         displayName: extras.displayName || null,
-        referralCode: extras.referralCode || generateReferralCode(userId),
+        referralCode,
         referredById: extras.referredBy || extras.referredById || null,
       },
       include: userInclude,
@@ -167,11 +170,12 @@ async function registerUser(userId, { referredBy } = {}) {
   }
 
   const uid = await allocateUniqueUid();
+  const referralCode = await allocateUniqueReferralCode();
   const row = await prisma.user.create({
     data: {
       id: userId,
       uid,
-      referralCode: generateReferralCode(userId),
+      referralCode,
       referredById: referredBy || null,
     },
     include: userInclude,

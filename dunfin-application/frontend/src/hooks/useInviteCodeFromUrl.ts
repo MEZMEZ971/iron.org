@@ -14,10 +14,10 @@ export function useInviteCodeFromUrl() {
   const [searchParams] = useSearchParams();
 
   const codeFromUrl = useMemo(() => {
-    const code = searchParams.get("code")?.trim();
-    if (code) return code;
     const ref = searchParams.get("ref")?.trim();
     if (ref) return ref;
+    const code = searchParams.get("code")?.trim();
+    if (code) return code;
     return "";
   }, [searchParams]);
 

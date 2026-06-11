@@ -4,10 +4,12 @@ const jwt = require("jsonwebtoken");
 const { prisma } = require("./lib/prisma.cjs");
 const {
   mapUserToLegacy,
-  generateReferralCode,
 } = require("./lib/userMapper.cjs");
 const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
-const { shortInviteCode } = require("./invite.cjs");
+const {
+  allocateUniqueReferralCode,
+  findReferrerByInviteCode,
+} = require("./lib/referralCodeGenerator.cjs");
 const { getDepositAddress } = require("./deposit.cjs");
 
 const BCRYPT_ROUNDS = 10;
@@ -71,39 +73,6 @@ function mapPublicUser(row) {
     referralCode: row.referralCode,
     role: row.role || "USER",
   };
-}
-
-async function findReferrerByInviteCode(code) {
-  const raw = String(code || "").trim();
-  if (!raw) return null;
-
-  const upper = raw.toUpperCase();
-
-  const direct = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { referralCode: { equals: raw, mode: "insensitive" } },
-        { referralCode: { equals: upper, mode: "insensitive" } },
-      ],
-    },
-    select: { id: true },
-  });
-  if (direct) return direct.id;
-
-  const byUid = await prisma.user.findFirst({
-    where: { uid: { equals: raw, mode: "insensitive" } },
-    select: { id: true },
-  });
-  if (byUid) return byUid.id;
-
-  const candidates = await prisma.user.findMany({
-    select: { id: true, referralCode: true },
-    take: 5000,
-  });
-  for (const u of candidates) {
-    if (shortInviteCode(u.referralCode) === upper) return u.id;
-  }
-  return null;
 }
 
 async function findUserByLoginIdentifier(identifier) {
@@ -196,16 +165,12 @@ async function registerUser({
   const inviteCodeRaw = String(invitationCode || "").trim();
   if (inviteCodeRaw) {
     referredById = await findReferrerByInviteCode(inviteCodeRaw);
-    if (!referredById) {
-      const err = new Error("Invitation code not found");
-      err.code = "INVALID_INVITE";
-      throw err;
-    }
   }
 
   const id = `user_${crypto.randomBytes(12).toString("hex")}`;
   const passwordHash = await bcrypt.hash(String(password), BCRYPT_ROUNDS);
   const uid = await allocateUniqueUid();
+  const referralCode = await allocateUniqueReferralCode();
 
   const row = await prisma.user.create({
     data: {
@@ -217,7 +182,7 @@ async function registerUser({
       phoneCountryCode: country,
       passwordHash,
       displayName: uname,
-      referralCode: generateReferralCode(id),
+      referralCode,
       referredById,
     },
     include: {
