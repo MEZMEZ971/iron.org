@@ -248,7 +248,7 @@ const en = {
     authInvitationCode: "Invitation code",
     authInvitationOptional: "Optional",
     authIdentifier: "Username, email, or phone",
-    authIdentifierPlaceholder: "e.g. jonass1 or you@email.com",
+    authIdentifierPlaceholder: "Username or Email",
     authSigningIn: "Signing in…",
     authCreatingAccount: "Creating account…",
     authNoAccount: "Don't have an account?",
