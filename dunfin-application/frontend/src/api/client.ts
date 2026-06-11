@@ -56,8 +56,24 @@ import {
   getStoredToken,
 } from "../lib/authStorage";
 
-const baseURL =
-  import.meta.env.VITE_API_URL || "http://localhost:3000";
+/** Live Railway backend — used when VITE_API_URL is not provided at build time. */
+const PRODUCTION_API_URL = "https://ironorg-production.up.railway.app";
+const DEV_API_URL = "http://localhost:3000";
+
+/** Strip trailing slashes so `${baseURL}${path}` never yields `...app//api/...`. */
+function sanitizeBaseURL(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+const baseURL = sanitizeBaseURL(
+  import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? PRODUCTION_API_URL : DEV_API_URL)
+);
+
+/** Join base + path with exactly one slash between them. */
+function buildRequestUrl(path: string): string {
+  return `${baseURL}/${path.replace(/^\/+/, "")}`;
+}
 
 export { baseURL as API_BASE_URL };
 
@@ -123,7 +139,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   let res: Response;
   try {
-    res = await fetch(`${baseURL}${path}`, {
+    res = await fetch(buildRequestUrl(path), {
       ...init,
       headers,
       credentials: "include",

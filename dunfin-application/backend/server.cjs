@@ -1,5 +1,6 @@
 require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 const express = require("express");
+const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const { formatUnits } = require("viem");
@@ -60,30 +61,33 @@ const app = express();
 app.use(express.json());
 
 const DEFAULT_CORS_ORIGINS = [
+  "https://iron-org.vercel.app",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 ];
 
-function resolveCorsOrigin(requestOrigin) {
-  const configured = process.env.CORS_ORIGIN;
-  if (!configured || configured === "*") {
-    return requestOrigin || "*";
-  }
-  const allowed = configured.split(",").map((s) => s.trim());
-  if (requestOrigin && allowed.includes(requestOrigin)) return requestOrigin;
-  return allowed[0] || DEFAULT_CORS_ORIGINS[0];
-}
+// Merge defaults with any comma-separated CORS_ORIGIN env additions.
+const ALLOWED_CORS_ORIGINS = [
+  ...new Set([
+    ...DEFAULT_CORS_ORIGINS,
+    ...(process.env.CORS_ORIGIN || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s && s !== "*"),
+  ]),
+];
 
-app.use((req, res, next) => {
-  const origin = resolveCorsOrigin(req.headers.origin);
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Vary", "Origin");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
+app.use(
+  cors({
+    origin:
+      process.env.CORS_ORIGIN === "*"
+        ? true // reflect request origin (credentials-safe wildcard)
+        : ALLOWED_CORS_ORIGINS,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 const { publicClient, walletClient } = getBlockchainClients();
 
@@ -829,7 +833,9 @@ setInterval(() => {
 app.listen(PORT, HOST, () => {
   const cryptoSummary = getStartupSummary();
   console.log(`IRON API http://localhost:${PORT}`);
-  console.log(`CORS origins: ${process.env.CORS_ORIGIN || DEFAULT_CORS_ORIGINS.join(", ")}`);
+  console.log(
+    `CORS origins: ${process.env.CORS_ORIGIN === "*" ? "* (reflective)" : ALLOWED_CORS_ORIGINS.join(", ")}`
+  );
   console.log(`Network: ${cryptoSummary.network} (chainId ${cryptoSummary.chainId})`);
   console.log(`Active factory: ${cryptoSummary.activeFactory}`);
   if (cryptoSummary.legacyFactory) {
