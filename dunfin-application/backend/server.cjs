@@ -569,6 +569,7 @@ async function buildUserProfileResponse(userId) {
   const locked = Number(user.lockedCapital) || 0;
   const available = Number(user.walletBalance) || 0;
   const onChain = Number(user.onChainBalance) || available + locked;
+  const pendingWithdrawals = await sumPendingWithdrawals(user.id);
 
   const transactions = await buildTransactionFeed(user.id, user);
   const todayPnl = estimateTodayPnl(user, locked);
@@ -593,7 +594,8 @@ async function buildUserProfileResponse(userId) {
     tradeHistory: user.tradeHistory || [],
     deposits: user.deposits || [],
     transactions,
-    assets: buildAssetLedger(available, locked, onChain),
+    assets: buildAssetLedger(available, locked, pendingWithdrawals),
+    pendingWithdrawals: trunc6(pendingWithdrawals),
   };
 }
 
@@ -637,14 +639,34 @@ app.get("/api/users/:userId/profile", async (req, res) => {
   }
 });
 
-function buildAssetLedger(available, locked, onChain) {
-  const usdtTotal = onChain || available + locked;
+const PENDING_WITHDRAWAL_STATUSES = ["PROCESSING", "PENDING_REVIEW"];
+
+async function sumPendingWithdrawals(userId) {
+  const agg = await prisma.withdrawalRecord.aggregate({
+    where: {
+      userId,
+      status: { in: PENDING_WITHDRAWAL_STATUSES },
+    },
+    _sum: { amount: true },
+  });
+  return trunc6(agg._sum.amount);
+}
+
+function mapWithdrawalFeedStatus(status) {
+  if (status === "COMPLETED") return "COMPLETED";
+  if (status === "REJECTED") return "REJECTED";
+  return "PENDING";
+}
+
+function buildAssetLedger(available, locked, pendingWithdrawals) {
+  const pendingFreeze = Number(pendingWithdrawals) || 0;
+  const usdtTotal = trunc6(available + locked + pendingFreeze);
   return [
     {
       symbol: "USDT",
       total: usdtTotal,
-      available,
-      freeze: locked,
+      available: trunc6(available),
+      freeze: pendingFreeze,
     },
     {
       symbol: "BTC",
@@ -663,11 +685,18 @@ function buildAssetLedger(available, locked, onChain) {
 
 async function buildTransactionFeed(userId, user) {
   const rows = [];
-  const txnRecords = await prisma.transactionRecord.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: 40,
-  });
+  const [txnRecords, withdrawalRecords] = await Promise.all([
+    prisma.transactionRecord.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    }),
+    prisma.withdrawalRecord.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    }),
+  ]);
 
   for (const e of txnRecords) {
     const isLucky = e.type === "LUCKY_WHEEL_REWARD";
@@ -684,8 +713,19 @@ async function buildTransactionFeed(userId, user) {
         isLucky && String(e.description || "").includes("DADB")
           ? "DADB"
           : "USDT",
-      status: e.status === "SUCCESS" ? "Completed" : e.status,
+      status: e.status === "SUCCESS" ? "COMPLETED" : e.status,
       timestamp: e.createdAt.toISOString(),
+      commission: null,
+    });
+  }
+  for (const w of withdrawalRecords) {
+    rows.push({
+      id: `wd-${w.id}`,
+      type: "Withdrawal",
+      amount: -trunc6(w.amount),
+      currency: w.currency,
+      status: mapWithdrawalFeedStatus(w.status),
+      timestamp: w.createdAt.toISOString(),
       commission: null,
     });
   }
@@ -695,7 +735,7 @@ async function buildTransactionFeed(userId, user) {
       type: "Deposit",
       amount: d.amount,
       currency: "USDT",
-      status: "Completed",
+      status: "COMPLETED",
       timestamp: d.at,
       commission: null,
     });
@@ -706,7 +746,7 @@ async function buildTransactionFeed(userId, user) {
       type: "AI Trade",
       amount: t.capitalAmount,
       currency: "USDT",
-      status: "Locked",
+      status: "LOCKED",
       timestamp: t.executedAt,
       commission: null,
       strategyId: t.strategyId,
@@ -715,7 +755,7 @@ async function buildTransactionFeed(userId, user) {
   rows.sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
-  return rows;
+  return rows.slice(0, 40);
 }
 
 function estimateTodayPnl(user, locked) {

@@ -1,6 +1,53 @@
 import { useUser } from "../context/UserContext";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useLocale } from "../i18n/LocaleContext";
+import type { TransactionRow } from "../api/client";
+
+function txStatusLabel(
+  status: string,
+  t: (key: import("../i18n/translations").TranslationKey) => string
+) {
+  switch (status.toUpperCase()) {
+    case "COMPLETED":
+      return t("txStatusCompleted");
+    case "PENDING":
+      return t("txStatusPending");
+    case "REJECTED":
+      return t("txStatusRejected");
+    case "LOCKED":
+      return t("txStatusLocked");
+    default:
+      return status;
+  }
+}
+
+function txStatusClass(status: string) {
+  switch (status.toUpperCase()) {
+    case "COMPLETED":
+      return "rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-semibold text-[#00d4aa]";
+    case "PENDING":
+    case "LOCKED":
+      return "rounded-md bg-[#f0b90b]/15 px-1.5 py-0.5 font-semibold text-[#f0b90b]";
+    case "REJECTED":
+      return "rounded-md bg-red-500/10 px-1.5 py-0.5 font-semibold text-red-400";
+    default:
+      return "text-[#f0b90b]";
+  }
+}
+
+function formatTxAmount(tx: TransactionRow) {
+  const value = tx.amount.toLocaleString(undefined, {
+    maximumFractionDigits: 6,
+  });
+  if (tx.amount > 0) return `+${value}`;
+  return value;
+}
+
+function txAmountClass(tx: TransactionRow) {
+  if (tx.type === "Withdrawal" || tx.amount < 0) return "text-red-400";
+  if (tx.type === "Admin Reward" || tx.type === "Lucky Wheel") return "text-[#00d4aa]";
+  return "text-df";
+}
 
 export default function Personal() {
   const { t } = useLocale();
@@ -121,17 +168,11 @@ export default function Personal() {
                 )}
               </div>
               <div className="shrink-0 text-end">
-                <p className="text-xs font-bold text-df">
-                  {tx.amount.toLocaleString()} {tx.currency}
+                <p className={`text-xs font-bold ${txAmountClass(tx)}`}>
+                  {formatTxAmount(tx)} {tx.currency}
                 </p>
-                <span
-                  className={`text-[10px] ${
-                    tx.status === "Completed"
-                      ? "text-[#00d4aa]"
-                      : "text-[#f0b90b]"
-                  }`}
-                >
-                  {tx.status}
+                <span className={`text-[10px] ${txStatusClass(tx.status)}`}>
+                  {txStatusLabel(tx.status, t)}
                 </span>
               </div>
             </li>

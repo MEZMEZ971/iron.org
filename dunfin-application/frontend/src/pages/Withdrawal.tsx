@@ -12,6 +12,7 @@ import { PaymentPasswordModal } from "../components/h5/PaymentPasswordModal";
 import { useSuccessFeedback } from "../context/SuccessFeedbackContext";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useUser } from "../context/UserContext";
+import { emitWalletRefresh } from "../lib/walletSync";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
 
@@ -153,7 +154,7 @@ export default function Withdrawal() {
     setBusy(true);
     setError(null);
     try {
-      await submitWithdrawal({
+      const result = await submitWithdrawal({
         amount: amountNum,
         currency,
         network,
@@ -164,6 +165,7 @@ export default function Withdrawal() {
       setQuantity("");
       setAddress("");
       await loadPreflight();
+      emitWalletRefresh({ userId, walletBalance: result.walletBalance });
       await refreshProfile();
       showSuccess({
         titleKey: "withdrawSuccess",

@@ -322,6 +322,7 @@ export interface UserProfile {
   deposits: unknown[];
   transactions: TransactionRow[];
   assets: AssetRow[];
+  pendingWithdrawals?: number;
 }
 
 /** Authenticated profile for the current JWT subject */
