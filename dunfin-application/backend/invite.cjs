@@ -35,8 +35,10 @@ function shortInviteCode(referralCode) {
   return clean.slice(0, 5) || referralCode.slice(0, 5).toUpperCase();
 }
 
+const PRODUCTION_FRONTEND_URL = "https://iron-org.vercel.app";
+
 function buildInviteLink(referralCode, baseUrl) {
-  const origin = baseUrl || process.env.FRONTEND_URL || "http://localhost:5173";
+  const origin = baseUrl || process.env.FRONTEND_URL || PRODUCTION_FRONTEND_URL;
   const url = new URL("/register", origin.replace(/\/$/, ""));
   const code = shortInviteCode(referralCode) || referralCode;
   url.searchParams.set("code", code);

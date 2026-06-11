@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { CopyField } from "../components/invite/CopyField";
 import { StrategyRewardTable } from "../components/invite/StrategyRewardTable";
@@ -6,6 +6,7 @@ import { PageHeader } from "../components/PageHeader";
 import { useUser } from "../context/UserContext";
 import { useInviteInfo } from "../hooks/useInviteInfo";
 import { useLocale } from "../i18n/LocaleContext";
+import { buildInvitationLink } from "../lib/inviteLink";
 
 export default function Invite() {
   const { t } = useLocale();
@@ -13,9 +14,15 @@ export default function Invite() {
   const { data, loading, error } = useInviteInfo(userId);
   const [linkCopied, setLinkCopied] = useState(false);
 
+  // Always anchored to the live origin the user is browsing.
+  const invitationLink = useMemo(
+    () => buildInvitationLink(data?.inviteLink, data?.referralCode),
+    [data?.inviteLink, data?.referralCode]
+  );
+
   async function copyInviteLink() {
-    if (!data?.inviteLink) return;
-    await navigator.clipboard.writeText(data.inviteLink);
+    if (!invitationLink) return;
+    await navigator.clipboard.writeText(invitationLink);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
   }
@@ -35,7 +42,7 @@ export default function Invite() {
             <div className="flex justify-center">
               <div className="rounded-2xl border border-[#f0b90b]/25 bg-white p-3 shadow-lg shadow-[#f0b90b]/10">
                 <QRCodeSVG
-                  value={data.inviteLink}
+                  value={invitationLink}
                   size={160}
                   level="M"
                   bgColor="#ffffff"
@@ -53,7 +60,7 @@ export default function Invite() {
             </button>
 
             <CopyField label={t("h5MyInvitationCode")} value={data.inviteCode} />
-            <CopyField label={t("h5MyInvitationLink")} value={data.inviteLink} />
+            <CopyField label={t("h5MyInvitationLink")} value={invitationLink} />
 
             <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
               <div className="rounded-lg bg-df-inset py-2">
