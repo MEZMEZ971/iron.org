@@ -18,6 +18,7 @@ import {
   persistAuthSession,
   type StoredAuthUser,
 } from "../lib/authStorage";
+import { bumpFomoOnRegistration } from "../lib/fomoUserCount";
 
 type AuthContextValue = {
   token: string | null;
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(
     async (payload: RegisterPayload) => {
       const result = await authRegister(payload);
+      bumpFomoOnRegistration();
       applySession(result.token, result.user);
     },
     [applySession]

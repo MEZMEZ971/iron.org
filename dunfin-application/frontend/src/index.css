@@ -628,6 +628,26 @@ html:not(.dark) .hover\:bg-white\/\[0\.04\]:hover {
   animation: lockbox-halo-pulse 3.5s ease-in-out infinite;
 }
 
+@keyframes fomo-count-flip {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  45% {
+    transform: translateY(-6px) scale(1.12);
+    opacity: 0.85;
+    text-shadow: 0 0 12px rgba(240, 185, 11, 0.55);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.fomo-count-flip {
+  animation: fomo-count-flip 0.45s ease-out;
+}
+
 .lockbox-safe-gleam::after {
   content: "";
   position: absolute;

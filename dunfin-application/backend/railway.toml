@@ -1,0 +1,11 @@
+# Railway deployment configuration for the IRON Express backend.
+# Set the service "Root Directory" to dunfin-application/backend in the
+# Railway dashboard so this file is picked up.
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "echo 'Skipping build step'"
+
+[deploy]
+startCommand = "node server.cjs"
+restartPolicyType = "ON_FAILURE"

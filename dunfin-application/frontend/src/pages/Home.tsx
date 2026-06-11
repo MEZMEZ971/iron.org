@@ -1,4 +1,5 @@
 import { AffiliatePromoBanner } from "../components/AffiliatePromoBanner";
+import { FomoUsersBanner } from "../components/FomoUsersBanner";
 import { RoiProfitSimulator } from "../components/h5/RoiProfitSimulator";
 import { MarqueeBanner } from "../components/MarqueeBanner";
 import { MiniWatchlist } from "../components/MiniWatchlist";
@@ -11,6 +12,9 @@ export default function Home() {
 
   return (
     <div className="space-y-4 pb-4">
+      <div className="sticky top-0 z-30 -mx-4 px-4 pb-1 pt-0 md:static md:mx-0 md:px-0 md:pb-0">
+        <FomoUsersBanner variant="hero" />
+      </div>
       <MarqueeBanner />
       <QuickActionGrid />
       <RoiProfitSimulator />

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node server.cjs",
+    "build": "echo 'No build step required for Express backend'",
     "test": "node test-trading.cjs",
     "postinstall": "prisma generate --schema=./prisma/schema.prisma",
     "db:generate": "prisma generate --schema=./prisma/schema.prisma",

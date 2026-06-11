@@ -4,6 +4,8 @@
   "private": true,
   "description": "IRON monorepo: smart-forwarder contracts + dunfin-application",
   "scripts": {
+    "start": "node dunfin-application/backend/server.cjs",
+    "build": "npm install --prefix dunfin-application/backend",
     "server": "node dunfin-application/backend/server.cjs",
     "dev:frontend": "npm run dev --prefix dunfin-application/frontend",
     "build:frontend": "npm run build --prefix dunfin-application/frontend",
