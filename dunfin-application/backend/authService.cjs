@@ -78,6 +78,7 @@ async function findReferrerByInviteCode(code) {
   if (!raw) return null;
 
   const upper = raw.toUpperCase();
+
   const direct = await prisma.user.findFirst({
     where: {
       OR: [
@@ -88,6 +89,12 @@ async function findReferrerByInviteCode(code) {
     select: { id: true },
   });
   if (direct) return direct.id;
+
+  const byUid = await prisma.user.findFirst({
+    where: { uid: { equals: raw, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (byUid) return byUid.id;
 
   const candidates = await prisma.user.findMany({
     select: { id: true, referralCode: true },
@@ -186,8 +193,9 @@ async function registerUser({
   }
 
   let referredById = null;
-  if (invitationCode) {
-    referredById = await findReferrerByInviteCode(invitationCode);
+  const inviteCodeRaw = String(invitationCode || "").trim();
+  if (inviteCodeRaw) {
+    referredById = await findReferrerByInviteCode(inviteCodeRaw);
     if (!referredById) {
       const err = new Error("Invitation code not found");
       err.code = "INVALID_INVITE";

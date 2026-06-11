@@ -38,6 +38,7 @@ export type RegisterPayload = {
   phoneCountryCode: string;
   password: string;
   invitationCode?: string;
+  referralCode?: string;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);

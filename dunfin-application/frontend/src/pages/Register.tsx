@@ -2,6 +2,11 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useInviteCodeFromUrl } from "../hooks/useInviteCodeFromUrl";
+import {
+  clearStoredReferralCode,
+  normalizeReferralCode,
+  setStoredReferralCode,
+} from "../lib/referralStorage";
 import { CountryCodeSelect } from "../components/auth/CountryCodeSelect";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { useLocale } from "../i18n/LocaleContext";
@@ -10,7 +15,8 @@ export default function Register() {
   const { t, dir } = useLocale();
   const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { codeFromUrl, hasUrlCode } = useInviteCodeFromUrl();
+  const { codeFromUrl, resolvedCode, hasUrlCode, hasReferralContext } =
+    useInviteCodeFromUrl();
 
   const [username, setUsername] = useState("");
   const [phoneCountryCode, setPhoneCountryCode] = useState("+971");
@@ -24,11 +30,12 @@ export default function Register() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!resolvedCode) return;
+    setInvitationCode(resolvedCode);
     if (codeFromUrl) {
-      setInvitationCode(codeFromUrl);
       setLockInvite(true);
     }
-  }, [codeFromUrl]);
+  }, [resolvedCode, codeFromUrl]);
 
   useEffect(() => {
     if (isAuthenticated) navigate("/", { replace: true });
@@ -40,14 +47,20 @@ export default function Register() {
     setLoading(true);
     setError(null);
     try {
+      const referralCode =
+        normalizeReferralCode(invitationCode) ||
+        normalizeReferralCode(resolvedCode);
+
       await register({
         username: username.trim().toLowerCase(),
         email: email.trim(),
         phone: phone.replace(/\D/g, ""),
         phoneCountryCode,
         password,
-        invitationCode: invitationCode.trim() || undefined,
+        invitationCode: referralCode || undefined,
+        referralCode: referralCode || undefined,
       });
+      clearStoredReferralCode();
       navigate("/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("authRegisterFailed"));
@@ -148,13 +161,21 @@ export default function Register() {
           <input
             type="text"
             value={invitationCode}
-            onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
+            onChange={(e) => {
+              const next = e.target.value.toUpperCase();
+              setInvitationCode(next);
+              const normalized = normalizeReferralCode(next);
+              if (normalized) setStoredReferralCode(normalized);
+            }}
             disabled={formDisabled}
             readOnly={lockInvite && hasUrlCode}
             className={`${inputClass} ${lockInvite && hasUrlCode ? "border-[#f0b90b]/40 bg-[#f0b90b]/5" : ""}`}
             placeholder={t("authInvitationOptional")}
           />
           {hasUrlCode && (
+            <p className="mt-1 text-[10px] text-[#00d4aa]">{t("authInviteAutoFilled")}</p>
+          )}
+          {!hasUrlCode && hasReferralContext && (
             <p className="mt-1 text-[10px] text-[#00d4aa]">{t("authInviteAutoFilled")}</p>
           )}
           {lockInvite && hasUrlCode && (

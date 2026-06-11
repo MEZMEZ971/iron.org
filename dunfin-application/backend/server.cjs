@@ -197,8 +197,15 @@ app.post("/api/auth/register", async (req, res) => {
       phone,
       phoneCountryCode,
       password,
-      invitationCode,
+      invitationCode: bodyInvitationCode,
+      referralCode: bodyReferralCode,
+      ref: bodyRef,
     } = req.body;
+
+    const invitationCode =
+      [bodyInvitationCode, bodyReferralCode, bodyRef]
+        .map((value) => (typeof value === "string" ? value.trim() : ""))
+        .find(Boolean) || undefined;
 
     const result = await registerAuthUser({
       username,

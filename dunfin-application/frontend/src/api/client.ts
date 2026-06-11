@@ -196,10 +196,18 @@ export function authRegister(payload: {
   phoneCountryCode: string;
   password: string;
   invitationCode?: string;
+  referralCode?: string;
 }) {
+  const referral =
+    payload.referralCode?.trim() || payload.invitationCode?.trim() || undefined;
+
   return request<AuthResponse>("/api/auth/register", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      invitationCode: referral,
+      referralCode: referral,
+    }),
   });
 }
 
