@@ -25,6 +25,9 @@ const PUBLIC_USER_SELECT = {
 
 const PENDING_WITHDRAW_STATUSES = ["PROCESSING", "PENDING_REVIEW"];
 
+/** Withdrawals that debited the user wallet (exclude admin-rejected / refunded). */
+const COUNTABLE_WITHDRAWAL_STATUSES = ["PROCESSING", "PENDING_REVIEW", "COMPLETED"];
+
 function mapWithdrawalRow(row) {
   const u = row.user || {};
   return {
@@ -541,7 +544,10 @@ async function getUserFinanceSummary({ search, page = 1, limit = 50 } = {}) {
     }),
     prisma.withdrawalRecord.groupBy({
       by: ["userId"],
-      where: { userId: { in: userIds }, status: "COMPLETED" },
+      where: {
+        userId: { in: userIds },
+        status: { in: COUNTABLE_WITHDRAWAL_STATUSES },
+      },
       _sum: { amount: true },
     }),
   ]);
