@@ -103,6 +103,10 @@ const MAIN_PARTNER_WALLET_ADDRESS =
 
 const USDT_ADDRESS = requireAddress("USDT_ADDRESS", process.env.USDT_ADDRESS);
 
+const USDC_ADDRESS =
+  optionalAddress("USDC_ADDRESS", process.env.USDC_ADDRESS) ||
+  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+
 const CHAIN = mainnet;
 
 const FACTORY_ABI = parseAbi([
@@ -175,6 +179,7 @@ function getStartupSummary() {
     legacyFactory: LEGACY_FACTORY_ADDRESS,
     mainPartnerWallet: MAIN_PARTNER_WALLET_ADDRESS,
     usdt: USDT_ADDRESS,
+    usdc: USDC_ADDRESS,
     monitoredFactories: getMonitoredFactoryAddresses(),
     deployerKeyPlaceholder: DEPLOYER_KEY_IS_PLACEHOLDER,
   };
@@ -187,6 +192,7 @@ module.exports = {
   LEGACY_FACTORY_ADDRESS,
   MAIN_PARTNER_WALLET_ADDRESS,
   USDT_ADDRESS,
+  USDC_ADDRESS,
   FACTORY_ABI,
   ERC20_ABI,
   getBlockchainClients,

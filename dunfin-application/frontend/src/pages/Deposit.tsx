@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DepositSelectors } from "../components/deposit/DepositSelectors";
 import { DepositWalletCard } from "../components/deposit/DepositWalletCard";
 import { useUser } from "../context/UserContext";
 import { useDepositAddress } from "../hooks/useDepositAddress";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useLocale } from "../i18n/LocaleContext";
+import type { DepositCurrency, DepositNetwork } from "../types/deposit";
 
 export default function Deposit() {
   const { t, dir } = useLocale();
@@ -11,8 +14,12 @@ export default function Deposit() {
   const rtl = dir === "rtl";
   const { userId } = useUser();
   const { profile, refresh: refreshProfile } = useUserProfile(userId);
+
+  const [currency, setCurrency] = useState<DepositCurrency>("USDT");
+  const [network, setNetwork] = useState<DepositNetwork>("TRC20");
+
   const { data: deposit, loading: addressLoading, error: addressError } =
-    useDepositAddress("TRC20");
+    useDepositAddress(currency, network);
 
   const fund = profile?.fundAccount ?? 0;
   const trading = profile?.tradingAccount ?? 0;
@@ -66,11 +73,20 @@ export default function Deposit() {
         </button>
       </div>
 
+      <DepositSelectors
+        currency={currency}
+        network={network}
+        onCurrencyChange={setCurrency}
+        onNetworkChange={setNetwork}
+      />
+
       <DepositWalletCard
+        currency={currency}
+        network={network}
         address={deposit?.depositAddress ?? ""}
         loading={addressLoading}
         error={addressError}
-        networkLabel={deposit?.networkLabel ?? "TRC20"}
+        networkLabel={deposit?.networkLabel ?? network}
       />
     </div>
   );

@@ -1,16 +1,23 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DepositSelectors } from "../components/deposit/DepositSelectors";
 import { DepositWalletCard } from "../components/deposit/DepositWalletCard";
 import { useH5Portfolio } from "../context/H5PortfolioContext";
 import { useDepositAddress } from "../hooks/useDepositAddress";
 import { useLocale } from "../i18n/LocaleContext";
+import type { DepositCurrency, DepositNetwork } from "../types/deposit";
 
 export default function H5Deposit() {
   const { t, dir } = useLocale();
   const navigate = useNavigate();
   const rtl = dir === "rtl";
   const { earningsView, refresh } = useH5Portfolio();
+
+  const [currency, setCurrency] = useState<DepositCurrency>("USDT");
+  const [network, setNetwork] = useState<DepositNetwork>("TRC20");
+
   const { data: deposit, loading: addressLoading, error: addressError } =
-    useDepositAddress("TRC20");
+    useDepositAddress(currency, network);
 
   return (
     <div className="space-y-4 pb-4 text-white">
@@ -46,12 +53,22 @@ export default function H5Deposit() {
         </button>
       </div>
 
+      <DepositSelectors
+        variant="h5"
+        currency={currency}
+        network={network}
+        onCurrencyChange={setCurrency}
+        onNetworkChange={setNetwork}
+      />
+
       <DepositWalletCard
         variant="h5"
+        currency={currency}
+        network={network}
         address={deposit?.depositAddress ?? ""}
         loading={addressLoading}
         error={addressError}
-        networkLabel={deposit?.networkLabel ?? "TRC20"}
+        networkLabel={deposit?.networkLabel ?? network}
       />
     </div>
   );

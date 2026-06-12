@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSuccessFeedback } from "../../context/SuccessFeedbackContext";
 import { useLocale } from "../../i18n/LocaleContext";
+import {
+  buildDepositAddressTitle,
+  buildDepositWarning,
+} from "../../lib/depositLabels";
+import type { DepositCurrency, DepositNetwork } from "../../types/deposit";
 import { DepositQrCode } from "./DepositQrCode";
 
 interface Props {
   address: string;
   loading?: boolean;
   error?: string | null;
+  currency: DepositCurrency;
+  network: DepositNetwork;
   networkLabel?: string;
   variant?: "default" | "h5";
 }
@@ -15,7 +22,9 @@ export function DepositWalletCard({
   address,
   loading,
   error,
-  networkLabel = "TRC20",
+  currency,
+  network,
+  networkLabel,
   variant = "default",
 }: Props) {
   const { t } = useLocale();
@@ -23,6 +32,13 @@ export function DepositWalletCard({
   const [copied, setCopied] = useState(false);
 
   const isH5 = variant === "h5";
+  const resolvedNetworkLabel = networkLabel ?? network;
+  const title = buildDepositAddressTitle(t, currency, network);
+  const warning = buildDepositWarning(t, currency, resolvedNetworkLabel);
+
+  useEffect(() => {
+    setCopied(false);
+  }, [address, currency, network]);
 
   async function handleCopy() {
     if (!address) return;
@@ -36,8 +52,8 @@ export function DepositWalletCard({
     <div
       className={
         isH5
-          ? "space-y-5 rounded-2xl border border-white/10 bg-white/5 p-5"
-          : "glass-card space-y-5 rounded-2xl p-5"
+          ? "space-y-5 rounded-2xl border border-white/10 bg-white/5 p-5 transition-all duration-300"
+          : "glass-card space-y-5 rounded-2xl p-5 transition-all duration-300"
       }
     >
       <h2
@@ -47,7 +63,7 @@ export function DepositWalletCard({
             : "text-center text-sm font-bold leading-snug text-df"
         }
       >
-        {t("depositTrc20AddressTitle")}
+        {title}
       </h2>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
@@ -75,7 +91,7 @@ export function DepositWalletCard({
       </div>
 
       <div className="flex justify-center pt-1">
-        <DepositQrCode value={address} loading={loading} />
+        <DepositQrCode key={address || "loading"} value={address} loading={loading} />
       </div>
 
       {error && (
@@ -91,7 +107,7 @@ export function DepositWalletCard({
             : "text-center text-[10px] leading-relaxed text-df-faint"
         }
       >
-        {t("depositWarning")} ({networkLabel})
+        {warning}
       </p>
     </div>
   );

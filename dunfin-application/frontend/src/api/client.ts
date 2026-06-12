@@ -363,8 +363,12 @@ export function fetchDepositAddress(
 }
 
 /** Authenticated permanent deposit address for the signed-in user. */
-export function fetchUserDepositAddress(network = "TRC20") {
-  const params = new URLSearchParams({ network });
+export function fetchUserDepositAddress(
+  network: import("../types/deposit").DepositNetwork = "TRC20",
+  currency: import("../types/deposit").DepositCurrency = "USDT"
+) {
+  const asset = currency === "USDC" ? "USDC" : "USDT";
+  const params = new URLSearchParams({ network, currency: asset });
   return request<import("../types/deposit").DepositAddressResponse>(
     `/api/user/deposit-address?${params.toString()}`
   );

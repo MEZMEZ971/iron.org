@@ -5,10 +5,11 @@ export type DepositCurrency = "USDT" | "USDC" | "BTC";
 export interface DepositAddressResponse {
   success: boolean;
   userId: string;
+  currency: DepositCurrency;
   network: DepositNetwork;
   networkLabel: string;
   depositAddress: string;
-  new: boolean;
+  new?: boolean;
   txHash: string | null;
   addressType: "evm" | "tron";
 }
@@ -36,6 +37,8 @@ export const NETWORK_OPTIONS: {
 ];
 
 export const CURRENCY_OPTIONS: DepositCurrency[] = ["USDT", "USDC", "BTC"];
+
+export const DEPOSIT_CURRENCY_OPTIONS = ["USDT", "USDC"] as const satisfies readonly DepositCurrency[];
 
 export const QUICK_AMOUNTS = [30, 50, 100] as const;
 

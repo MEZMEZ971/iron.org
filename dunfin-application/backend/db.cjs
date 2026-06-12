@@ -7,6 +7,7 @@ const {
 const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
 const { allocateUniqueReferralCode } = require("./lib/referralCodeGenerator.cjs");
 const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
+const { trunc6 } = require("./lib/formatNumbers.cjs");
 
 const userInclude = {
   deposits: { orderBy: { createdAt: "desc" } },
@@ -188,20 +189,32 @@ async function registerUser(userId, { referredBy } = {}) {
   return { user: mapUserToLegacy(row), created: true };
 }
 
-async function recordDeposit(userId, { amount, txHash } = {}) {
+async function recordDeposit(userId, { amount, txHash, network } = {}) {
   await getOrCreateUser(userId);
-  const depositAmount = Number(amount) || 0;
+  const depositAmount = trunc6(Number(amount) || 0);
+  if (depositAmount <= 0) {
+    return findUserRecord(userId);
+  }
+
+  if (txHash) {
+    const existing = await prisma.deposit.findFirst({
+      where: { txHash: String(txHash) },
+    });
+    if (existing) {
+      return findUserRecord(userId);
+    }
+  }
 
   await prisma.deposit.create({
     data: {
       userId,
       amount: depositAmount,
-      txHash: txHash || null,
+      txHash: txHash ? String(txHash) : null,
     },
   });
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  const newBalance = decimalToNumber(user.walletBalance) + depositAmount;
+  const newBalance = trunc6(decimalToNumber(user.walletBalance) + depositAmount);
 
   const row = await prisma.user.update({
     where: { id: userId },

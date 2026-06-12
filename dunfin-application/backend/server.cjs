@@ -23,6 +23,7 @@ const { getTradeStatus } = require("./trading.cjs");
 const { getTradeEarnings } = require("./earnings.cjs");
 const { processDuePayouts } = require("./cron/payouts.cjs");
 const { runSleepAccountWakeUpCron } = require("./cron/sleepAccounts.cjs");
+const { runDepositWatcherCycle } = require("./cron/depositWatcher.cjs");
 const { STRATEGIES } = require("./strategies.cjs");
 const { getDepositAddress, NETWORKS } = require("./deposit.cjs");
 const { getKycStatus, submitKyc } = require("./kyc.cjs");
@@ -101,15 +102,16 @@ const { publicClient, walletClient } = getBlockchainClients();
 
 const depositClients = () => getDepositClients();
 
-async function syncWalletBalanceFromChain(userId) {
+async function syncWalletBalanceFromChain(userId, forwarderAddressOverride) {
   const user = await db.getUser(userId);
-  if (!user?.depositAddress) return user;
+  const forwarder = forwarderAddressOverride || user?.depositAddress;
+  if (!forwarder) return user;
 
   const balance = await publicClient.readContract({
     address: USDT_ADDRESS,
     abi: ERC20_ABI,
     functionName: "balanceOf",
-    args: [user.depositAddress],
+    args: [forwarder],
   });
 
   return await db.setWalletBalanceFromChain(userId, Number(formatUnits(balance, 6)));
@@ -143,6 +145,7 @@ app.get("/api/deposit/address", async (req, res) => {
 app.get("/api/user/deposit-address", requireAuth, async (req, res) => {
   try {
     const network = (req.query.network || "TRC20").toUpperCase();
+    const currency = String(req.query.currency || "USDT").toUpperCase();
     if (!NETWORKS[network]) {
       return sendClientError(
         res,
@@ -153,15 +156,23 @@ app.get("/api/user/deposit-address", requireAuth, async (req, res) => {
     }
 
     const userId = req.auth.userId;
-    const result = await getDepositAddress(userId, network, depositClients());
-    if (network === "ERC20") {
-      await syncWalletBalanceFromChain(userId).catch(() => null);
+    const result = await getDepositAddress(
+      userId,
+      network,
+      depositClients(),
+      currency
+    );
+    if (network === "ERC20" || network === "BEP20") {
+      await syncWalletBalanceFromChain(userId, result.depositAddress).catch(
+        () => null
+      );
     }
 
     res.json({
       success: true,
       depositAddress: result.depositAddress,
       userId: result.userId,
+      currency: result.currency,
       network: result.network,
       networkLabel: result.networkLabel,
       addressType: result.addressType,
@@ -865,6 +876,13 @@ setInterval(() => {
   });
 }, SLEEP_CRON_MS);
 
+const DEPOSIT_WATCHER_MS = Number(process.env.DEPOSIT_WATCHER_MS) || 45_000;
+setInterval(() => {
+  runDepositWatcherCycle().catch((err) => {
+    console.warn("[deposit-watcher] tick failed:", err.message);
+  });
+}, DEPOSIT_WATCHER_MS);
+
 app.listen(PORT, HOST, () => {
   const cryptoSummary = getStartupSummary();
   console.log(`IRON API http://localhost:${PORT}`);
@@ -885,4 +903,8 @@ app.listen(PORT, HOST, () => {
   }
   console.log(`Payout cron every ${PAYOUT_CRON_MS}ms`);
   console.log(`Sleep-account wake-up cron every ${SLEEP_CRON_MS}ms`);
+  console.log(`Deposit watcher every ${DEPOSIT_WATCHER_MS}ms`);
+  void runDepositWatcherCycle().catch((err) => {
+    console.warn("[deposit-watcher] initial cycle failed:", err.message);
+  });
 });

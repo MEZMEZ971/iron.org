@@ -1,6 +1,7 @@
 const crypto = require("crypto");
-const { keccak256, toBytes, formatUnits } = require("viem");
+const { keccak256, toBytes } = require("viem");
 const db = require("./db.cjs");
+const { normalizeCurrency, resolveForwarderNetwork } = require("./lib/depositAssets.cjs");
 
 const NETWORKS = Object.freeze({
   ERC20: {
@@ -98,22 +99,31 @@ async function resolveTrc20DepositAddress(userId, network) {
   return { address, created: true, tron: true };
 }
 
-async function getDepositAddress(userId, network, clients) {
-  const net = NETWORKS[network];
+async function getDepositAddress(userId, network, clients, currency = "USDT") {
+  const requestedNetwork = String(network || "TRC20").toUpperCase();
+  const net = NETWORKS[requestedNetwork];
   if (!net) {
-    const err = new Error(`Unsupported network: ${network}`);
+    const err = new Error(`Unsupported network: ${requestedNetwork}`);
     err.code = "INVALID_NETWORK";
     throw err;
   }
 
+  const asset = normalizeCurrency(currency);
   await db.getOrCreateUser(userId);
 
   if (net.evm) {
-    const result = await resolveEvmDepositAddress(userId, network, clients);
+    const forwarderNetwork = resolveForwarderNetwork(requestedNetwork);
+    const result = await resolveEvmDepositAddress(userId, forwarderNetwork, clients);
+
+    if (requestedNetwork === "BEP20") {
+      await db.saveNetworkDepositAddress(userId, "BEP20", result.address);
+    }
+
     return {
       success: true,
       userId,
-      network,
+      currency: asset,
+      network: requestedNetwork,
       networkLabel: net.label,
       depositAddress: result.address,
       new: result.created,
@@ -122,11 +132,12 @@ async function getDepositAddress(userId, network, clients) {
     };
   }
 
-  const result = await resolveTrc20DepositAddress(userId, network);
+  const result = await resolveTrc20DepositAddress(userId, requestedNetwork);
   return {
     success: true,
     userId,
-    network,
+    currency: asset,
+    network: requestedNetwork,
     networkLabel: net.label,
     depositAddress: result.address,
     new: result.created,

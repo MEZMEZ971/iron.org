@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchUserDepositAddress } from "../api/client";
-import type { DepositAddressResponse, DepositNetwork } from "../types/deposit";
+import type {
+  DepositAddressResponse,
+  DepositCurrency,
+  DepositNetwork,
+} from "../types/deposit";
 import { useLocale } from "../i18n/LocaleContext";
 
-export function useDepositAddress(network: DepositNetwork = "TRC20") {
+export function useDepositAddress(
+  currency: DepositCurrency = "USDT",
+  network: DepositNetwork = "TRC20"
+) {
   const { t } = useLocale();
   const [data, setData] = useState<DepositAddressResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -13,7 +20,7 @@ export function useDepositAddress(network: DepositNetwork = "TRC20") {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchUserDepositAddress(network);
+      const result = await fetchUserDepositAddress(network, currency);
       setData(result);
     } catch (e) {
       setData(null);
@@ -21,7 +28,7 @@ export function useDepositAddress(network: DepositNetwork = "TRC20") {
     } finally {
       setLoading(false);
     }
-  }, [network, t]);
+  }, [currency, network, t]);
 
   useEffect(() => {
     void load();
