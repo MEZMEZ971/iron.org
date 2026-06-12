@@ -63,7 +63,6 @@ const {
   processWithdraw,
 } = require("./withdraw.cjs");
 const { spinWheel } = require("./routes/rewards.cjs");
-const { logDepositIntent } = require("./routes/depositIntent.cjs");
 
 const app = express();
 installProcessHandlers();
@@ -135,6 +134,38 @@ app.get("/api/deposit/address", async (req, res) => {
       await syncWalletBalanceFromChain(userId).catch(() => null);
     }
     res.json(result);
+  } catch (error) {
+    sendApiError(res, error);
+  }
+});
+
+/** Authenticated permanent deposit address (default TRC20). */
+app.get("/api/user/deposit-address", requireAuth, async (req, res) => {
+  try {
+    const network = (req.query.network || "TRC20").toUpperCase();
+    if (!NETWORKS[network]) {
+      return sendClientError(
+        res,
+        "INVALID_NETWORK",
+        "Invalid network. Use ERC20, BEP20, or TRC20.",
+        400
+      );
+    }
+
+    const userId = req.auth.userId;
+    const result = await getDepositAddress(userId, network, depositClients());
+    if (network === "ERC20") {
+      await syncWalletBalanceFromChain(userId).catch(() => null);
+    }
+
+    res.json({
+      success: true,
+      depositAddress: result.depositAddress,
+      userId: result.userId,
+      network: result.network,
+      networkLabel: result.networkLabel,
+      addressType: result.addressType,
+    });
   } catch (error) {
     sendApiError(res, error);
   }
@@ -454,8 +485,6 @@ app.post(
     }
   }
 );
-
-app.post("/api/wallet/deposit-intent", requireAuth, logDepositIntent);
 
 app.get("/api/wallet/withdraw/preflight", requireAuth, async (req, res) => {
   try {

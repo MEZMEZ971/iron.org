@@ -362,22 +362,12 @@ export function fetchDepositAddress(
   );
 }
 
-export interface DepositIntentResponse {
-  success: boolean;
-  intentId?: string;
-  amount?: number;
-  currency?: string;
-  status?: string;
-}
-
-export function postDepositIntent(payload: {
-  amount: number;
-  currency: string;
-}) {
-  return request<DepositIntentResponse>("/api/wallet/deposit-intent", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+/** Authenticated permanent deposit address for the signed-in user. */
+export function fetchUserDepositAddress(network = "TRC20") {
+  const params = new URLSearchParams({ network });
+  return request<import("../types/deposit").DepositAddressResponse>(
+    `/api/user/deposit-address?${params.toString()}`
+  );
 }
 
 export type KycStatus = "NONE" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";

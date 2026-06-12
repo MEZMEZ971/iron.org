@@ -1,24 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchDepositAddress } from "../api/client";
+import { fetchUserDepositAddress } from "../api/client";
 import type { DepositAddressResponse, DepositNetwork } from "../types/deposit";
 import { useLocale } from "../i18n/LocaleContext";
 
-export function useDepositAddress(
-  userId: string,
-  network: DepositNetwork,
-  enabled = true,
-) {
+export function useDepositAddress(network: DepositNetwork = "TRC20") {
   const { t } = useLocale();
   const [data, setData] = useState<DepositAddressResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!userId) return;
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchDepositAddress(userId, network);
+      const result = await fetchUserDepositAddress(network);
       setData(result);
     } catch (e) {
       setData(null);
@@ -26,13 +21,11 @@ export function useDepositAddress(
     } finally {
       setLoading(false);
     }
-  }, [userId, network, t]);
+  }, [network, t]);
 
   useEffect(() => {
-    if (enabled) {
-      load();
-    }
-  }, [load, enabled]);
+    void load();
+  }, [load]);
 
   return { data, loading, error, reload: load };
 }
