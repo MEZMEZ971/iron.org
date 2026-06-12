@@ -10,15 +10,16 @@ import { useH5Portfolio } from "../../context/H5PortfolioContext";
 import { useLocale } from "../../i18n/LocaleContext";
 import { emitWalletRefresh } from "../../lib/walletSync";
 import { useUser } from "../../context/UserContext";
-
-const PANEL =
-  "rounded-xl border border-white/[0.06] bg-[rgba(26,31,46,0.65)] backdrop-blur-md transition-all duration-300 ease-in-out";
+import {
+  ADMIN_DESC,
+  ADMIN_GHOST_BTN,
+  ADMIN_INPUT,
+  ADMIN_LABEL,
+  ADMIN_PANEL,
+} from "./adminUi";
 
 const GOLD_BTN =
   "rounded-lg bg-gradient-to-r from-[#f0b90b] via-[#fcd535] to-[#f0b90b] px-4 py-2 text-xs font-bold text-[#0a0e1a] transition-all duration-300 hover:shadow-[0_0_12px_rgba(240,185,11,0.35)] disabled:opacity-50";
-
-const GHOST_BTN =
-  "rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-df-muted transition-all duration-300 hover:border-red-400/40 hover:text-red-400 disabled:opacity-50";
 
 interface Props {
   onNotice: (msg: string) => void;
@@ -207,9 +208,9 @@ export function UserControlHub({ onNotice }: Props) {
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSearch} className={`${PANEL} p-4`}>
+      <form onSubmit={handleSearch} className={`${ADMIN_PANEL} p-4`}>
         <h2 className="text-sm font-bold text-white">{t("adminUserControlTitle")}</h2>
-        <p className="mt-1 text-xs text-df-muted">{t("adminUserControlDesc")}</p>
+        <p className={`mt-1 ${ADMIN_DESC}`}>{t("adminUserControlDesc")}</p>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-stretch">
           <div className="relative min-w-0 flex-1">
             <input
@@ -219,7 +220,7 @@ export function UserControlHub({ onNotice }: Props) {
               value={uidQuery}
               onChange={(e) => setUidQuery(e.target.value.replace(/\D/g, "").slice(0, 8))}
               placeholder={t("adminUidSearchPlaceholder")}
-              className="w-full rounded-xl border border-white/10 bg-[#0a0e1a] py-3 pe-12 ps-4 font-mono text-sm text-df placeholder:text-df-faint focus:outline-none focus:ring-1 focus:ring-[#f0b90b]/40"
+              className={`w-full rounded-xl py-3 pe-12 ps-4 font-mono ${ADMIN_INPUT}`}
               dir="ltr"
             />
           </div>
@@ -235,10 +236,10 @@ export function UserControlHub({ onNotice }: Props) {
       </form>
 
       {user && (
-        <div className={`${PANEL} space-y-5 p-5`}>
+        <div className={`${ADMIN_PANEL} space-y-5 p-5`}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-widest text-df-faint">
+              <p className={`tracking-widest ${ADMIN_LABEL}`}>
                 {t("adminProfileCardTitle")}
               </p>
               <p className="mt-1 text-lg font-bold text-white">{user.displayName}</p>
@@ -280,7 +281,7 @@ export function UserControlHub({ onNotice }: Props) {
                   value={creditAmount}
                   onChange={(e) => setCreditAmount(e.target.value)}
                   placeholder={t("adminAmountPlaceholder")}
-                  className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a0e1a] px-3 py-2 text-sm text-df focus:outline-none focus:ring-1 focus:ring-[#f0b90b]/40"
+                  className={`min-w-0 flex-1 rounded-lg px-3 py-2 ${ADMIN_INPUT}`}
                   dir="ltr"
                 />
                 <button
@@ -302,14 +303,14 @@ export function UserControlHub({ onNotice }: Props) {
                   value={debitAmount}
                   onChange={(e) => setDebitAmount(e.target.value)}
                   placeholder={t("adminAmountPlaceholder")}
-                  className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a0e1a] px-3 py-2 text-sm text-df focus:outline-none focus:ring-1 focus:ring-[#f0b90b]/40"
+                  className={`min-w-0 flex-1 rounded-lg px-3 py-2 ${ADMIN_INPUT}`}
                   dir="ltr"
                 />
                 <button
                   type="button"
                   disabled={busy === "debit" || !debitAmount.trim()}
                   onClick={() => void handleDebit()}
-                  className={GHOST_BTN}
+                  className={ADMIN_GHOST_BTN}
                 >
                   {busy === "debit" ? "…" : t("adminDeductFundsBtn")}
                 </button>
@@ -317,8 +318,8 @@ export function UserControlHub({ onNotice }: Props) {
             </ActionBlock>
           </div>
 
-          <div className={`${PANEL} border-white/[0.04] bg-[#0a0e1a]/40 p-4`}>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-df-faint">
+          <div className={`${ADMIN_PANEL} border-white/[0.04] bg-[#0a0e1a]/40 p-4`}>
+            <p className={`mb-3 font-bold ${ADMIN_LABEL}`}>
               {t("adminAccountStatusToggle")}
             </p>
             <div
@@ -327,11 +328,11 @@ export function UserControlHub({ onNotice }: Props) {
               }`}
             >
               <div className="flex gap-4 text-sm">
-                <span className={isActive ? "font-bold text-[#00d4aa]" : "text-df-faint"}>
+                <span className={isActive ? "font-bold text-[#00d4aa]" : "text-slate-400"}>
                   {t("adminStatusActive")}
                 </span>
                 <span
-                  className={!isActive ? "font-bold text-red-400" : "text-df-faint"}
+                  className={!isActive ? "font-bold text-red-400" : "text-slate-400"}
                 >
                   {t("adminStatusSuspended")}
                 </span>
@@ -385,10 +386,10 @@ function ProfileStat({
           : "border-white/[0.06] bg-white/[0.02]"
       }`}
     >
-      <p className="text-[10px] uppercase tracking-wide text-df-faint">{label}</p>
+      <p className="text-[10px] uppercase tracking-wide text-slate-400">{label}</p>
       <p
         className={`mt-1 text-sm font-semibold tabular-nums transition-all duration-300 ${
-          accent ? "text-[#f0b90b]" : "text-df"
+          accent ? "text-[#f0b90b]" : "text-white"
         }`}
       >
         {value}

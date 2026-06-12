@@ -7,9 +7,7 @@ import {
 } from "../../api/client";
 import { useLocale } from "../../i18n/LocaleContext";
 import type { TranslationKey } from "../../i18n/translations";
-
-const PANEL =
-  "rounded-xl border border-white/[0.06] bg-[rgba(26,31,46,0.65)] backdrop-blur-md transition-all duration-300 ease-in-out";
+import { ADMIN_LABEL, ADMIN_MUTED, ADMIN_PANEL } from "./adminUi";
 
 const GOLD_BTN =
   "rounded-lg bg-gradient-to-r from-[#f0b90b] via-[#fcd535] to-[#f0b90b] px-3 py-2 text-xs font-bold text-[#0a0e1a] transition-all duration-300 ease-in-out hover:shadow-[0_0_12px_rgba(240,185,11,0.35)] disabled:opacity-50";
@@ -90,7 +88,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
 
   if (loading && !data) {
     return (
-      <p className="text-center text-sm text-df-muted">{t("adminLoading")}</p>
+      <p className={`text-center ${ADMIN_MUTED}`}>{t("adminLoading")}</p>
     );
   }
 
@@ -101,7 +99,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <div
-          className={`${PANEL} p-5 shadow-[0_0_24px_rgba(16,185,129,0.12)]`}
+          className={`${ADMIN_PANEL} p-5 shadow-[0_0_24px_rgba(16,185,129,0.12)]`}
         >
           <p className="text-xs uppercase tracking-widest text-emerald-400/80">
             {t("adminActivityActiveTotal")}
@@ -112,7 +110,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
         </div>
 
         <div
-          className={`${PANEL} p-5 shadow-[0_0_24px_rgba(245,158,11,0.12)]`}
+          className={`${ADMIN_PANEL} p-5 shadow-[0_0_24px_rgba(245,158,11,0.12)]`}
         >
           <p className="text-xs uppercase tracking-widest text-amber-400/80">
             {t("adminActivityInactiveTotal")}
@@ -123,7 +121,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
         </div>
 
         <div
-          className={`${PANEL} animate-pulse p-5 shadow-[0_0_28px_rgba(168,85,247,0.2)]`}
+          className={`${ADMIN_PANEL} animate-pulse p-5 shadow-[0_0_28px_rgba(168,85,247,0.2)]`}
           style={{ animationDuration: "3s" }}
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -134,7 +132,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
               <p className="mt-2 text-3xl font-bold text-purple-300">
                 {counts.sleep}
               </p>
-              <p className="mt-1 text-[10px] text-df-faint">
+              <p className="mt-1 text-[10px] text-slate-400">
                 {t("adminActivitySleepPulse")}
               </p>
             </div>
@@ -151,10 +149,10 @@ export function ActivitySleepTracker({ onNotice }: Props) {
         </div>
       </div>
 
-      <div className={`${PANEL} overflow-x-auto`}>
+      <div className={`${ADMIN_PANEL} overflow-x-auto`}>
         <table className="w-full min-w-[720px] text-start text-sm">
           <thead>
-            <tr className="border-b border-white/[0.06] text-xs uppercase tracking-wide text-df-faint">
+            <tr className={`border-b border-white/[0.06] ${ADMIN_LABEL}`}>
               <th className="px-4 py-3">UID</th>
               <th className="px-4 py-3">{t("adminColUser")}</th>
               <th className="px-4 py-3">{t("adminFieldBalance")}</th>
@@ -168,10 +166,10 @@ export function ActivitySleepTracker({ onNotice }: Props) {
                 key={row.uid}
                 className="border-b border-white/[0.04] transition-all duration-300 hover:bg-white/[0.02]"
               >
-                <td className="px-4 py-3 font-mono text-xs text-df-muted">
+                <td className="px-4 py-3 font-mono text-xs text-slate-400">
                   {row.uid}
                 </td>
-                <td className="px-4 py-3 font-medium text-df">
+                <td className="px-4 py-3 font-medium text-white">
                   {row.username || "—"}
                 </td>
                 <td className="px-4 py-3 text-[#f0b90b]">
@@ -180,7 +178,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
                   })}{" "}
                   USDT
                 </td>
-                <td className="px-4 py-3 text-df-muted">
+                <td className="px-4 py-3 text-slate-400">
                   {formatLastActivity(row.lastActivityAt)}
                 </td>
                 <td className="px-4 py-3">
@@ -196,7 +194,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
           </tbody>
         </table>
         {users.length === 0 && (
-          <p className="p-8 text-center text-sm text-df-muted">
+          <p className={`p-8 text-center ${ADMIN_MUTED}`}>
             {t("adminLoading")}
           </p>
         )}

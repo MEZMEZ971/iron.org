@@ -5,9 +5,13 @@ import {
 } from "../../api/client";
 import { useLocale } from "../../i18n/LocaleContext";
 import { formatUsdt as formatUsdtSafe } from "../../lib/formatNumbers";
-
-const PANEL =
-  "rounded-xl border border-white/[0.06] bg-[rgba(26,31,46,0.65)] backdrop-blur-md transition-all duration-300 ease-in-out";
+import {
+  ADMIN_DESC,
+  ADMIN_INPUT,
+  ADMIN_LABEL,
+  ADMIN_MUTED,
+  ADMIN_PANEL,
+} from "./adminUi";
 
 function formatUsdt(value: number, locale: string) {
   return formatUsdtSafe(value, locale, 6);
@@ -51,7 +55,7 @@ export function UserWalletsAuditor({ onNotice }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className={`${PANEL} p-4`}>
+      <div className={`${ADMIN_PANEL} p-4`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="flex items-center gap-2 text-base font-bold text-white">
@@ -61,11 +65,11 @@ export function UserWalletsAuditor({ onNotice }: Props) {
               />
               {t("adminTabFinanceAuditor")}
             </h2>
-            <p className="mt-1 text-xs text-df-muted">{t("adminFinanceAuditorDesc")}</p>
+            <p className={`mt-1 ${ADMIN_DESC}`}>{t("adminFinanceAuditorDesc")}</p>
           </div>
           <div className="relative w-full max-w-sm">
             <i
-              className="fa-solid fa-magnifying-glass pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-xs text-df-faint"
+              className="fa-solid fa-magnifying-glass pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"
               aria-hidden
             />
             <input
@@ -73,25 +77,25 @@ export function UserWalletsAuditor({ onNotice }: Props) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("adminFinanceSearchPlaceholder")}
-              className="w-full rounded-lg border border-white/10 bg-[#0a0e1a] py-2.5 ps-9 pe-3 text-sm text-df placeholder:text-df-faint focus:outline-none focus:ring-1 focus:ring-[#f0b90b]/40"
+              className={`w-full rounded-lg py-2.5 ps-9 pe-3 ${ADMIN_INPUT}`}
             />
           </div>
         </div>
       </div>
 
-      <div className={`${PANEL} overflow-x-auto`}>
+      <div className={`${ADMIN_PANEL} overflow-x-auto`}>
         {loading ? (
-          <p className="p-8 text-center text-sm text-df-muted">
+          <p className={`p-8 text-center ${ADMIN_MUTED}`}>
             {t("adminFinanceLoading")}
           </p>
         ) : rows.length === 0 ? (
-          <p className="p-8 text-center text-sm text-df-muted">
+          <p className={`p-8 text-center ${ADMIN_MUTED}`}>
             {t("adminFinanceEmpty")}
           </p>
         ) : (
           <table className="w-full min-w-[880px] text-start text-sm">
             <thead>
-              <tr className="border-b border-white/[0.06] text-xs uppercase tracking-wide text-df-faint">
+              <tr className={`border-b border-white/[0.06] ${ADMIN_LABEL}`}>
                 <th className="px-4 py-3">{t("adminFinanceColUser")}</th>
                 <th className="px-4 py-3">{t("adminFinanceColBalance")}</th>
                 <th className="px-4 py-3">{t("adminFinanceColDeposited")}</th>
@@ -108,10 +112,10 @@ export function UserWalletsAuditor({ onNotice }: Props) {
                     className="border-b border-white/[0.04] transition-all duration-300 hover:bg-white/[0.02]"
                   >
                     <td className="px-4 py-3">
-                      <p className="font-medium text-df">
+                      <p className="font-medium text-white">
                         {row.username || "—"}
                       </p>
-                      <p className="font-mono text-xs text-df-faint">{row.uid}</p>
+                      <p className="font-mono text-xs text-slate-400">{row.uid}</p>
                     </td>
                     <td className="px-4 py-3 font-semibold text-slate-200">
                       {formatUsdt(row.walletBalance, locale)} USDT

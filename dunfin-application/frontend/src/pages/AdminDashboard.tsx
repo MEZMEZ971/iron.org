@@ -13,13 +13,21 @@ import {
 import { ActivitySleepTracker } from "../components/admin/ActivitySleepTracker";
 import { UserControlHub } from "../components/admin/UserControlHub";
 import { UserWalletsAuditor } from "../components/admin/UserWalletsAuditor";
+import {
+  ADMIN_DESC,
+  ADMIN_GHOST_BTN,
+  ADMIN_INPUT,
+  ADMIN_LABEL,
+  ADMIN_MUTED,
+  ADMIN_PANEL,
+  ADMIN_TAB_INACTIVE,
+} from "../components/admin/adminUi";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
 
 type AdminTab = "withdrawals" | "kyc" | "stats" | "users" | "activity" | "finance";
 
-const PANEL =
-  "rounded-xl border border-white/[0.06] bg-[rgba(26,31,46,0.65)] backdrop-blur-md transition-all duration-300 ease-in-out";
+const PANEL = ADMIN_PANEL;
 
 const GOLD_BADGE =
   "inline-flex rounded-md bg-[#f0b90b]/15 px-2 py-0.5 text-[10px] font-bold text-[#f0b90b] shadow-[0_0_12px_rgba(240,185,11,0.25)]";
@@ -27,8 +35,7 @@ const GOLD_BADGE =
 const GOLD_BTN =
   "rounded-lg bg-gradient-to-r from-[#f0b90b] via-[#fcd535] to-[#f0b90b] px-3 py-1.5 text-xs font-bold text-[#0a0e1a] transition-all duration-300 ease-in-out hover:shadow-[0_0_12px_rgba(240,185,11,0.35)] disabled:opacity-50";
 
-const GHOST_BTN =
-  "rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-df-muted transition-all duration-300 ease-in-out hover:border-red-400/40 hover:text-red-400 disabled:opacity-50";
+const GHOST_BTN = `${ADMIN_GHOST_BTN} px-3 py-1.5 ease-in-out`;
 
 function KycDocThumb({
   label,
@@ -52,7 +59,7 @@ function KycDocThumb({
         <p className="text-[10px] font-bold uppercase tracking-wide text-[#f0b90b]">
           {label}
         </p>
-        <p className="truncate text-[11px] text-df-muted">{fileName}</p>
+        <p className="truncate text-[11px] text-slate-400">{fileName}</p>
       </div>
     </button>
   );
@@ -188,7 +195,7 @@ export default function AdminDashboard() {
           <div>
             <Link
               to="/"
-              className="mb-2 inline-flex items-center gap-2 text-xs text-df-muted transition-all duration-300 hover:text-[#f0b90b]"
+              className="mb-2 inline-flex items-center gap-2 text-xs text-slate-400 transition-all duration-300 hover:text-[#f0b90b]"
             >
               <i
                 className={`fa-solid fa-arrow-left ${rtl ? "rotate-180" : ""}`}
@@ -219,7 +226,7 @@ export default function AdminDashboard() {
               className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-in-out ${
                 tab === id
                   ? "bg-[#f0b90b]/15 text-[#f0b90b] shadow-[inset_0_0_0_1px_rgba(240,185,11,0.25)]"
-                  : "text-df-muted hover:bg-white/[0.04] hover:text-df"
+                  : ADMIN_TAB_INACTIVE
               }`}
             >
               {icon && (
@@ -244,7 +251,7 @@ export default function AdminDashboard() {
           </p>
         )}
         {loading && (
-          <p className="text-center text-sm text-df-muted">{t("adminLoading")}</p>
+          <p className={`text-center ${ADMIN_MUTED}`}>{t("adminLoading")}</p>
         )}
 
         {!loading && tab === "users" && <UserControlHub onNotice={flash} />}
@@ -262,7 +269,7 @@ export default function AdminDashboard() {
               { key: "adminStatRevenue" as const, value: stats.totalPlatformRevenue },
             ].map(({ key, value }) => (
               <div key={key} className={`${PANEL} p-5`}>
-                <p className="text-xs uppercase tracking-widest text-df-faint">{t(key)}</p>
+                <p className={`tracking-widest ${ADMIN_LABEL}`}>{t(key)}</p>
                 <p className="mt-2 text-2xl font-bold text-[#f0b90b]">
                   {value.toLocaleString(undefined, { maximumFractionDigits: 6 })} USDT
                 </p>
@@ -274,13 +281,13 @@ export default function AdminDashboard() {
         {!loading && tab === "withdrawals" && (
           <div className={`${PANEL} overflow-x-auto`}>
             {withdrawals.length === 0 ? (
-              <p className="p-8 text-center text-sm text-df-muted">
+              <p className={`p-8 text-center ${ADMIN_MUTED}`}>
                 {t("adminNoPendingWithdrawals")}
               </p>
             ) : (
               <table className="w-full min-w-[900px] text-start text-sm">
                 <thead>
-                  <tr className="border-b border-white/[0.06] text-xs uppercase tracking-wide text-df-faint">
+                  <tr className={`border-b border-white/[0.06] ${ADMIN_LABEL}`}>
                     <th className="px-4 py-3">{t("adminColUser")}</th>
                     <th className="px-4 py-3">{t("adminColAmount")}</th>
                     <th className="px-4 py-3">{t("adminColFee")}</th>
@@ -297,22 +304,22 @@ export default function AdminDashboard() {
                       className="border-b border-white/[0.04] transition-all duration-300 hover:bg-white/[0.02]"
                     >
                       <td className="px-4 py-3">
-                        <p className="font-medium text-df">{row.displayName}</p>
-                        <p className="text-xs text-df-faint">
+                        <p className="font-medium text-white">{row.displayName}</p>
+                        <p className="text-xs text-slate-400">
                           {row.uid || row.email || row.userId}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-df">
+                      <td className="px-4 py-3 text-white">
                         {row.amount} {row.currency}
                       </td>
-                      <td className="px-4 py-3 text-df-muted">{row.fee}</td>
+                      <td className="px-4 py-3 text-slate-400">{row.fee}</td>
                       <td className="px-4 py-3 font-semibold text-[#f0b90b]">
                         {row.netAmount}
                       </td>
                       <td className="px-4 py-3">
                         <span className={GOLD_BADGE}>{row.network}</span>
                       </td>
-                      <td className="max-w-[140px] truncate px-4 py-3 font-mono text-xs text-df-muted">
+                      <td className="max-w-[140px] truncate px-4 py-3 font-mono text-xs text-slate-400">
                         {row.address}
                       </td>
                       <td className="px-4 py-3">
@@ -355,7 +362,7 @@ export default function AdminDashboard() {
         {!loading && tab === "kyc" && (
           <div className="space-y-4">
             {kycList.length === 0 && (
-              <p className={`${PANEL} p-8 text-center text-sm text-df-muted`}>
+              <p className={`${PANEL} p-8 text-center ${ADMIN_MUTED}`}>
                 {t("adminNoPendingKyc")}
               </p>
             )}
@@ -363,8 +370,8 @@ export default function AdminDashboard() {
               <div key={row.id} className={`${PANEL} p-4`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-bold text-df">{row.displayName}</p>
-                    <p className="text-xs text-df-faint">
+                    <p className="font-bold text-white">{row.displayName}</p>
+                    <p className="text-xs text-slate-400">
                       {row.uid || row.email} · {new Date(row.submittedAt).toLocaleString()}
                     </p>
                   </div>
@@ -430,12 +437,12 @@ export default function AdminDashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-base font-bold text-white">{t("adminReject")}</h3>
-            <p className="mt-2 text-xs text-df-muted">{t("adminRejectReasonPrompt")}</p>
+            <p className={`mt-2 ${ADMIN_DESC}`}>{t("adminRejectReasonPrompt")}</p>
             <input
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder={t("adminRejectReasonPlaceholder")}
-              className="mt-3 w-full rounded-lg border border-white/10 bg-[#0a0e1a] px-3 py-2 text-sm text-df focus:outline-none focus:ring-1 focus:ring-[#f0b90b]/40"
+              className={`mt-3 w-full rounded-lg px-3 py-2 ${ADMIN_INPUT}`}
             />
             <div className="mt-4 flex gap-2">
               <button type="button" onClick={() => setRejectTarget(null)} className={GHOST_BTN}>
@@ -468,11 +475,11 @@ export default function AdminDashboard() {
               <i className="fa-solid fa-xmark" aria-hidden />
             </button>
             <p className="text-sm font-bold text-[#f0b90b]">{previewDoc.label}</p>
-            <p className="text-xs text-df-muted">{previewDoc.user}</p>
+            <p className="text-xs text-slate-400">{previewDoc.user}</p>
             <div className="mt-4 flex aspect-video items-center justify-center rounded-xl bg-gradient-to-br from-[#1a2238] to-[#0a0e1a]">
               <i className="fa-solid fa-id-card text-6xl text-[#f0b90b]/50" aria-hidden />
             </div>
-            <p className="mt-3 break-all text-sm text-df">{previewDoc.fileName}</p>
+            <p className="mt-3 break-all text-sm text-white">{previewDoc.fileName}</p>
           </div>
         </div>
       )}
