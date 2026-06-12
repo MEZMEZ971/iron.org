@@ -4,23 +4,26 @@ const { trunc6 } = require("../lib/formatNumbers.cjs");
 const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+const DAILY_SPINS = 1;
 
 const SPIN_BLOCKED_EN =
   "You have already used your free spin today. Come back tomorrow!";
 const SPIN_BLOCKED_AR = "لقد استهلكت دورتك المجانية اليوم. عد غداً!";
 
-/** Index-aligned prizes — weights: high → low probability */
+/** Eight USDT-only slices — index order matches wheel UI (clockwise from top). */
 const PRIZES = Object.freeze([
-  { amount: 0.1, type: "USDT", label: "0.10 USDT" },
-  { amount: 0.5, type: "USDT", label: "0.50 USDT" },
-  { amount: 1, type: "DADB", label: "1.00 DADB Coin" },
-  { amount: 2, type: "DADB", label: "2.00 DADB Coin" },
-  { amount: 0.05, type: "USDT", label: "0.05 USDT" },
-  { amount: 5, type: "DADB", label: "5.00 DADB Coin" },
+  { amount: 0.1, type: "USDT", label: "USDT 0.10" },
+  { amount: 0.25, type: "USDT", label: "USDT 0.25" },
+  { amount: 0.5, type: "USDT", label: "USDT 0.50" },
+  { amount: 1, type: "USDT", label: "USDT 1.00" },
+  { amount: 2, type: "USDT", label: "USDT 2.00" },
+  { amount: 5, type: "USDT", label: "USDT 5.00" },
+  { amount: 10, type: "USDT", label: "USDT 10.00" },
+  { amount: 100, type: "USDT", label: "GRAND: USDT 100", grand: true },
 ]);
 
-/** 0: high, 1: medium, 2–3: medium, 4: medium-low, 5: jackpot low */
-const PRIZE_WEIGHTS = Object.freeze([40, 22, 18, 12, 5, 3]);
+/** Higher weight → more common (sums to 100). */
+const PRIZE_WEIGHTS = Object.freeze([26, 20, 18, 14, 10, 7, 4, 1]);
 
 function pickPrizeIndex() {
   const total = PRIZE_WEIGHTS.reduce((sum, w) => sum + w, 0);
@@ -35,6 +38,44 @@ function pickPrizeIndex() {
 function isWithinSpinCooldown(lastSpinDate) {
   if (!lastSpinDate) return false;
   return Date.now() - lastSpinDate.getTime() < TWENTY_FOUR_HOURS_MS;
+}
+
+async function getWheelStatus(req, res) {
+  try {
+    const userId = req.auth.userId;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { walletBalance: true, lastSpinDate: true },
+    });
+
+    if (!user) {
+      return sendClientError(res, "NOT_FOUND", "User not found", 404);
+    }
+
+    const onCooldown = isWithinSpinCooldown(user.lastSpinDate);
+    const funded = trunc6(user.walletBalance) > 0;
+    const spinsRemaining = onCooldown ? 0 : DAILY_SPINS;
+
+    return res.json({
+      success: true,
+      spinsRemaining,
+      maxSpinsPerDay: DAILY_SPINS,
+      canSpin: spinsRemaining > 0 && funded,
+      nextSpinAt:
+        onCooldown && user.lastSpinDate
+          ? new Date(user.lastSpinDate.getTime() + TWENTY_FOUR_HOURS_MS).toISOString()
+          : null,
+      prizes: PRIZES.map((p, index) => ({
+        index,
+        amount: p.amount,
+        type: p.type,
+        label: p.label,
+        grand: Boolean(p.grand),
+      })),
+    });
+  } catch (error) {
+    return sendApiError(res, error, { success: false });
+  }
 }
 
 async function spinWheel(req, res) {
@@ -81,16 +122,12 @@ async function spinWheel(req, res) {
     const now = new Date();
 
     const updated = await prisma.$transaction(async (tx) => {
-      const data = { lastSpinDate: now };
-      if (prize.type === "USDT") {
-        data.walletBalance = { increment: prize.amount };
-      } else {
-        data.customTokenBalance = { increment: prize.amount };
-      }
-
       const row = await tx.user.update({
         where: { id: userId },
-        data,
+        data: {
+          lastSpinDate: now,
+          walletBalance: { increment: prize.amount },
+        },
         select: { walletBalance: true, customTokenBalance: true },
       });
 
@@ -113,12 +150,19 @@ async function spinWheel(req, res) {
       amount: prize.amount,
       type: prize.type,
       label: prize.label,
+      grand: Boolean(prize.grand),
       walletBalance: trunc6(updated.walletBalance),
       customTokenBalance: Number(updated.customTokenBalance) || 0,
+      spinsRemaining: 0,
     });
   } catch (error) {
     return sendApiError(res, error, { success: false });
   }
 }
 
-module.exports = { spinWheel, PRIZES, PRIZE_WEIGHTS };
+module.exports = {
+  spinWheel,
+  getWheelStatus,
+  PRIZES,
+  PRIZE_WEIGHTS,
+};

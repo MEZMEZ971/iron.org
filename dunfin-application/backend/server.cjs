@@ -63,7 +63,7 @@ const {
   listWithdrawals,
   processWithdraw,
 } = require("./withdraw.cjs");
-const { spinWheel } = require("./routes/rewards.cjs");
+const { spinWheel, getWheelStatus } = require("./routes/rewards.cjs");
 
 const app = express();
 installProcessHandlers();
@@ -536,6 +536,7 @@ app.post("/api/users/profile/send-email-otp", requireAuth, async (req, res) => {
   }
 });
 
+app.get("/api/rewards/wheel-status", requireAuth, getWheelStatus);
 app.post("/api/rewards/spin-wheel", requireAuth, spinWheel);
 
 app.post("/api/users/profile/update", requireAuth, async (req, res) => {

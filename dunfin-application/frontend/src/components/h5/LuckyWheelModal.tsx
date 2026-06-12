@@ -1,29 +1,67 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, spinLuckyWheel, type SpinWheelResult } from "../../api/client";
+import {
+  ApiError,
+  fetchWheelStatus,
+  spinLuckyWheel,
+  type SpinWheelResult,
+  type WheelStatusResult,
+} from "../../api/client";
+import {
+  rotationForPrizeIndex,
+  WHEEL_GRAND_SLICE_INDEX,
+  WHEEL_PRIZE_KEYS,
+  WHEEL_SLICE_COUNT,
+  WHEEL_SLICE_DEG,
+} from "../../config/luckyWheel";
 import { useH5Portfolio } from "../../context/H5PortfolioContext";
 import { useLocale } from "../../i18n/LocaleContext";
 import { emitWalletRefresh } from "../../lib/walletSync";
 import { useUser } from "../../context/UserContext";
 
-const WEDGE_PRIZE_KEYS = [
-  "h5WheelPrize0",
-  "h5WheelPrize1",
-  "h5WheelPrize2",
-  "h5WheelPrize3",
-  "h5WheelPrize4",
-  "h5WheelPrize5",
+const SPIN_MS = 5000;
+const WHEEL_SIZE = 256;
+const CX = 100;
+const CY = 100;
+const OUTER_R = 96;
+const INNER_R = 28;
+
+const SEGMENT_TEXT_COLORS = [
+  "#e8ecf0",
+  "#141820",
+  "#f5e6c8",
+  "#e8ecf0",
+  "#141820",
+  "#fef3c7",
+  "#e8ecf0",
+  "#fcd535",
 ] as const;
 
-const WEDGE_GRADIENTS = [
-  "from-rose-500 to-orange-500",
-  "from-violet-500 to-fuchsia-600",
-  "from-cyan-500 to-blue-600",
-  "from-emerald-500 to-teal-600",
-  "from-amber-400 to-yellow-500",
-  "from-[#f0b90b] to-amber-700",
-];
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
 
-const SPIN_MS = 5000;
+function describeWedge(
+  cx: number,
+  cy: number,
+  outerR: number,
+  innerR: number,
+  startAngle: number,
+  endAngle: number
+) {
+  const outerStart = polarToCartesian(cx, cy, outerR, endAngle);
+  const outerEnd = polarToCartesian(cx, cy, outerR, startAngle);
+  const innerEnd = polarToCartesian(cx, cy, innerR, startAngle);
+  const innerStart = polarToCartesian(cx, cy, innerR, endAngle);
+  const largeArc = endAngle - startAngle <= 180 ? 0 : 1;
+  return [
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${outerR} ${outerR} 0 ${largeArc} 0 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerEnd.x} ${innerEnd.y}`,
+    `A ${innerR} ${innerR} 0 ${largeArc} 1 ${innerStart.x} ${innerStart.y}`,
+    "Z",
+  ].join(" ");
+}
 
 type Props = {
   open: boolean;
@@ -39,6 +77,7 @@ export function LuckyWheelModal({ open, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [win, setWin] = useState<SpinWheelResult | null>(null);
   const [showWin, setShowWin] = useState(false);
+  const [wheelStatus, setWheelStatus] = useState<WheelStatusResult | null>(null);
   const pendingWinRef = useRef<SpinWheelResult | null>(null);
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -53,6 +92,7 @@ export function LuckyWheelModal({ open, onClose }: Props) {
     setWin(null);
     pendingWinRef.current = null;
     setError(null);
+    setWheelStatus(null);
   }, []);
 
   useEffect(() => {
@@ -60,23 +100,42 @@ export function LuckyWheelModal({ open, onClose }: Props) {
   }, [open, resetMotion]);
 
   useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void fetchWheelStatus()
+      .then((status) => {
+        if (!cancelled) setWheelStatus(status);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
     return () => {
       if (spinTimerRef.current) clearTimeout(spinTimerRef.current);
     };
   }, []);
 
-  function handleWheelTransitionEnd() {
-    if (!spinning || !pendingWinRef.current) return;
-    const prize = pendingWinRef.current;
+  function finishSpin(prize: SpinWheelResult) {
     pendingWinRef.current = null;
     setSpinning(false);
     setWin(prize);
     setShowWin(true);
+    setWheelStatus((prev) =>
+      prev ? { ...prev, spinsRemaining: prize.spinsRemaining, canSpin: false } : prev
+    );
     emitWalletRefresh({
       userId,
       walletBalance: prize.walletBalance,
     });
     void h5Portfolio.refresh({ skipChainSync: true });
+  }
+
+  function handleWheelTransitionEnd() {
+    if (!spinning || !pendingWinRef.current) return;
+    finishSpin(pendingWinRef.current);
   }
 
   async function handleSpin() {
@@ -88,30 +147,22 @@ export function LuckyWheelModal({ open, onClose }: Props) {
 
     try {
       const result = await spinLuckyWheel();
-      const degrees = 3600 + result.prizeIndex * 60;
+      const degrees = rotationForPrizeIndex(result.prizeIndex, 10);
       pendingWinRef.current = result;
       setRotation(degrees);
 
       spinTimerRef.current = setTimeout(() => {
         if (!pendingWinRef.current) return;
-        const prize = pendingWinRef.current;
-        pendingWinRef.current = null;
-        setSpinning(false);
-        setWin(prize);
-        setShowWin(true);
-        emitWalletRefresh({
-          userId,
-          walletBalance: prize.walletBalance,
-        });
-        void h5Portfolio.refresh({ skipChainSync: true });
+        finishSpin(pendingWinRef.current);
       }, SPIN_MS + 80);
     } catch (e) {
       setSpinning(false);
       pendingWinRef.current = null;
       if (e instanceof ApiError) {
         if (e.code === "SPIN_ALREADY_USED") {
-          setError(
-            locale === "ar" ? t("h5SpinLimitAr") : t("h5SpinLimitEn")
+          setError(locale === "ar" ? t("h5SpinLimitAr") : t("h5SpinLimitEn"));
+          setWheelStatus((prev) =>
+            prev ? { ...prev, spinsRemaining: 0, canSpin: false } : prev
           );
         } else if (e.code === "NOT_FUNDED") {
           setError(t("h5SpinNotFunded"));
@@ -124,22 +175,26 @@ export function LuckyWheelModal({ open, onClose }: Props) {
     }
   }
 
+  function spinsRemainingLabel() {
+    const count = wheelStatus?.spinsRemaining ?? 1;
+    if (count <= 0) return t("h5WheelSpinsRemainingZero");
+    if (count === 1) return t("h5WheelSpinsRemainingOne");
+    return t("h5WheelSpinsRemainingMany", { count: String(count) });
+  }
+
   if (!open) return null;
 
-  const winLabel =
-    win?.label ??
-    (win
-      ? `${win.amount} ${win.type}`
-      : "");
+  const winLabel = win?.label ?? (win ? `${win.amount} ${win.type}` : "");
+  const rimDots = Array.from({ length: WHEEL_SLICE_COUNT * 3 }, (_, i) => i);
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-4 sm:items-center"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-4 sm:items-center"
       role="dialog"
       aria-modal
       aria-labelledby="lucky-wheel-title"
     >
-      <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-amber-400/30 bg-gradient-to-b from-slate-900 via-[#121820] to-[#0a0e1a] p-5 text-white shadow-2xl shadow-amber-500/10">
+      <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#3d4454]/80 bg-gradient-to-b from-[#0f131c] via-[#121824] to-[#080b12] p-5 text-white shadow-2xl shadow-black/50">
         <button
           type="button"
           onClick={onClose}
@@ -152,21 +207,36 @@ export function LuckyWheelModal({ open, onClose }: Props) {
 
         <h2
           id="lucky-wheel-title"
-          className="pe-8 text-center text-lg font-bold text-[#f0b90b]"
+          className="pe-8 text-center text-lg font-bold tracking-wide text-[#e8c547]"
         >
           {t("h5LuckyWheelTitle")}
         </h2>
 
         <div className="relative mx-auto mt-6 h-64 w-64">
           <div
-            className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1"
+            className="pointer-events-none absolute left-1/2 top-0 z-30 -translate-x-1/2 -translate-y-0.5"
             aria-hidden
           >
-            <div className="h-0 w-0 border-x-[14px] border-b-[22px] border-x-transparent border-b-[#f0b90b] drop-shadow-[0_2px_8px_rgba(240,185,11,0.6)]" />
+            <div className="h-0 w-0 border-x-[12px] border-b-[20px] border-x-transparent border-b-[#d4af37] drop-shadow-[0_3px_10px_rgba(212,175,55,0.55)]" />
           </div>
 
           <div
-            className="relative h-full w-full rounded-full border-4 border-[#f0b90b]/50 shadow-[inset_0_0_24px_rgba(0,0,0,0.45)]"
+            className="absolute inset-0 rounded-full border-[3px] border-[#4a5060] bg-[#1a1f2a] shadow-[0_0_28px_rgba(212,175,55,0.12),inset_0_0_20px_rgba(0,0,0,0.6)]"
+            aria-hidden
+          >
+            {rimDots.map((i) => (
+              <span
+                key={i}
+                className="absolute left-1/2 top-1/2 block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f0b90b]/90 shadow-[0_0_6px_rgba(240,185,11,0.85)]"
+                style={{
+                  transform: `rotate(${(360 / rimDots.length) * i}deg) translateY(-${WHEEL_SIZE / 2 - 6}px)`,
+                }}
+              />
+            ))}
+          </div>
+
+          <div
+            className="absolute inset-[6px] rounded-full"
             style={{
               transform: `rotate(${rotation}deg)`,
               transition: spinning
@@ -175,66 +245,148 @@ export function LuckyWheelModal({ open, onClose }: Props) {
             }}
             onTransitionEnd={handleWheelTransitionEnd}
           >
-            <div
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: `conic-gradient(
-                  #f43f5e 0deg 60deg,
-                  #8b5cf6 60deg 120deg,
-                  #06b6d4 120deg 180deg,
-                  #10b981 180deg 240deg,
-                  #f59e0b 240deg 300deg,
-                  #d97706 300deg 360deg
-                )`,
-              }}
-            />
-            {WEDGE_PRIZE_KEYS.map((prizeKey, i) => (
-              <div
-                key={prizeKey}
-                className="pointer-events-none absolute left-1/2 top-1/2 h-1/2 w-[42%] origin-bottom -translate-x-1/2"
-                style={{ transform: `rotate(${i * 60 + 30}deg)` }}
-              >
-                <span
-                  className={`absolute left-1/2 top-3 w-full -translate-x-1/2 bg-gradient-to-r ${WEDGE_GRADIENTS[i]} bg-clip-text text-center text-[9px] font-extrabold leading-tight text-transparent drop-shadow-sm`}
-                  style={{ transform: "rotate(-90deg)" }}
-                >
-                  {t(prizeKey)}
-                </span>
-              </div>
-            ))}
-            <div className="absolute inset-[18%] rounded-full bg-[#0a0e1a]/90 ring-2 ring-[#f0b90b]/30" />
+            <svg
+              viewBox="0 0 200 200"
+              className="h-full w-full drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+              aria-hidden
+            >
+              <defs>
+                <linearGradient id="wheelCharcoal" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#161b26" />
+                  <stop offset="100%" stopColor="#0e121a" />
+                </linearGradient>
+                <linearGradient id="wheelSilver" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#b8bec8" />
+                  <stop offset="50%" stopColor="#8f96a3" />
+                  <stop offset="100%" stopColor="#6b7280" />
+                </linearGradient>
+                <linearGradient id="wheelBronze" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8a6a42" />
+                  <stop offset="100%" stopColor="#5c4528" />
+                </linearGradient>
+                <linearGradient id="wheelGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#fcd535" />
+                  <stop offset="100%" stopColor="#b8860b" />
+                </linearGradient>
+                <radialGradient id="wheelGrandGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#2a2010" />
+                  <stop offset="100%" stopColor="#121824" />
+                </radialGradient>
+              </defs>
+
+              {WHEEL_PRIZE_KEYS.map((prizeKey, index) => {
+                const start = index * WHEEL_SLICE_DEG;
+                const end = start + WHEEL_SLICE_DEG;
+                const isGrand = index === WHEEL_GRAND_SLICE_INDEX;
+                const fillId =
+                  index % 4 === 1
+                    ? "wheelSilver"
+                    : index % 4 === 2
+                      ? "wheelBronze"
+                      : index % 4 === 3
+                        ? "wheelGold"
+                        : isGrand
+                          ? "wheelGrandGlow"
+                          : "wheelCharcoal";
+                const path = describeWedge(CX, CY, OUTER_R, INNER_R, start, end);
+                const mid = start + WHEEL_SLICE_DEG / 2;
+                const labelPos = polarToCartesian(CX, CY, 62, mid);
+                const label = t(prizeKey);
+
+                return (
+                  <g key={prizeKey}>
+                    <path
+                      d={path}
+                      fill={isGrand ? "url(#wheelGrandGlow)" : `url(#${fillId})`}
+                      stroke={isGrand ? "#fcd535" : "rgba(0,0,0,0.35)"}
+                      strokeWidth={isGrand ? 2.2 : 0.6}
+                    />
+                    <text
+                      x={labelPos.x}
+                      y={labelPos.y}
+                      fill={SEGMENT_TEXT_COLORS[index]}
+                      fontSize={isGrand ? 7.5 : 8.5}
+                      fontWeight={600}
+                      letterSpacing="0.08em"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      transform={`rotate(${mid}, ${labelPos.x}, ${labelPos.y})`}
+                      style={{ fontFamily: "system-ui, sans-serif" }}
+                    >
+                      {isGrand ? (
+                        <>
+                          <tspan x={labelPos.x} dy="-0.35em">
+                            GRAND
+                          </tspan>
+                          <tspan x={labelPos.x} dy="1.1em" fontSize={7}>
+                            USDT 100
+                          </tspan>
+                        </>
+                      ) : (
+                        label
+                      )}
+                    </text>
+                    {isGrand && (
+                      <text
+                        x={polarToCartesian(CX, CY, 48, mid).x}
+                        y={polarToCartesian(CX, CY, 48, mid).y}
+                        fill="#fcd535"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        transform={`rotate(${mid}, ${polarToCartesian(CX, CY, 48, mid).x}, ${polarToCartesian(CX, CY, 48, mid).y})`}
+                      >
+                        $
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
+              <circle
+                cx={CX}
+                cy={CY}
+                r={INNER_R + 1}
+                fill="none"
+                stroke="rgba(212,175,55,0.35)"
+                strokeWidth={1}
+              />
+            </svg>
           </div>
 
           <button
             type="button"
             onClick={handleSpin}
-            disabled={spinning}
-            className="absolute left-1/2 top-1/2 z-30 flex h-[4.25rem] w-[4.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-gradient-to-br from-[#fcd535] via-[#f0b90b] to-[#c99400] text-[11px] font-black text-[#1a1208] shadow-lg shadow-amber-500/40 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={spinning || wheelStatus?.canSpin === false}
+            className="absolute left-1/2 top-1/2 z-40 flex h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-[#fef08a]/40 bg-[radial-gradient(circle_at_30%_25%,#fff7c2_0%,#fcd535_35%,#d4a017_70%,#8a6508_100%)] text-[12px] font-bold tracking-wider text-[#1a1208] shadow-[0_0_24px_rgba(252,213,53,0.55),0_4px_16px_rgba(0,0,0,0.45)] transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-55"
           >
             {spinning ? t("h5Spinning") : t("h5Spin")}
           </button>
         </div>
 
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-[10px] leading-snug backdrop-blur-sm">
+          <p className="shrink-0 font-medium text-slate-400">{spinsRemainingLabel()}</p>
+          <p className="text-end text-slate-300">{t("h5WheelFooterPromo")}</p>
+        </div>
+
         {error && (
-          <p className="mt-4 text-center text-xs text-red-400" role="alert">
+          <p className="mt-3 text-center text-xs text-red-400" role="alert">
             {error}
           </p>
         )}
 
         {showWin && win && (
-          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/75 p-6 backdrop-blur-sm">
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
             <div className="text-center">
               <i
-                className="fa-solid fa-gift mb-3 text-4xl text-[#f0b90b] animate-bounce"
+                className="fa-solid fa-coins mb-3 text-4xl text-[#fcd535] animate-bounce"
                 aria-hidden
               />
-              <p className="text-sm font-semibold text-amber-200/90">
+              <p className="text-sm font-semibold tracking-wide text-amber-200/90">
                 {t("h5Congratulations")}
               </p>
-              <p className="mt-1 text-lg font-bold text-white">
-                {t("h5YouWon")}
-              </p>
-              <p className="mt-2 text-2xl font-black text-[#fcd535]">
+              <p className="mt-1 text-lg font-bold text-white">{t("h5YouWon")}</p>
+              <p className="mt-2 text-2xl font-black tracking-wider text-[#fcd535]">
                 {winLabel}
               </p>
               <button
@@ -243,7 +395,7 @@ export function LuckyWheelModal({ open, onClose }: Props) {
                   setShowWin(false);
                   onClose();
                 }}
-                className="mt-6 rounded-full bg-gradient-to-r from-[#f0b90b] to-[#fcd535] px-8 py-2.5 text-sm font-bold text-[#0a0e1a]"
+                className="mt-6 rounded-full border border-[#fcd535]/40 bg-gradient-to-r from-[#b8860b] via-[#f0b90b] to-[#fcd535] px-8 py-2.5 text-sm font-bold tracking-wide text-[#0a0e1a] shadow-lg shadow-amber-500/20"
               >
                 {t("h5ClaimReward")}
               </button>

@@ -778,10 +778,31 @@ export interface SpinWheelResult {
   success: true;
   prizeIndex: number;
   amount: number;
-  type: "USDT" | "DADB";
+  type: "USDT";
   label: string;
+  grand?: boolean;
   walletBalance: number;
   customTokenBalance: number;
+  spinsRemaining: number;
+}
+
+export interface WheelStatusResult {
+  success: true;
+  spinsRemaining: number;
+  maxSpinsPerDay: number;
+  canSpin: boolean;
+  nextSpinAt: string | null;
+  prizes: Array<{
+    index: number;
+    amount: number;
+    type: "USDT";
+    label: string;
+    grand: boolean;
+  }>;
+}
+
+export function fetchWheelStatus() {
+  return request<WheelStatusResult>("/api/rewards/wheel-status");
 }
 
 export function spinLuckyWheel() {
