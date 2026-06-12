@@ -4,6 +4,8 @@ const { decimalToNumber } = require("../lib/userMapper.cjs");
 const { getTradeSessionState, TWENTY_FOUR_HOURS_MS } = require("../strategies.cjs");
 const { computeDailyProfit } = require("../lib/strategyRoi.cjs");
 const { distributeReferralCommissions } = require("../teamCommission.cjs");
+const { splitDailyProfit } = require("../lib/taxHoliday.cjs");
+const { creditPlatformTax } = require("../lib/platformRevenue.cjs");
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -41,10 +43,11 @@ async function settleUserTradePayout(userRow, tx) {
   });
   if (session.active) return { settled: false };
 
-  const dailyProfit = computeDailyProfit(locked, userRow.activeStrategy);
+  const grossDailyProfit = computeDailyProfit(locked, userRow.activeStrategy);
+  const split = splitDailyProfit(userRow, grossDailyProfit);
   const wallet = decimalToNumber(userRow.walletBalance);
-  const newWallet = trunc6(wallet + locked + dailyProfit);
-  const monthlyPatch = normalizeMonthlyProceeds(userRow, dailyProfit);
+  const newWallet = trunc6(wallet + locked + split.userShare);
+  const monthlyPatch = normalizeMonthlyProceeds(userRow, split.userShare);
 
   const lastTrade = await db.trade.findFirst({
     where: { userId: userRow.id },
@@ -63,10 +66,14 @@ async function settleUserTradePayout(userRow, tx) {
     },
   });
 
-  if (dailyProfit > 0) {
+  if (split.platformShare > 0) {
+    await creditPlatformTax(split.platformShare, db);
+  }
+
+  if (split.userShare > 0) {
     await distributeReferralCommissions(
       userRow.id,
-      dailyProfit,
+      split.userShare,
       lastTrade?.id ?? null,
       db
     );
@@ -75,7 +82,10 @@ async function settleUserTradePayout(userRow, tx) {
   return {
     settled: true,
     userId: userRow.id,
-    dailyProfit,
+    dailyProfit: split.grossProfit,
+    userProfit: split.userShare,
+    platformProfit: split.platformShare,
+    taxFree: split.taxFree,
     newWalletBalance: newWallet,
   };
 }
@@ -98,6 +108,9 @@ async function processDuePayouts() {
       tradeSessionEndsAt: true,
       monthlyTradingProceeds: true,
       proceedsPeriodStart: true,
+      isInvited: true,
+      taxFreeUntil: true,
+      hasActivatedBonusStrategy: true,
     },
   });
 

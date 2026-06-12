@@ -6,6 +6,7 @@ const {
 } = require("./lib/userMapper.cjs");
 const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
 const { allocateUniqueReferralCode } = require("./lib/referralCodeGenerator.cjs");
+const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
 
 const userInclude = {
   deposits: { orderBy: { createdAt: "desc" } },
@@ -31,13 +32,15 @@ async function getOrCreateUser(userId, extras = {}) {
     const uid = extras.uid || (await allocateUniqueUid());
     const referralCode =
       extras.referralCode || (await allocateUniqueReferralCode());
+    const referredById = extras.referredBy || extras.referredById || null;
     row = await prisma.user.create({
       data: {
         id: userId,
         uid,
         displayName: extras.displayName || null,
         referralCode,
-        referredById: extras.referredBy || extras.referredById || null,
+        referredById,
+        ...(referredById ? inviteRegistrationTaxFields() : {}),
       },
       include: userInclude,
     });
@@ -177,6 +180,7 @@ async function registerUser(userId, { referredBy } = {}) {
       uid,
       referralCode,
       referredById: referredBy || null,
+      ...(referredBy ? inviteRegistrationTaxFields() : {}),
     },
     include: userInclude,
   });

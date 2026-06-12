@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatedSafeBox } from "../components/h5/AnimatedSafeBox";
 import { LockboxInfoModal } from "../components/h5/LockboxInfoModal";
+import { TaxHolidayStatusBanner } from "../components/TaxHolidayStatusBanner";
 import { useH5Portfolio } from "../context/H5PortfolioContext";
 import { useLocale } from "../i18n/LocaleContext";
 
@@ -37,6 +38,8 @@ export default function H5Assets() {
   return (
     <div className="space-y-4 pb-4 text-white">
       <h1 className="text-center text-lg font-bold">{t("navAssets")}</h1>
+
+      <TaxHolidayStatusBanner />
 
       <section className="rounded-2xl bg-[#fdfcf0] p-4 text-amber-950 shadow-xl dark:bg-gradient-to-b dark:from-[#1a1510] dark:to-[#121820] dark:text-white">
         <p className="text-center text-xs text-amber-900/70 dark:text-amber-200/70">

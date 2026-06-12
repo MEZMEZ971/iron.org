@@ -94,6 +94,13 @@ model User {
   /// Last authenticated interaction (trade, deposit intent, withdrawal, login, etc.)
   lastActivityAt DateTime @default(now())
 
+  /// End of current invite tax-free profit window (100% user share)
+  taxFreeUntil              DateTime?
+  /// One-time +20 day tax extension after first strategy activation
+  hasActivatedBonusStrategy   Boolean   @default(false)
+  /// Registered via valid referral / invitation link
+  isInvited                 Boolean   @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -256,4 +263,11 @@ model WithdrawalRecord {
   @@index([userId])
   @@index([userId, createdAt])
   @@index([status])
+}
+
+/// Cumulative platform share from expired tax-holiday profit splits (40% pool)
+model PlatformRevenueLedger {
+  id             String   @id @default("main")
+  totalCollected Decimal  @default(0) @db.Decimal(18, 6)
+  updatedAt      DateTime @updatedAt
 }

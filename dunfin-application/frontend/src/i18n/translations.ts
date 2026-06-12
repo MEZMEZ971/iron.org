@@ -131,6 +131,12 @@ const en = {
     txStatusCompleted: "Completed",
     txStatusRejected: "Rejected",
     txStatusLocked: "Locked",
+    taxHolidayActive:
+      "Tax-Free Period Active: {days} Days Remaining (100% Profits)",
+    taxHolidayStandardSplit:
+      "Account Status: Standard Split Active (60% You / 40% Platform)",
+    taxHolidayStrategyPromo:
+      "🚀 Open a new strategy now to instantly unlock an extra 20 Days of Tax-Free trading!",
     commission: "Commission",
     profileMenu: "Profile",
     profileCertification: "Certification Center",
@@ -412,6 +418,12 @@ const ar = {
     txStatusCompleted: "مكتمل",
     txStatusRejected: "مرفوض",
     txStatusLocked: "مقفل",
+    taxHolidayActive:
+      "فترة معفاة من الضرائب نشطة: {days} يومًا متبقيًا (100% أرباح)",
+    taxHolidayStandardSplit:
+      "حالة الحساب: تقسيم قياسي نشط (60% لك / 40% للمنصة)",
+    taxHolidayStrategyPromo:
+      "🚀 افتح استراتيجية جديدة الآن لفتح 20 يومًا إضافيًا من التداول المعفى من الضرائب!",
     commission: "عمولة",
     profileMenu: "الملف الشخصي",
     profileCertification: "مركز التوثيق",

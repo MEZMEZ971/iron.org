@@ -226,7 +226,10 @@ export interface TradeEarnings {
   totalTransactionProceeds: number;
   proceedsPeriodEndsAt: string;
   totalIncomeToBeDistributed: number;
+  grossIncomeToBeDistributed?: number;
   todayPendingEarnings: number;
+  taxHolidayActive?: boolean;
+  userProfitSharePercent?: number;
   teamCommissions: {
     dailyReferralEarnings: number;
     monthlyReferralEarnings: number;
@@ -323,6 +326,14 @@ export interface UserProfile {
   transactions: TransactionRow[];
   assets: AssetRow[];
   pendingWithdrawals?: number;
+  isInvited?: boolean;
+  hasActivatedBonusStrategy?: boolean;
+  taxFreeUntil?: string | null;
+  taxHolidayActive?: boolean;
+  taxHolidayDaysRemaining?: number;
+  profitShareMode?: "TAX_FREE" | "STANDARD_SPLIT";
+  userProfitSharePercent?: number;
+  platformProfitSharePercent?: number;
 }
 
 /** Authenticated profile for the current JWT subject */

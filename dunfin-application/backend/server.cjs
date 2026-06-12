@@ -49,6 +49,7 @@ const {
   updateUserProfile,
 } = require("./profileUpdate.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
+const { buildTaxHolidayProfile } = require("./lib/taxHoliday.cjs");
 const {
   getWithdrawPreflight,
   listWithdrawals,
@@ -596,6 +597,11 @@ async function buildUserProfileResponse(userId) {
     transactions,
     assets: buildAssetLedger(available, locked, pendingWithdrawals),
     pendingWithdrawals: trunc6(pendingWithdrawals),
+    ...buildTaxHolidayProfile({
+      isInvited: user.isInvited,
+      hasActivatedBonusStrategy: user.hasActivatedBonusStrategy,
+      taxFreeUntil: user.taxFreeUntil,
+    }),
   };
 }
 

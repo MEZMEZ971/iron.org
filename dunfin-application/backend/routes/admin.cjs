@@ -5,6 +5,7 @@ const {
   getActivityAnalytics,
   dispatchWakeUpNotifications,
 } = require("../lib/userActivity.cjs");
+const { getPlatformTaxCollected } = require("../lib/platformRevenue.cjs");
 
 const PUBLIC_USER_SELECT = {
   id: true,
@@ -83,12 +84,16 @@ async function getAdminStats() {
 
   const totalLiquidity =
     trunc6(walletAgg._sum.walletBalance) + trunc6(walletAgg._sum.lockedCapital);
+  const profitShareTaxCollected = await getPlatformTaxCollected();
 
   return {
     totalManagedLiquidity: trunc6(totalLiquidity),
     totalCumulativeDeposits: trunc6(depositAgg._sum.amount),
     totalSettledWithdrawals: trunc6(withdrawalCompleted._sum.netAmount),
-    totalPlatformRevenue: trunc6(feeAgg._sum.fee),
+    totalPlatformRevenue: trunc6(
+      trunc6(feeAgg._sum.fee) + profitShareTaxCollected
+    ),
+    profitShareTaxCollected,
     pendingWithdrawalCount: await prisma.withdrawalRecord.count({
       where: { status: { in: PENDING_WITHDRAW_STATUSES } },
     }),

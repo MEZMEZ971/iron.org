@@ -3,6 +3,7 @@ const { trunc6 } = require("./lib/formatNumbers.cjs");
 const { decimalToNumber } = require("./lib/userMapper.cjs");
 const { getCooldownState } = require("./strategies.cjs");
 const { computeDailyProfit } = require("./lib/strategyRoi.cjs");
+const { splitDailyProfit } = require("./lib/taxHoliday.cjs");
 const {
   processDuePayouts,
   startOfCalendarMonth,
@@ -23,6 +24,9 @@ async function getTradeEarnings(userId) {
       lastTradeTime: true,
       monthlyTradingProceeds: true,
       proceedsPeriodStart: true,
+      isInvited: true,
+      taxFreeUntil: true,
+      hasActivatedBonusStrategy: true,
     },
   });
 
@@ -38,9 +42,11 @@ async function getTradeEarnings(userId) {
     user.lastTradeTime ? user.lastTradeTime.toISOString() : null
   );
 
-  const pendingDistribution = cooldown.onCooldown
+  const grossPending = cooldown.onCooldown
     ? computeDailyProfit(lockedCapital, user.activeStrategy)
     : 0;
+  const pendingSplit = splitDailyProfit(user, grossPending);
+  const pendingDistribution = pendingSplit.userShare;
 
   const dayStart = new Date();
   dayStart.setHours(0, 0, 0, 0);
@@ -90,7 +96,10 @@ async function getTradeEarnings(userId) {
     totalTransactionProceeds,
     proceedsPeriodEndsAt: periodEndsAt,
     totalIncomeToBeDistributed: trunc6(pendingDistribution),
+    grossIncomeToBeDistributed: trunc6(grossPending),
     todayPendingEarnings: trunc6(todayPendingEarnings),
+    taxHolidayActive: pendingSplit.taxFree,
+    userProfitSharePercent: pendingSplit.taxFree ? 100 : 60,
     teamCommissions: {
       dailyReferralEarnings: trunc6(decimalToNumber(dailyReferralAgg._sum.amount)),
       monthlyReferralEarnings: trunc6(

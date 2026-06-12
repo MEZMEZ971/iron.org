@@ -4,6 +4,7 @@ import { RoiProfitSimulator } from "../components/h5/RoiProfitSimulator";
 import { MarqueeBanner } from "../components/MarqueeBanner";
 import { MiniWatchlist } from "../components/MiniWatchlist";
 import { QuickActionGrid } from "../components/QuickActionGrid";
+import { TaxHolidayStatusBanner } from "../components/TaxHolidayStatusBanner";
 import { useMarketStream } from "../hooks/useMarketStream";
 
 /** H5 dashboard home — quotes landing + gamification widgets */
@@ -16,6 +17,7 @@ export default function Home() {
         <FomoUsersBanner variant="hero" />
       </div>
       <MarqueeBanner />
+      <TaxHolidayStatusBanner />
       <QuickActionGrid />
       <RoiProfitSimulator />
       <AffiliatePromoBanner />
