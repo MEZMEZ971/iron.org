@@ -68,7 +68,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
       }
       await load();
     } catch (e) {
-      onNotice(e instanceof Error ? e.message : "Error");
+      onNotice(e instanceof Error ? e.message : t("errorGeneric"));
     } finally {
       setWaking(false);
     }

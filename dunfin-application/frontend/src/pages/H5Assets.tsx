@@ -85,13 +85,7 @@ export default function H5Assets() {
               <span className="text-emerald-400" aria-hidden>
                 ●{" "}
               </span>
-              <span className="text-amber-500">
-                {t("h5LockboxSecuredBadge")}
-              </span>
-              <span className="text-teal-400"> / </span>
-              <span className="font-arabic text-amber-500" dir="rtl">
-                محمي بالكامل في خزنة الضمان
-              </span>
+              <span className="text-amber-500">{t("h5LockboxSecuredBadge")}</span>
             </p>
 
             <div className="flex items-start gap-2">

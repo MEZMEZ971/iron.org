@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       await refresh();
       flash(t("adminApproveClear"));
     } catch (e) {
-      flash(e instanceof Error ? e.message : "Error");
+      flash(e instanceof Error ? e.message : t("errorGeneric"));
     } finally {
       setBusyId(null);
     }
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
       setRejectReason("");
       await refresh();
     } catch (e) {
-      flash(e instanceof Error ? e.message : "Error");
+      flash(e instanceof Error ? e.message : t("errorGeneric"));
     } finally {
       setBusyId(null);
     }
@@ -158,7 +158,7 @@ export default function AdminDashboard() {
       await adminKycAction(id, { action: "approve" });
       await refresh();
     } catch (e) {
-      flash(e instanceof Error ? e.message : "Error");
+      flash(e instanceof Error ? e.message : t("errorGeneric"));
     } finally {
       setBusyId(null);
     }

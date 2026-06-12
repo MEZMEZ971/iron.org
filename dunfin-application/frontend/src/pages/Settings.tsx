@@ -25,11 +25,13 @@ function ModalShell({
   onClose,
   children,
   footer,
+  closeLabel,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  closeLabel: string;
 }) {
   return (
     <div
@@ -41,7 +43,7 @@ function ModalShell({
         type="button"
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={closeLabel}
       />
       <div
         className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0e1a]/95 shadow-2xl backdrop-blur-xl"
@@ -76,6 +78,8 @@ function PasswordField({
   onToggleVisible,
   inputMode,
   maxLength,
+  showPasswordLabel,
+  hidePasswordLabel,
 }: {
   label: string;
   value: string;
@@ -84,6 +88,8 @@ function PasswordField({
   onToggleVisible: () => void;
   inputMode?: "numeric" | "text";
   maxLength?: number;
+  showPasswordLabel: string;
+  hidePasswordLabel: string;
 }) {
   return (
     <div className={`${PANEL} flex items-center gap-3 px-4 py-3`}>
@@ -103,7 +109,7 @@ function PasswordField({
         type="button"
         onClick={onToggleVisible}
         className="shrink-0 text-df-faint hover:text-[#f0b90b]"
-        aria-label={visible ? "Hide password" : "Show password"}
+        aria-label={visible ? hidePasswordLabel : showPasswordLabel}
       >
         <i
           className={`fa-solid ${visible ? "fa-eye-slash" : "fa-eye"} text-sm`}
@@ -274,6 +280,8 @@ export default function Settings() {
             onToggleVisible={() => setShowOld((v) => !v)}
             inputMode={isPayment ? "numeric" : "text"}
             maxLength={isPayment ? 6 : undefined}
+            showPasswordLabel={t("settingsShowPassword")}
+            hidePasswordLabel={t("settingsHidePassword")}
           />
           <PasswordField
             label={t("settingsNewPasswordPlaceholder")}
@@ -283,6 +291,8 @@ export default function Settings() {
             onToggleVisible={() => setShowNew((v) => !v)}
             inputMode={isPayment ? "numeric" : "text"}
             maxLength={isPayment ? 6 : undefined}
+            showPasswordLabel={t("settingsShowPassword")}
+            hidePasswordLabel={t("settingsHidePassword")}
           />
         </div>
 
@@ -383,6 +393,7 @@ export default function Settings() {
       {emailOpen && (
         <ModalShell
           title={t("settingsEmailModalTitle")}
+          closeLabel={t("close")}
           onClose={() => {
             setEmailOpen(false);
             setError(null);
@@ -452,6 +463,7 @@ export default function Settings() {
       {nicknameOpen && (
         <ModalShell
           title={t("settingsNicknameModalTitle")}
+          closeLabel={t("close")}
           onClose={() => {
             setNicknameOpen(false);
             setError(null);

@@ -4,8 +4,10 @@ import {
   fetchTeamAnalytics,
   type TeamAnalytics,
 } from "../api/client";
+import { useLocale } from "../i18n/LocaleContext";
 
 export function useTeamAnalytics(userId: string) {
+  const { t } = useLocale();
   const [data, setData] = useState<TeamAnalytics | null>(null);
   const [loading, setLoading] = useState(Boolean(userId));
   const [error, setError] = useState<string | null>(null);
@@ -25,13 +27,13 @@ export function useTeamAnalytics(userId: string) {
         setError(e.message);
       } else {
         setError(
-          e instanceof Error ? e.message : "Failed to load team analytics"
+          e instanceof Error ? e.message : t("errorLoadTeam")
         );
       }
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     if (!userId) {

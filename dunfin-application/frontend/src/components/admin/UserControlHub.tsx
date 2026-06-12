@@ -126,11 +126,8 @@ export function UserControlHub({ onNotice }: Props) {
       setCreditAmount("");
       onNotice(t("adminCreditSuccess"));
     } catch (error) {
-      console.error("Balance adjustment pipeline failure:", error);
       onNotice(
-        error instanceof Error
-          ? error.message
-          : "Failed to commit balance adjustment on backend server."
+        error instanceof Error ? error.message : t("adminBalanceAdjustFailed")
       );
       try {
         const rollback = await fetchTargetUserAdminLookup(user.uid);
@@ -169,11 +166,8 @@ export function UserControlHub({ onNotice }: Props) {
       setDebitAmount("");
       onNotice(t("adminDebitSuccess"));
     } catch (error) {
-      console.error("Balance adjustment pipeline failure:", error);
       onNotice(
-        error instanceof Error
-          ? error.message
-          : "Failed to commit balance adjustment on backend server."
+        error instanceof Error ? error.message : t("adminBalanceAdjustFailed")
       );
       try {
         const rollback = await fetchTargetUserAdminLookup(user.uid);
@@ -198,7 +192,7 @@ export function UserControlHub({ onNotice }: Props) {
         nextActive ? t("adminAccountActivated") : t("adminAccountSuspended")
       );
     } catch (err) {
-      onNotice(err instanceof Error ? err.message : "Error");
+      onNotice(err instanceof Error ? err.message : t("errorGeneric"));
     } finally {
       setBusy(null);
     }

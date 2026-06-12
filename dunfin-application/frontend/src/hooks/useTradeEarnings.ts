@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchTradeEarnings, type TradeEarnings } from "../api/client";
+import { useLocale } from "../i18n/LocaleContext";
 
 export function useTradeEarnings(userId: string) {
+  const { t } = useLocale();
   const [earnings, setEarnings] = useState<TradeEarnings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,11 +15,11 @@ export function useTradeEarnings(userId: string) {
       const data = await fetchTradeEarnings(userId);
       setEarnings(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load earnings");
+      setError(e instanceof Error ? e.message : t("errorLoadEarnings"));
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     refresh();

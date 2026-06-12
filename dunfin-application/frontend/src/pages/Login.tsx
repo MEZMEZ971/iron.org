@@ -86,7 +86,7 @@ export default function Login() {
               className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-amber-500 focus:ring-1 focus:ring-amber-500 focus:ring-offset-slate-900 disabled:opacity-50"
             />
             <span className="text-sm text-slate-300 transition-colors duration-200 group-hover:text-white">
-              Remember me
+              {t("authRememberMe")}
             </span>
           </label>
         </div>

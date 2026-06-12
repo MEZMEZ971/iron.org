@@ -6,12 +6,14 @@ import {
 } from "../api/client";
 import { getAuthenticatedUserId } from "../lib/authStorage";
 import { subscribeWalletRefresh } from "../lib/walletSync";
+import { useLocale } from "../i18n/LocaleContext";
 
 export function getUserId(): string {
   return getAuthenticatedUserId() || "";
 }
 
 export function useTradeStatus(userId: string) {
+  const { t } = useLocale();
   const [status, setStatus] = useState<TradeStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,12 +29,12 @@ export function useTradeStatus(userId: string) {
         const data = await fetchTradeStatus(userId);
         setStatus(data);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load status");
+        setError(e instanceof Error ? e.message : t("errorLoadStatus"));
       } finally {
         setLoading(false);
       }
     },
-    [userId]
+    [userId, t]
   );
 
   useEffect(() => {

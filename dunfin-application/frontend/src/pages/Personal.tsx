@@ -2,6 +2,7 @@ import { useUser } from "../context/UserContext";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TransactionRow } from "../api/client";
+import { formatAmount, safeNumber } from "../lib/formatNumbers";
 
 function txStatusLabel(
   status: string,
@@ -36,9 +37,7 @@ function txStatusClass(status: string) {
 }
 
 function formatTxAmount(tx: TransactionRow) {
-  const value = tx.amount.toLocaleString(undefined, {
-    maximumFractionDigits: 6,
-  });
+  const value = formatAmount(tx.amount, undefined, { maximumFractionDigits: 6 });
   if (tx.amount > 0) return `+${value}`;
   return value;
 }
@@ -54,13 +53,13 @@ export default function Personal() {
   const { userId, displayName } = useUser();
   const { profile, loading, error } = useUserProfile(userId);
 
-  const fund = profile?.fundAccount ?? 0;
-  const trading = profile?.tradingAccount ?? 0;
+  const fund = safeNumber(profile?.fundAccount);
+  const trading = safeNumber(profile?.tradingAccount);
   const total = fund + trading || 1;
   const fundPct = (fund / total) * 100;
 
-  const todayPnl = profile?.todayPnl ?? 0;
-  const totalPnl = profile?.totalPnl ?? 0;
+  const todayPnl = safeNumber(profile?.todayPnl);
+  const totalPnl = safeNumber(profile?.totalPnl);
 
   return (
     <div className="space-y-4 pb-4">
@@ -99,10 +98,10 @@ export default function Personal() {
         </div>
         <div className="mt-2 flex justify-between text-xs">
           <span className="text-[#00d4aa]">
-            {t("fundAccount")}: ${fund.toLocaleString()}
+            {t("fundAccount")}: ${formatAmount(fund)}
           </span>
           <span className="text-[#f0b90b]">
-            {t("tradingAccount")}: ${trading.toLocaleString()}
+            {t("tradingAccount")}: ${formatAmount(trading)}
           </span>
         </div>
       </div>
@@ -130,13 +129,13 @@ export default function Personal() {
                 <tr key={a.symbol} className="border-t border-df hover:bg-df-hover">
                   <td className="px-3 py-2.5 font-semibold text-df">{a.symbol}</td>
                   <td className="px-2 py-2.5 text-end text-df-muted">
-                    {a.total.toLocaleString()}
+                    {formatAmount(a.total)}
                   </td>
                   <td className="px-2 py-2.5 text-end text-[#00d4aa]">
-                    {a.available.toLocaleString()}
+                    {formatAmount(a.available)}
                   </td>
                   <td className="px-3 py-2.5 text-end text-[#f0b90b]">
-                    {a.freeze.toLocaleString()}
+                    {formatAmount(a.freeze)}
                   </td>
                 </tr>
               ))}
@@ -200,7 +199,7 @@ function PnlCard({
           positive ? "text-[#00d4aa]" : "text-[#ef4444]"
         }`}
       >
-        {positive ? "+" : ""}${value.toLocaleString()}
+        {positive ? "+" : ""}${formatAmount(value)}
       </p>
     </div>
   );

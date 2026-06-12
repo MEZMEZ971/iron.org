@@ -1,4 +1,5 @@
 import { useLocale } from "../../i18n/LocaleContext";
+import { formatUsdt, safeNumber } from "../../lib/formatNumbers";
 
 interface Props {
   totalCommission: number;
@@ -39,7 +40,7 @@ export function TeamMetricsBar({
   newRegistrationsToday,
 }: Props) {
   const { t } = useLocale();
-  const usdt = (n: number) => `${n.toFixed(6)} USDT`;
+  const usdt = (n: number) => `${formatUsdt(n, undefined, 6)} USDT`;
 
   return (
     <div className="space-y-2">
@@ -56,10 +57,10 @@ export function TeamMetricsBar({
       </div>
       <div className="grid grid-cols-3 gap-2">
         <MetricCard label={t("h5DailyVolume")} value={usdt(dailyVolume)} />
-        <MetricCard label={t("h5TeamHeadcount")} value={String(headcount)} />
+        <MetricCard label={t("h5TeamHeadcount")} value={String(safeNumber(headcount))} />
         <MetricCard
           label={t("h5NewRegistrationToday")}
-          value={String(newRegistrationsToday)}
+          value={String(safeNumber(newRegistrationsToday))}
           accent
         />
       </div>

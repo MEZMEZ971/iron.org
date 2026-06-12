@@ -39,7 +39,7 @@ export default function Certification() {
       setBackFile(null);
       await refresh();
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : "Submission failed");
+      setSubmitError(e instanceof Error ? e.message : t("kycSubmitFailed"));
     } finally {
       setSubmitting(false);
     }

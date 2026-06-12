@@ -4,12 +4,13 @@ import {
   type AdminFinanceUserRow,
 } from "../../api/client";
 import { useLocale } from "../../i18n/LocaleContext";
+import { formatUsdt as formatUsdtSafe } from "../../lib/formatNumbers";
 
 const PANEL =
   "rounded-xl border border-white/[0.06] bg-[rgba(26,31,46,0.65)] backdrop-blur-md transition-all duration-300 ease-in-out";
 
 function formatUsdt(value: number, locale: string) {
-  return value.toLocaleString(locale, { maximumFractionDigits: 6 });
+  return formatUsdtSafe(value, locale, 6);
 }
 
 type Props = {

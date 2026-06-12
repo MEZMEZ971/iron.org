@@ -9,9 +9,11 @@ import {
 import { getStoredToken } from "../lib/authStorage";
 import { subscribeWalletRefresh } from "../lib/walletSync";
 import { useUser } from "../context/UserContext";
+import { useLocale } from "../i18n/LocaleContext";
 
 export function useUserProfile(userId: string) {
   const { uid } = useUser();
+  const { t } = useLocale();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(Boolean(userId));
   const [error, setError] = useState<string | null>(null);
@@ -38,13 +40,13 @@ export function useUserProfile(userId: string) {
       if (e instanceof ApiNetworkError) {
         setError(e.message);
       } else {
-        setError(e instanceof Error ? e.message : "Failed to load profile");
+        setError(e instanceof Error ? e.message : t("errorLoadProfile"));
       }
     } finally {
       setLoading(false);
     }
   },
-    [userId]
+    [userId, t]
   );
 
   useEffect(() => {
