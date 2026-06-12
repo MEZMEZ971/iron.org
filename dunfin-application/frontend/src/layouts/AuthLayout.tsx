@@ -1,7 +1,7 @@
 ﻿import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { FomoUsersBanner } from "../components/FomoUsersBanner";
-import { IronLogo } from "../components/layout/IronLogo";
+import { IronBrandLockup, IronLogo } from "../components/layout/IronLogo";
 import { LanguageSwitcherOverlay } from "../i18n/LanguageSwitcherOverlay";
 import { useLocale } from "../i18n/LocaleContext";
 
@@ -39,6 +39,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
 
       <div className="flex flex-1 items-center justify-center px-4 pb-10">
         <div className="relative z-10 w-full max-w-md">
+          <IronBrandLockup layout="stack" className="mb-6" />
           <FomoUsersBanner variant="auth" />
 
           <div className="glass-card mb-6 rounded-2xl p-6 shadow-lg transition-all duration-300 ease-in-out">

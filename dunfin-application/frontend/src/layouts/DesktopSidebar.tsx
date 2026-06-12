@@ -1,6 +1,6 @@
 ﻿import { NavLink, useNavigate } from "react-router-dom";
 import { AppDownloadLinks } from "../components/layout/ApkDownloadLink";
-import { IronLogo } from "../components/layout/IronLogo";
+import { IronBrandLockup } from "../components/layout/IronLogo";
 import { ProThemeToggle } from "../components/theme/ProThemeToggle";
 import { DESKTOP_SIDEBAR_NAV } from "../config/navigation";
 import { useAuth } from "../context/AuthContext";
@@ -47,13 +47,9 @@ export function DesktopSidebar() {
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="flex items-center gap-3 rounded-xl text-start transition-all duration-300 ease-in-out hover:opacity-90"
+          className="rounded-xl text-start transition-all duration-300 ease-in-out hover:opacity-90"
         >
-          <IronLogo size={44} />
-          <div className="min-w-0">
-            <p className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">{t("brand")}</p>
-            <p className="text-[10px] leading-tight text-slate-500 dark:text-slate-400">{t("tagline")}</p>
-          </div>
+          <IronBrandLockup layout="row" />
         </button>
       </div>
 

@@ -212,7 +212,7 @@ export const h5Ar = {
   h5ClaimReward: "رائع!",
   h5SpinNotFunded: "قم بتمويل محفظتك لفتح العجلة اليومية.",
   h5Close: "إغلاق",
-  h5AvailableBalance: "الرصيد المتاح للعب",
+  h5AvailableBalance: "رأس المال المتاح للتداول",
   h5AvailableBalanceSub: "USDT سائل للتداول أو السحب الفوري",
   h5LockedStrategyCapital: "رأس المال قيد التداول",
   h5LockboxSecuredBadge: "محمي بالكامل في خزنة الضمان",
