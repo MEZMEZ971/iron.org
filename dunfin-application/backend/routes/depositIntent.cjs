@@ -1,5 +1,6 @@
 const { prisma } = require("../lib/prisma.cjs");
 const { trunc6 } = require("../lib/formatNumbers.cjs");
+const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
 
 const MIN_DEPOSIT_AMOUNT = 5;
 
@@ -10,19 +11,16 @@ async function logDepositIntent(req, res) {
     const currency = String(req.body?.currency || "").trim();
 
     if (!Number.isFinite(amount) || amount < MIN_DEPOSIT_AMOUNT) {
-      return res.status(400).json({
-        success: false,
-        code: "MIN_AMOUNT",
-        error: `Minimum deposit amount is ${MIN_DEPOSIT_AMOUNT} USDT`,
-      });
+      return sendClientError(
+        res,
+        "MIN_AMOUNT",
+        `Minimum deposit amount is ${MIN_DEPOSIT_AMOUNT} USDT`,
+        400
+      );
     }
 
     if (!currency) {
-      return res.status(400).json({
-        success: false,
-        code: "INVALID_CURRENCY",
-        error: "currency is required",
-      });
+      return sendClientError(res, "INVALID_CURRENCY", "currency is required", 400);
     }
 
     const record = await prisma.transactionRecord.create({
@@ -43,7 +41,7 @@ async function logDepositIntent(req, res) {
       status: record.status,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return sendApiError(res, error, { success: false });
   }
 }
 

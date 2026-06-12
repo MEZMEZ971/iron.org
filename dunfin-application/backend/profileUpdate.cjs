@@ -5,6 +5,33 @@ const { mapPublicUser, normalizeEmail } = require("./authService.cjs");
 const BCRYPT_ROUNDS = 10;
 const OTP_TTL_MS = 10 * 60 * 1000;
 
+const BLOCKED_SELF_SERVICE_FIELDS = new Set([
+  "isInvited",
+  "taxFreeUntil",
+  "hasActivatedBonusStrategy",
+  "walletBalance",
+  "onChainBalance",
+  "lockedCapital",
+  "tradingCapital",
+  "role",
+  "referredById",
+  "referralCode",
+  "uid",
+  "accountActive",
+  "monthlyTradingProceeds",
+  "proceedsPeriodStart",
+]);
+
+function rejectPrivilegedFields(body) {
+  for (const key of BLOCKED_SELF_SERVICE_FIELDS) {
+    if (body[key] !== undefined) {
+      const err = new Error("This field cannot be changed from the client");
+      err.code = "FORBIDDEN_FIELD";
+      throw err;
+    }
+  }
+}
+
 /** @type {Map<string, { code: string, email: string, expires: number }>} */
 const emailOtpByUser = new Map();
 
@@ -45,6 +72,7 @@ async function sendEmailVerificationCode(userId, email) {
 }
 
 async function updateUserProfile(userId, body) {
+  rejectPrivilegedFields(body || {});
   const data = {};
   const row = await prisma.user.findUnique({ where: { id: userId } });
   if (!row) {

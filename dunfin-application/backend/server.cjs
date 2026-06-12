@@ -51,6 +51,13 @@ const {
 const { trunc6 } = require("./lib/formatNumbers.cjs");
 const { buildTaxHolidayProfile } = require("./lib/taxHoliday.cjs");
 const {
+  sendApiError,
+  sendClientError,
+  installProcessHandlers,
+  notFoundApiHandler,
+  errorMiddleware,
+} = require("./lib/apiErrors.cjs");
+const {
   getWithdrawPreflight,
   listWithdrawals,
   processWithdraw,
@@ -59,6 +66,7 @@ const { spinWheel } = require("./routes/rewards.cjs");
 const { logDepositIntent } = require("./routes/depositIntent.cjs");
 
 const app = express();
+installProcessHandlers();
 app.use(express.json());
 
 const DEFAULT_CORS_ORIGINS = [
@@ -112,9 +120,14 @@ app.get("/api/deposit/address", async (req, res) => {
   try {
     const userId = req.query.userId;
     const network = (req.query.network || "ERC20").toUpperCase();
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return sendClientError(res, "INVALID_REQUEST", "userId required", 400);
     if (!NETWORKS[network]) {
-      return res.status(400).json({ error: "Invalid network. Use ERC20, BEP20, or TRC20." });
+      return sendClientError(
+        res,
+        "INVALID_NETWORK",
+        "Invalid network. Use ERC20, BEP20, or TRC20.",
+        400
+      );
     }
 
     const result = await getDepositAddress(userId, network, depositClients());
@@ -123,15 +136,14 @@ app.get("/api/deposit/address", async (req, res) => {
     }
     res.json(result);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
 app.post("/api/deposit-address", async (req, res) => {
   try {
     const { userId, network = "ERC20" } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return sendClientError(res, "INVALID_REQUEST", "userId required", 400);
 
     const result = await getDepositAddress(
       userId,
@@ -150,8 +162,7 @@ app.post("/api/deposit-address", async (req, res) => {
       txHash: result.txHash,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -170,7 +181,7 @@ app.get("/api/balance/:address", async (req, res) => {
       raw: balance.toString(),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -186,7 +197,7 @@ app.post("/api/flush", async (req, res) => {
     await publicClient.waitForTransactionReceipt({ hash });
     res.json({ success: true, txHash: hash });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -231,18 +242,7 @@ app.post("/api/auth/register", async (req, res) => {
       user: result.user,
     });
   } catch (error) {
-    const status =
-      error.code === "USER_EXISTS" ||
-      error.code === "INVALID_USERNAME" ||
-      error.code === "INVALID_EMAIL" ||
-      error.code === "INVALID_PHONE" ||
-      error.code === "INVALID_PASSWORD"
-        ? 400
-        : error.code === "UID_EXHAUSTED" ||
-            error.code === "REFERRAL_CODE_EXHAUSTED"
-          ? 503
-          : 500;
-    res.status(status).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -250,19 +250,18 @@ app.post("/api/auth/login", async (req, res) => {
   try {
     const { identifier, password } = req.body;
     if (!identifier || !password) {
-      return res.status(400).json({ error: "identifier and password required" });
+      return sendClientError(
+        res,
+        "INVALID_REQUEST",
+        "identifier and password required",
+        400
+      );
     }
 
     const result = await loginUser({ identifier, password }, depositClients());
     res.json(result);
   } catch (error) {
-    const status =
-      error.code === "INVALID_CREDENTIALS"
-        ? 401
-        : error.code === "ACCOUNT_DEACTIVATED"
-          ? 403
-          : 500;
-    res.status(status).json({ error: error.message, code: error.code });
+    sendApiError(res, error);
   }
 });
 
@@ -270,22 +269,18 @@ app.get("/api/users", async (req, res) => {
   try {
     res.json(await db.getAllUsers());
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
 app.post("/api/users/register", async (req, res) => {
   try {
     const { userId, referredBy } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return sendClientError(res, "INVALID_REQUEST", "userId required", 400);
     const result = await db.registerUser(userId, { referredBy });
     res.json({ success: true, ...result });
   } catch (error) {
-    const status =
-      error.code === "REFERRER_NOT_FOUND" || error.code === "SELF_REFERRAL"
-        ? 400
-        : 500;
-    res.status(status).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -293,7 +288,7 @@ app.post("/api/users/:userId/sync-balance", async (req, res) => {
   try {
     const user = await syncWalletBalanceFromChain(req.params.userId);
     if (!user?.depositAddress) {
-      return res.status(404).json({ error: "User has no deposit address" });
+      return sendClientError(res, "NOT_FOUND", "User has no deposit address", 404);
     }
     res.json({
       success: true,
@@ -302,7 +297,7 @@ app.post("/api/users/:userId/sync-balance", async (req, res) => {
       lockedCapital: user.lockedCapital,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -312,7 +307,7 @@ app.post("/api/users/:userId/deposit", async (req, res) => {
     const user = await db.recordDeposit(req.params.userId, { amount, txHash });
     res.json({ success: true, user });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -321,7 +316,7 @@ app.get("/api/admin/me", adminRequired, async (req, res) => {
     const user = await getAdminSession(req.auth.userId);
     res.json({ success: true, user });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -329,7 +324,7 @@ app.get("/api/admin/stats", adminRequired, async (req, res) => {
   try {
     res.json(await getAdminStats());
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -338,7 +333,7 @@ app.get("/api/admin/withdrawals", adminRequired, async (req, res) => {
     const withdrawals = await listPendingWithdrawals();
     res.json({ withdrawals });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -347,10 +342,10 @@ app.post("/api/admin/withdrawals/:id/action", adminRequired, async (req, res) =>
     const result = await actOnWithdrawal(req.params.id, req.body);
     res.json(result);
   } catch (error) {
-    const client = new Set(["NOT_FOUND", "INVALID_STATE", "INVALID_ACTION"]);
-    res.status(client.has(error.code) ? 400 : 500).json({
-      error: error.message,
-      code: error.code,
+    sendApiError(res, error, {
+      status: ["NOT_FOUND", "INVALID_STATE", "INVALID_ACTION"].includes(error.code)
+        ? 400
+        : 500,
     });
   }
 });
@@ -360,7 +355,7 @@ app.get("/api/admin/kyc", adminRequired, async (req, res) => {
     const submissions = await listPendingKyc();
     res.json({ submissions });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -369,10 +364,10 @@ app.post("/api/admin/kyc/:id/action", adminRequired, async (req, res) => {
     const result = await actOnKyc(req.params.id, req.body);
     res.json(result);
   } catch (error) {
-    const client = new Set(["NOT_FOUND", "INVALID_STATE", "INVALID_ACTION"]);
-    res.status(client.has(error.code) ? 400 : 500).json({
-      error: error.message,
-      code: error.code,
+    sendApiError(res, error, {
+      status: ["NOT_FOUND", "INVALID_STATE", "INVALID_ACTION"].includes(error.code)
+        ? 400
+        : 500,
     });
   }
 });
@@ -397,10 +392,7 @@ app.get("/api/admin/users/lookup/:uid", adminRequired, async (req, res) => {
     const result = await lookupUserByUid(req.params.uid);
     res.json(result);
   } catch (error) {
-    res.status(adminClientErrorStatus(error.code)).json({
-      error: error.message,
-      code: error.code,
-    });
+    sendApiError(res, error, { status: adminClientErrorStatus(error.code) });
   }
 });
 
@@ -414,11 +406,7 @@ app.post("/api/admin/users/:uid/mutate-balance", adminRequired, async (req, res)
     );
     res.status(200).json(result);
   } catch (error) {
-    console.error("[admin] mutate-balance failed:", error);
-    res.status(adminClientErrorStatus(error.code)).json({
-      error: error.message,
-      code: error.code,
-    });
+    sendApiError(res, error, { status: adminClientErrorStatus(error.code) });
   }
 });
 
@@ -431,10 +419,7 @@ app.post("/api/admin/users/:uid/toggle-status", adminRequired, async (req, res) 
     );
     res.json(result);
   } catch (error) {
-    res.status(adminClientErrorStatus(error.code)).json({
-      error: error.message,
-      code: error.code,
-    });
+    sendApiError(res, error, { status: adminClientErrorStatus(error.code) });
   }
 });
 
@@ -443,7 +428,7 @@ app.get("/api/admin/analytics/activity", adminRequired, async (_req, res) => {
     const data = await getActivityAnalytics();
     res.json({ success: true, ...data });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    sendApiError(res, error, { status: 500, success: false });
   }
 });
 
@@ -453,7 +438,7 @@ app.get("/api/admin/finance/user-summary", adminRequired, async (req, res) => {
     const data = await getUserFinanceSummary({ search, page, limit });
     res.json({ success: true, ...data });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    sendApiError(res, error, { status: 500, success: false });
   }
 });
 
@@ -465,7 +450,7 @@ app.post(
       const result = await dispatchWakeUpNotifications({ skipRecentHours: 24 });
       res.json({ success: true, ...result });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      sendApiError(res, error, { status: 500, success: false });
     }
   }
 );
@@ -477,7 +462,7 @@ app.get("/api/wallet/withdraw/preflight", requireAuth, async (req, res) => {
     const data = await getWithdrawPreflight(req.auth.userId);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message, code: error.code });
+    sendApiError(res, error);
   }
 });
 
@@ -486,7 +471,7 @@ app.get("/api/wallet/withdrawals", requireAuth, async (req, res) => {
     const withdrawals = await listWithdrawals(req.auth.userId);
     res.json({ withdrawals });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -495,30 +480,7 @@ app.post("/api/wallet/withdraw", requireAuth, async (req, res) => {
     const result = await processWithdraw(req.auth.userId, req.body);
     res.json(result);
   } catch (error) {
-    const clientCodes = new Set([
-      "INVALID_CURRENCY",
-      "INVALID_NETWORK",
-      "INVALID_ADDRESS",
-      "MIN_AMOUNT",
-      "MAX_AMOUNT",
-      "INSUFFICIENT_BALANCE",
-      "PAYMENT_PASSWORD_REQUIRED",
-      "PAYMENT_PASSWORD_NOT_SET",
-      "INVALID_PAYMENT_PASSWORD",
-      "PAYMENT_PIN_REQUIRED",
-      "WRONG_PAYMENT_PIN",
-      "WRONG_PAYMENT_PASSWORD",
-      "USER_NOT_FOUND",
-    ]);
-    const status =
-      error.httpStatus ??
-      (error.code === "WRONG_PAYMENT_PASSWORD" ? 403 : null) ??
-      (clientCodes.has(error.code) ? 400 : 500);
-    res.status(status).json({
-      error: error.message,
-      code: error.code,
-      errorAr: error.errorAr ?? undefined,
-    });
+    sendApiError(res, error);
   }
 });
 
@@ -526,13 +488,11 @@ app.post("/api/users/profile/send-email-otp", requireAuth, async (req, res) => {
   try {
     const userId = req.auth.userId;
     const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "email required" });
+    if (!email) return sendClientError(res, "INVALID_REQUEST", "email required", 400);
     const result = await sendEmailVerificationCode(userId, email);
     res.json(result);
   } catch (error) {
-    const status =
-      error.code === "INVALID_EMAIL" || error.code === "EMAIL_TAKEN" ? 400 : 500;
-    res.status(status).json({ error: error.message, code: error.code });
+    sendApiError(res, error);
   }
 });
 
@@ -544,21 +504,7 @@ app.post("/api/users/profile/update", requireAuth, async (req, res) => {
     const user = await updateUserProfile(userId, req.body);
     res.json({ success: true, user });
   } catch (error) {
-    const clientCodes = new Set([
-      "INVALID_EMAIL",
-      "INVALID_NICKNAME",
-      "INVALID_PASSWORD",
-      "INVALID_PAYMENT_PIN",
-      "INVALID_OTP",
-      "OTP_REQUIRED",
-      "EMAIL_TAKEN",
-      "WRONG_PASSWORD",
-      "EMPTY_UPDATE",
-      "NO_PASSWORD",
-      "USER_NOT_FOUND",
-    ]);
-    const status = clientCodes.has(error.code) ? 400 : 500;
-    res.status(status).json({ error: error.message, code: error.code });
+    sendApiError(res, error);
   }
 });
 
@@ -610,7 +556,7 @@ app.get("/api/users/profile", requireAuth, async (req, res) => {
   try {
     res.json(await buildUserProfileResponse(req.auth.userId));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -619,7 +565,7 @@ app.post("/api/users/profile/sync-balance", requireAuth, async (req, res) => {
     const userId = req.auth.userId;
     const user = await syncWalletBalanceFromChain(userId);
     if (!user?.depositAddress) {
-      return res.status(404).json({ error: "User has no deposit address" });
+      return sendClientError(res, "NOT_FOUND", "User has no deposit address", 404);
     }
     res.json({
       success: true,
@@ -628,20 +574,23 @@ app.post("/api/users/profile/sync-balance", requireAuth, async (req, res) => {
       lockedCapital: user.lockedCapital,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
 app.get("/api/users/:userId/profile", async (req, res) => {
   try {
     if (req.params.userId === "profile") {
-      return res.status(404).json({
-        error: "Use GET /api/users/profile with Authorization Bearer token",
-      });
+      return sendClientError(
+        res,
+        "NOT_FOUND",
+        "Use GET /api/users/profile with Authorization Bearer token",
+        404
+      );
     }
     res.json(await buildUserProfileResponse(req.params.userId));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -784,10 +733,10 @@ function estimateTotalPnl(user) {
 app.get("/api/users/:userId/kyc", async (req, res) => {
   try {
     const status = await getKycStatus(req.params.userId);
-    if (!status) return res.status(404).json({ error: "User not found" });
+    if (!status) return sendClientError(res, "NOT_FOUND", "User not found", 404);
     res.json(status);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -800,8 +749,9 @@ app.post("/api/users/:userId/kyc/submit", async (req, res) => {
     });
     res.json(result);
   } catch (error) {
-    const code = error.code === "KYC_FILES_REQUIRED" ? 400 : 500;
-    res.status(code).json({ error: error.message });
+    sendApiError(res, error, {
+      status: error.code === "KYC_FILES_REQUIRED" ? 400 : 500,
+    });
   }
 });
 
@@ -810,7 +760,7 @@ app.get("/api/users/:userId/invite", async (req, res) => {
     const info = await getInviteInfo(req.params.userId);
     res.json(info);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -820,7 +770,7 @@ app.get("/api/team/analytics/:userId", async (req, res) => {
     const analytics = await getTeamAnalytics(req.params.userId);
     res.json(analytics);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -837,7 +787,7 @@ app.get("/api/trade/earnings/:userId", async (req, res) => {
     }
     res.json(earnings);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -846,7 +796,7 @@ app.post("/api/cron/payouts/run", async (_req, res) => {
     const result = await processDuePayouts();
     res.json({ ok: true, ...result });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendApiError(res, error);
   }
 });
 
@@ -857,6 +807,9 @@ app.use((req, _res, next) => {
 
 app.get("/api/trade/status/:userId", getTradeStatusHandler);
 app.post("/api/trade/execute", postTradeExecuteHandler);
+
+app.use(notFoundApiHandler);
+app.use(errorMiddleware);
 
 const frontendDist = path.join(__dirname, "..", "frontend", "dist");
 if (fs.existsSync(frontendDist)) {

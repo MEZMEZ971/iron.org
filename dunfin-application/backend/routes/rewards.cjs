@@ -1,6 +1,7 @@
 const { randomInt } = require("crypto");
 const { prisma } = require("../lib/prisma.cjs");
 const { trunc6 } = require("../lib/formatNumbers.cjs");
+const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
@@ -49,24 +50,30 @@ async function spinWheel(req, res) {
     });
 
     if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
+      return sendClientError(res, "NOT_FOUND", "User not found", 404);
     }
 
     if (trunc6(user.walletBalance) <= 0) {
-      return res.status(403).json({
-        success: false,
-        code: "NOT_FUNDED",
-        error: "Fund your wallet before using the daily lucky wheel.",
-      });
+      return sendApiError(
+        res,
+        {
+          code: "NOT_FUNDED",
+          message: "Fund your wallet before using the daily lucky wheel.",
+        },
+        { status: 403, success: false }
+      );
     }
 
     if (isWithinSpinCooldown(user.lastSpinDate)) {
-      return res.status(429).json({
-        success: false,
-        code: "SPIN_ALREADY_USED",
-        error: SPIN_BLOCKED_EN,
-        errorAr: SPIN_BLOCKED_AR,
-      });
+      return sendApiError(
+        res,
+        {
+          code: "SPIN_ALREADY_USED",
+          message: SPIN_BLOCKED_EN,
+          errorAr: SPIN_BLOCKED_AR,
+        },
+        { status: 429, success: false }
+      );
     }
 
     const prizeIndex = pickPrizeIndex();
@@ -110,7 +117,7 @@ async function spinWheel(req, res) {
       customTokenBalance: Number(updated.customTokenBalance) || 0,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return sendApiError(res, error, { success: false });
   }
 }
 

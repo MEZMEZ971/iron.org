@@ -4,6 +4,7 @@ const {
 } = require("../authService.cjs");
 const { prisma } = require("../lib/prisma.cjs");
 const { touchUserActivity } = require("../lib/userActivity.cjs");
+const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
 
 const ADMIN_ROLES = new Set(["ADMIN", "PARTNER"]);
 
@@ -33,7 +34,7 @@ function optionalAuth(req, res, next) {
 async function requireAuth(req, res, next) {
   const token = extractBearer(req);
   if (!token) {
-    return res.status(401).json({ error: "Authentication required" });
+    return sendClientError(res, "AUTH_REQUIRED", "Authentication required", 401);
   }
   try {
     const payload = verifyToken(token);
@@ -42,26 +43,26 @@ async function requireAuth(req, res, next) {
       select: { id: true, accountActive: true },
     });
     if (!user) {
-      return res.status(401).json({ error: "Invalid or expired token" });
+      return sendClientError(res, "INVALID_TOKEN", "Invalid or expired token", 401);
     }
     if (user.accountActive === false) {
-      return res.status(403).json({
-        error: ACCOUNT_DEACTIVATED_MESSAGE,
+      return sendApiError(res, {
         code: "ACCOUNT_DEACTIVATED",
+        message: ACCOUNT_DEACTIVATED_MESSAGE,
       });
     }
     req.auth = payload;
     touchUserActivity(payload.userId);
     next();
   } catch {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    return sendClientError(res, "INVALID_TOKEN", "Invalid or expired token", 401);
   }
 }
 
 async function adminRequired(req, res, next) {
   const token = extractBearer(req);
   if (!token) {
-    return res.status(401).json({ error: "Authentication required" });
+    return sendClientError(res, "AUTH_REQUIRED", "Authentication required", 401);
   }
   try {
     const payload = verifyToken(token);
@@ -76,22 +77,22 @@ async function adminRequired(req, res, next) {
       },
     });
     if (!user) {
-      return res.status(401).json({ error: "Invalid or expired token" });
+      return sendClientError(res, "INVALID_TOKEN", "Invalid or expired token", 401);
     }
     if (!ADMIN_ROLES.has(user.role)) {
-      return res.status(403).json({ error: "Admin access denied", code: "FORBIDDEN" });
+      return sendClientError(res, "FORBIDDEN", "Admin access denied", 403);
     }
     if (user.accountActive === false) {
-      return res.status(403).json({
-        error: ACCOUNT_DEACTIVATED_MESSAGE,
+      return sendApiError(res, {
         code: "ACCOUNT_DEACTIVATED",
+        message: ACCOUNT_DEACTIVATED_MESSAGE,
       });
     }
     req.auth = { ...payload, role: user.role };
     req.adminUser = user;
     next();
   } catch {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    return sendClientError(res, "INVALID_TOKEN", "Invalid or expired token", 401);
   }
 }
 
