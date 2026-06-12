@@ -27,7 +27,23 @@ export const WHEEL_SEGMENT_FILLS = [
 
 export const WHEEL_GRAND_SLICE_INDEX = 7;
 
-export function rotationForPrizeIndex(prizeIndex: number, extraTurns = 10) {
-  const segmentCenter = prizeIndex * WHEEL_SLICE_DEG + WHEEL_SLICE_DEG / 2;
-  return extraTurns * 360 + (360 - segmentCenter);
+export function rotationForPrizeIndex(
+  prizeIndex: number,
+  currentRotation = 0,
+  fullTurns = 5
+): number {
+  const degreesPerSlice = WHEEL_SLICE_DEG;
+  const sliceCenterOffset =
+    prizeIndex * degreesPerSlice + degreesPerSlice / 2;
+  const landingMod =
+    ((360 - sliceCenterOffset) % 360 + 360) % 360;
+
+  if (currentRotation === 0) {
+    return fullTurns * 360 - sliceCenterOffset;
+  }
+
+  const currentMod = ((currentRotation % 360) + 360) % 360;
+  let delta = landingMod - currentMod;
+  if (delta <= 0) delta += 360;
+  return currentRotation + fullTurns * 360 + delta;
 }

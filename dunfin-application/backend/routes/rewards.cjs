@@ -22,8 +22,8 @@ const PRIZES = Object.freeze([
   { amount: 100, type: "USDT", label: "GRAND: USDT 100", grand: true },
 ]);
 
-/** Higher weight → more common (sums to 100). */
-const PRIZE_WEIGHTS = Object.freeze([26, 20, 18, 14, 10, 7, 4, 1]);
+/** Weighted odds (sum = 9000). Index 7 = 1/9000 GRAND prize. */
+const PRIZE_WEIGHTS = Object.freeze([3000, 2500, 1800, 1100, 450, 120, 29, 1]);
 
 function pickPrizeIndex() {
   const total = PRIZE_WEIGHTS.reduce((sum, w) => sum + w, 0);

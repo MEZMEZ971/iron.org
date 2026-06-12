@@ -19,6 +19,7 @@ import { emitWalletRefresh } from "../../lib/walletSync";
 import { useUser } from "../../context/UserContext";
 
 const SPIN_MS = 5000;
+const SPIN_EASING = "cubic-bezier(0.25, 0.1, 0.25, 1)";
 const WHEEL_SIZE = 256;
 const CX = 100;
 const CY = 100;
@@ -74,10 +75,13 @@ export function LuckyWheelModal({ open, onClose }: Props) {
   const h5Portfolio = useH5Portfolio();
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
+  const [animating, setAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [win, setWin] = useState<SpinWheelResult | null>(null);
   const [showWin, setShowWin] = useState(false);
   const [wheelStatus, setWheelStatus] = useState<WheelStatusResult | null>(null);
+  const wheelDiscRef = useRef<HTMLDivElement>(null);
+  const rotationRef = useRef(0);
   const pendingWinRef = useRef<SpinWheelResult | null>(null);
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -86,8 +90,10 @@ export function LuckyWheelModal({ open, onClose }: Props) {
       clearTimeout(spinTimerRef.current);
       spinTimerRef.current = null;
     }
+    rotationRef.current = 0;
     setRotation(0);
     setSpinning(false);
+    setAnimating(false);
     setShowWin(false);
     setWin(null);
     pendingWinRef.current = null;
@@ -119,8 +125,13 @@ export function LuckyWheelModal({ open, onClose }: Props) {
   }, []);
 
   function finishSpin(prize: SpinWheelResult) {
+    if (spinTimerRef.current) {
+      clearTimeout(spinTimerRef.current);
+      spinTimerRef.current = null;
+    }
     pendingWinRef.current = null;
     setSpinning(false);
+    setAnimating(false);
     setWin(prize);
     setShowWin(true);
     setWheelStatus((prev) =>
@@ -133,30 +144,60 @@ export function LuckyWheelModal({ open, onClose }: Props) {
     void h5Portfolio.refresh({ skipChainSync: true });
   }
 
-  function handleWheelTransitionEnd() {
-    if (!spinning || !pendingWinRef.current) return;
+  function handleWheelTransitionEnd(event: React.TransitionEvent<HTMLDivElement>) {
+    if (event.propertyName !== "transform") return;
+    if (!animating || !pendingWinRef.current) return;
     finishSpin(pendingWinRef.current);
   }
 
+  function startWheelAnimation(targetDegrees: number) {
+    const disc = wheelDiscRef.current;
+    const fromDegrees = rotationRef.current;
+
+    if (disc) {
+      disc.style.transition = "none";
+      disc.style.transform = `rotate(${fromDegrees}deg)`;
+    }
+    setRotation(fromDegrees);
+    void disc?.offsetHeight;
+
+    setAnimating(true);
+    setSpinning(true);
+
+    requestAnimationFrame(() => {
+      rotationRef.current = targetDegrees;
+      if (disc) {
+        disc.style.transition = `transform ${SPIN_MS}ms ${SPIN_EASING}`;
+        disc.style.transform = `rotate(${targetDegrees}deg)`;
+      }
+      setRotation(targetDegrees);
+    });
+
+    spinTimerRef.current = setTimeout(() => {
+      if (!pendingWinRef.current) return;
+      finishSpin(pendingWinRef.current);
+    }, SPIN_MS + 120);
+  }
+
   async function handleSpin() {
-    if (spinning) return;
+    if (spinning || animating) return;
+    if (wheelStatus && !wheelStatus.canSpin) return;
+
     setError(null);
     setShowWin(false);
     setWin(null);
-    setSpinning(true);
 
     try {
       const result = await spinLuckyWheel();
-      const degrees = rotationForPrizeIndex(result.prizeIndex, 10);
+      const targetDegrees = rotationForPrizeIndex(
+        result.prizeIndex,
+        rotationRef.current
+      );
       pendingWinRef.current = result;
-      setRotation(degrees);
-
-      spinTimerRef.current = setTimeout(() => {
-        if (!pendingWinRef.current) return;
-        finishSpin(pendingWinRef.current);
-      }, SPIN_MS + 80);
+      startWheelAnimation(targetDegrees);
     } catch (e) {
       setSpinning(false);
+      setAnimating(false);
       pendingWinRef.current = null;
       if (e instanceof ApiError) {
         if (e.code === "SPIN_ALREADY_USED") {
@@ -182,6 +223,9 @@ export function LuckyWheelModal({ open, onClose }: Props) {
     return t("h5WheelSpinsRemainingMany", { count: String(count) });
   }
 
+  const spinBlocked =
+    spinning || animating || (wheelStatus !== null && !wheelStatus.canSpin);
+
   if (!open) return null;
 
   const winLabel = win?.label ?? (win ? `${win.amount} ${win.type}` : "");
@@ -198,7 +242,7 @@ export function LuckyWheelModal({ open, onClose }: Props) {
         <button
           type="button"
           onClick={onClose}
-          disabled={spinning}
+          disabled={spinning || animating}
           className="absolute end-3 top-3 rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white disabled:opacity-40"
           aria-label={t("h5Close")}
         >
@@ -236,11 +280,12 @@ export function LuckyWheelModal({ open, onClose }: Props) {
           </div>
 
           <div
-            className="absolute inset-[6px] rounded-full"
+            ref={wheelDiscRef}
+            className="absolute inset-[6px] rounded-full will-change-transform"
             style={{
               transform: `rotate(${rotation}deg)`,
-              transition: spinning
-                ? `transform ${SPIN_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`
+              transition: animating
+                ? `transform ${SPIN_MS}ms ${SPIN_EASING}`
                 : "none",
             }}
             onTransitionEnd={handleWheelTransitionEnd}
@@ -357,10 +402,10 @@ export function LuckyWheelModal({ open, onClose }: Props) {
           <button
             type="button"
             onClick={handleSpin}
-            disabled={spinning || wheelStatus?.canSpin === false}
+            disabled={spinBlocked}
             className="absolute left-1/2 top-1/2 z-40 flex h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-[#fef08a]/40 bg-[radial-gradient(circle_at_30%_25%,#fff7c2_0%,#fcd535_35%,#d4a017_70%,#8a6508_100%)] text-[12px] font-bold tracking-wider text-[#1a1208] shadow-[0_0_24px_rgba(252,213,53,0.55),0_4px_16px_rgba(0,0,0,0.45)] transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-55"
           >
-            {spinning ? t("h5Spinning") : t("h5Spin")}
+            {spinning || animating ? t("h5Spinning") : t("h5Spin")}
           </button>
         </div>
 
