@@ -545,7 +545,7 @@ const ar = {
     authInvitationCode: "رمز الدعوة",
     authInvitationOptional: "اختياري",
     authIdentifier: "اسم المستخدم أو البريد أو الهاتف",
-    authIdentifierPlaceholder: "مثال: jonass1 أو you@email.com",
+    authIdentifierPlaceholder: "ادخل اسم المستخدم أو البريد",
     authSigningIn: "جاري تسجيل الدخول…",
     authCreatingAccount: "جاري إنشاء الحساب…",
     authNoAccount: "ليس لديك حساب؟",
