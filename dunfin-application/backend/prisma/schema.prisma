@@ -40,6 +40,8 @@ enum TransactionRecordType {
   ADMIN_DEDUCTION
   LUCKY_WHEEL_REWARD
   DEPOSIT_INTENT
+  BROKER_RANK_UPGRADE_BONUS
+  BROKER_SALARY
 }
 
 enum TransactionRecordStatus {
@@ -105,6 +107,11 @@ model User {
   trialBalance   Decimal   @default(0) @db.Decimal(18, 6)
   trialExpiresAt DateTime?
   isTrialActive  Boolean   @default(false)
+
+  /// Broker / VIP rank pipeline (GEN1–3 team milestones)
+  brokerRank          String    @default("NONE")
+  brokerSalaryBalance Decimal   @default(0) @db.Decimal(18, 6)
+  lastSalaryPayoutAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

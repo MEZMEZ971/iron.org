@@ -25,10 +25,12 @@ const { processDuePayouts } = require("./cron/payouts.cjs");
 const { runSleepAccountWakeUpCron } = require("./cron/sleepAccounts.cjs");
 const { runDepositWatcherCycle } = require("./cron/depositWatcher.cjs");
 const { runTrialExpiryCron } = require("./cron/trialExpiry.cjs");
+const { runBrokerSalaryCron } = require("./cron/brokerSalary.cjs");
 const {
   getEffectiveTradingBalance,
   getWithdrawableBalance,
 } = require("./lib/trialBalance.cjs");
+const { checkAndUpgradeBrokerRank } = require("./lib/brokerProgram.cjs");
 const { STRATEGIES } = require("./strategies.cjs");
 const { getDepositAddress, NETWORKS } = require("./deposit.cjs");
 const { getKycStatus, submitKyc } = require("./kyc.cjs");
@@ -556,6 +558,7 @@ app.post("/api/users/profile/update", requireAuth, async (req, res) => {
 
 async function buildUserProfileResponse(userId) {
   await syncWalletBalanceFromChain(userId).catch(() => null);
+  const rankResult = await checkAndUpgradeBrokerRank(userId);
   const user = await db.getOrCreateUser(userId);
   const trade = await getTradeStatus(userId);
 
@@ -601,6 +604,7 @@ async function buildUserProfileResponse(userId) {
       hasActivatedBonusStrategy: user.hasActivatedBonusStrategy,
       taxFreeUntil: user.taxFreeUntil,
     }),
+    broker: rankResult.broker,
   };
 }
 
@@ -708,14 +712,21 @@ async function buildTransactionFeed(userId, user) {
 
   for (const e of txnRecords) {
     const isLucky = e.type === "LUCKY_WHEEL_REWARD";
-    const isReward = e.type === "ADMIN_REWARD" || isLucky;
+    const isBrokerBonus = e.type === "BROKER_RANK_UPGRADE_BONUS";
+    const isBrokerSalary = e.type === "BROKER_SALARY";
+    const isReward =
+      e.type === "ADMIN_REWARD" || isLucky || isBrokerBonus || isBrokerSalary;
     rows.push({
       id: e.id,
       type: isLucky
         ? "Lucky Wheel"
-        : isReward
-          ? "Admin Reward"
-          : "Admin Deduction",
+        : isBrokerBonus
+          ? "Broker Rank Bonus"
+          : isBrokerSalary
+            ? "Broker Salary"
+            : isReward
+              ? "Admin Reward"
+              : "Admin Deduction",
       amount: trunc6(e.amount),
       currency:
         isLucky && String(e.description || "").includes("DADB")
@@ -903,6 +914,14 @@ setInterval(() => {
   });
 }, TRIAL_EXPIRY_CRON_MS);
 
+const BROKER_SALARY_CRON_MS =
+  Number(process.env.BROKER_SALARY_CRON_MS) || 60 * 60 * 1000;
+setInterval(() => {
+  runBrokerSalaryCron().catch((err) => {
+    console.warn("[broker-salary] tick failed:", err.message);
+  });
+}, BROKER_SALARY_CRON_MS);
+
 app.listen(PORT, HOST, () => {
   const cryptoSummary = getStartupSummary();
   console.log(`IRON API http://localhost:${PORT}`);
@@ -925,6 +944,7 @@ app.listen(PORT, HOST, () => {
   console.log(`Sleep-account wake-up cron every ${SLEEP_CRON_MS}ms`);
   console.log(`Deposit watcher every ${DEPOSIT_WATCHER_MS}ms`);
   console.log(`Trial expiry cron every ${TRIAL_EXPIRY_CRON_MS}ms`);
+  console.log(`Broker salary cron every ${BROKER_SALARY_CRON_MS}ms`);
   void runDepositWatcherCycle().catch((err) => {
     console.warn("[deposit-watcher] initial cycle failed:", err.message);
   });

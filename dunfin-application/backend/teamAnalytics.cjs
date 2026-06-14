@@ -243,12 +243,20 @@ function buildGenStats(rows, rebate, activeCount) {
   };
 }
 
+async function countDownlineTeamSize(userId) {
+  const downline = await loadDownlineGenerations(userId);
+  return downline.allIds.length;
+}
+
 async function getTeamAnalytics(userId) {
+  const { checkAndUpgradeBrokerRank } = require("./lib/brokerProgram.cjs");
+
   await prisma.user.findUniqueOrThrow({
     where: { id: userId },
     select: { id: true },
   });
 
+  const rankResult = await checkAndUpgradeBrokerRank(userId);
   const downline = await loadDownlineGenerations(userId);
   const { totalTurnover, dailyVolume } = await aggregateTradeMetrics(
     downline.allIds
@@ -292,7 +300,8 @@ async function getTeamAnalytics(userId) {
       gen3: buildGenStats(downline.gen3, rebates[3], countActive(downline.gen3)),
     },
     contributionLogs,
+    broker: rankResult.broker,
   };
 }
 
-module.exports = { getTeamAnalytics, maskAccount };
+module.exports = { getTeamAnalytics, maskAccount, countDownlineTeamSize };

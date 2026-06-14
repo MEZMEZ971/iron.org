@@ -8,6 +8,9 @@ const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
 const { allocateUniqueReferralCode } = require("./lib/referralCodeGenerator.cjs");
 const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
 const { evictTrialBalance, registrationTrialFields } = require("./lib/trialBalance.cjs");
+const {
+  propagateBrokerRankCheckFromReferral,
+} = require("./lib/brokerProgram.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
 
 const userInclude = {
@@ -189,6 +192,12 @@ async function registerUser(userId, { referredBy } = {}) {
     },
     include: userInclude,
   });
+
+  if (referredBy) {
+    await propagateBrokerRankCheckFromReferral(referredBy).catch((err) => {
+      console.warn("[broker] rank check after legacy register:", err.message);
+    });
+  }
 
   return { user: mapUserToLegacy(row), created: true };
 }

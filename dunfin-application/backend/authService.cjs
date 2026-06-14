@@ -12,6 +12,9 @@ const {
 } = require("./lib/referralCodeGenerator.cjs");
 const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
 const { registrationTrialFields } = require("./lib/trialBalance.cjs");
+const {
+  propagateBrokerRankCheckFromReferral,
+} = require("./lib/brokerProgram.cjs");
 const { getDepositAddress } = require("./deposit.cjs");
 
 const BCRYPT_ROUNDS = 10;
@@ -195,6 +198,12 @@ async function registerUser({
       networkAddresses: true,
     },
   });
+
+  if (referredById) {
+    await propagateBrokerRankCheckFromReferral(referredById).catch((err) => {
+      console.warn("[broker] rank check after register:", err.message);
+    });
+  }
 
   const token = signToken(row);
   return { token, user: mapPublicUser(row), legacy: mapUserToLegacy(row) };

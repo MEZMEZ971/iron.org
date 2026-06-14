@@ -59,6 +59,11 @@ function mapUserToLegacy(row) {
     trialBalance: decimalToNumber(row.trialBalance),
     isTrialActive: Boolean(row.isTrialActive),
     trialExpiresAt: row.trialExpiresAt ? row.trialExpiresAt.toISOString() : null,
+    brokerRank: row.brokerRank || "NONE",
+    brokerSalaryBalance: decimalToNumber(row.brokerSalaryBalance),
+    lastSalaryPayoutAt: row.lastSalaryPayoutAt
+      ? row.lastSalaryPayoutAt.toISOString()
+      : null,
     onChainBalance: decimalToNumber(row.onChainBalance),
     tradingCapital: decimalToNumber(row.tradingCapital),
     lockedCapital: decimalToNumber(row.lockedCapital),

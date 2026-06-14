@@ -146,6 +146,22 @@ const en = {
       "🎁 Free trial bonus active: ${amount} ({remaining} remaining)",
     trialBannerSubtext:
       "The bonus disappears automatically after 3 days or as soon as you make your first real deposit.",
+    brokerProgramTitle:
+      "💼 Leader Broker Program / برنامج الوكلاء والمكافآت القيادية",
+    brokerProgramSubtitle:
+      "Grow your GEN 1–3 network to unlock one-time USDT bonuses and recurring 15-day broker salaries.",
+    brokerTeamSizeLabel: "Total team (GEN 1+2+3)",
+    brokerNextTierProgress:
+      "{count} members to reach {tier}",
+    brokerMaxTierReached: "Maximum broker tier achieved — top salary unlocked.",
+    brokerColTier: "Tier",
+    brokerColBadge: "Badge",
+    brokerColTeam: "Team size",
+    brokerColBonus: "One-time bonus",
+    brokerColSalary: "15-day salary",
+    brokerCurrentTier: "Current",
+    brokerSalaryFootnote:
+      "Salaries credit to your withdrawable USDT wallet every 15 days while your rank is active.",
     commission: "Commission",
     profileMenu: "Profile",
     profileCertification: "Certification Center",
@@ -455,6 +471,21 @@ const ar = {
       "🎁 مكافأة الفترة التجريبية نشطة: {amount}$ (متبقي {remaining})",
     trialBannerSubtext:
       "ستختفي المكافأة تلقائياً بعد 3 أيام أو فور قيامك بأول عملية إيداع حقيقية.",
+    brokerProgramTitle:
+      "💼 برنامج الوكلاء والمكافآت القيادية / Leader Broker Program",
+    brokerProgramSubtitle:
+      "وسّع شبكتك (الجيل 1–3) لفتح مكافآت USDT لمرة واحدة وراتب وكيل متكرر كل 15 يوماً.",
+    brokerTeamSizeLabel: "إجمالي الفريق (ج1+2+3)",
+    brokerNextTierProgress: "متبقي {count} عضو للوصول إلى {tier}",
+    brokerMaxTierReached: "وصلت إلى أعلى رتبة وكيل — الراتب الأقصى مفعّل.",
+    brokerColTier: "الرتبة",
+    brokerColBadge: "الشارة",
+    brokerColTeam: "حجم الفريق",
+    brokerColBonus: "مكافأة لمرة واحدة",
+    brokerColSalary: "راتب 15 يوم",
+    brokerCurrentTier: "الحالية",
+    brokerSalaryFootnote:
+      "يُضاف الراتب إلى محفظة USDT القابلة للسحب كل 15 يوماً طالما رتبتك نشطة.",
     commission: "عمولة",
     profileMenu: "الملف الشخصي",
     profileCertification: "مركز التوثيق",

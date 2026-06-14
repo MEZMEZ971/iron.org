@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrokerProgramSection } from "../components/broker/BrokerProgramSection";
 import { PageHeader } from "../components/PageHeader";
 import { TeamPageSkeleton } from "../components/skeletons/TeamPageSkeleton";
 import { ContributionLogs } from "../components/team/ContributionLogs";
@@ -37,6 +38,8 @@ export default function Team() {
             headcount={data.headcount}
             newRegistrationsToday={data.newRegistrationsToday}
           />
+
+          <BrokerProgramSection broker={data.broker} />
 
           <GenRebateMatrix
             gen1={data.statsPerGen.gen1}

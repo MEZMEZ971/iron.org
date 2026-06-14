@@ -12,6 +12,8 @@ export interface StrategyCard {
   teamShortfall: number;
 }
 
+import type { BrokerProfileSnapshot } from "../config/brokerProgram";
+
 export interface TradeStatus {
   userId: string;
   walletBalance: number;
@@ -338,6 +340,7 @@ export interface UserProfile {
   profitShareMode?: "TAX_FREE" | "STANDARD_SPLIT";
   userProfitSharePercent?: number;
   platformProfitSharePercent?: number;
+  broker?: BrokerProfileSnapshot;
 }
 
 /** Authenticated profile for the current JWT subject */
@@ -477,6 +480,7 @@ export interface TeamAnalytics {
     gen3: TeamGenStats;
   };
   contributionLogs: TeamContributionLog[];
+  broker?: BrokerProfileSnapshot;
 }
 
 export function fetchTeamAnalytics(userId: string) {

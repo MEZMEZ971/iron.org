@@ -4,6 +4,7 @@ import { useLocale } from "../i18n/LocaleContext";
 import type { TransactionRow } from "../api/client";
 import { formatAmount, safeNumber } from "../lib/formatNumbers";
 import { formatTrialRemaining } from "../lib/trialRemaining";
+import { BrokerRankBadge } from "../components/broker/BrokerRankBadge";
 
 function txStatusLabel(
   status: string,
@@ -83,11 +84,16 @@ export default function Personal() {
       )}
 
       <div className="glass-card rounded-2xl p-4">
-        <p className="text-[10px] uppercase tracking-wide text-df-faint">
-          {t("userId")}
-        </p>
-        <p className="mt-0.5 text-lg font-bold text-[#f0b90b]">{displayName}</p>
-        <p className="mt-1 truncate font-mono text-[10px] text-df-faint">{userId}</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-wide text-df-faint">
+              {t("userId")}
+            </p>
+            <p className="mt-0.5 text-lg font-bold text-[#f0b90b]">{displayName}</p>
+            <p className="mt-1 truncate font-mono text-[10px] text-df-faint">{userId}</p>
+          </div>
+          <BrokerRankBadge broker={profile?.broker} />
+        </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <PnlCard
