@@ -7,6 +7,7 @@ const {
 const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
 const { allocateUniqueReferralCode } = require("./lib/referralCodeGenerator.cjs");
 const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
+const { evictTrialBalance, registrationTrialFields } = require("./lib/trialBalance.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
 
 const userInclude = {
@@ -63,6 +64,8 @@ async function updateUser(userId, patch) {
   const data = {};
 
   if (patch.walletBalance !== undefined) data.walletBalance = patch.walletBalance;
+  if (patch.trialBalance !== undefined) data.trialBalance = patch.trialBalance;
+  if (patch.isTrialActive !== undefined) data.isTrialActive = patch.isTrialActive;
   if (patch.onChainBalance !== undefined) data.onChainBalance = patch.onChainBalance;
   if (patch.tradingCapital !== undefined) data.tradingCapital = patch.tradingCapital;
   if (patch.lockedCapital !== undefined) data.lockedCapital = patch.lockedCapital;
@@ -181,6 +184,7 @@ async function registerUser(userId, { referredBy } = {}) {
       uid,
       referralCode,
       referredById: referredBy || null,
+      ...registrationTrialFields(),
       ...(referredBy ? inviteRegistrationTaxFields() : {}),
     },
     include: userInclude,
@@ -225,6 +229,8 @@ async function recordDeposit(userId, { amount, txHash, network } = {}) {
     include: userInclude,
   });
 
+  await evictTrialBalance(userId);
+
   return mapUserToLegacy(row);
 }
 
@@ -234,8 +240,10 @@ async function setWalletBalanceFromChain(userId, onChainBalance) {
   const onChain = Number(onChainBalance) || 0;
   const chainAvailable = Math.max(0, onChain - locked);
   const currentWallet = Number(user.walletBalance) || 0;
+  const prevOnChain = Number(user.onChainBalance) || 0;
   // Never clobber platform ledger credits (admin adjustments) with a lower on-chain read
   const walletBalance = Math.max(currentWallet, chainAvailable);
+  const incomingDeposit = onChain > prevOnChain && onChain > 0;
 
   const row = await prisma.user.update({
     where: { id: userId },
@@ -246,6 +254,10 @@ async function setWalletBalanceFromChain(userId, onChainBalance) {
     },
     include: userInclude,
   });
+
+  if (incomingDeposit) {
+    await evictTrialBalance(userId);
+  }
 
   return mapUserToLegacy(row);
 }

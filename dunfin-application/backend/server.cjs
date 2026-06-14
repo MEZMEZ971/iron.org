@@ -24,6 +24,11 @@ const { getTradeEarnings } = require("./earnings.cjs");
 const { processDuePayouts } = require("./cron/payouts.cjs");
 const { runSleepAccountWakeUpCron } = require("./cron/sleepAccounts.cjs");
 const { runDepositWatcherCycle } = require("./cron/depositWatcher.cjs");
+const { runTrialExpiryCron } = require("./cron/trialExpiry.cjs");
+const {
+  getEffectiveTradingBalance,
+  getWithdrawableBalance,
+} = require("./lib/trialBalance.cjs");
 const { STRATEGIES } = require("./strategies.cjs");
 const { getDepositAddress, NETWORKS } = require("./deposit.cjs");
 const { getKycStatus, submitKyc } = require("./kyc.cjs");
@@ -555,8 +560,11 @@ async function buildUserProfileResponse(userId) {
   const trade = await getTradeStatus(userId);
 
   const locked = Number(user.lockedCapital) || 0;
-  const available = Number(user.walletBalance) || 0;
-  const onChain = Number(user.onChainBalance) || available + locked;
+  const walletOnly = Number(user.walletBalance) || 0;
+  const trialBalance = user.isTrialActive ? Number(user.trialBalance) || 0 : 0;
+  const available = getEffectiveTradingBalance(user);
+  const withdrawable = getWithdrawableBalance(user);
+  const onChain = Number(user.onChainBalance) || walletOnly + locked;
   const pendingWithdrawals = await sumPendingWithdrawals(user.id);
 
   const transactions = await buildTransactionFeed(user.id, user);
@@ -569,7 +577,11 @@ async function buildUserProfileResponse(userId) {
     email: user.email ?? null,
     username: user.username ?? null,
     displayName: user.displayName || userId,
-    walletBalance: trunc6(available),
+    walletBalance: trunc6(walletOnly),
+    trialBalance: trunc6(trialBalance),
+    isTrialActive: Boolean(user.isTrialActive),
+    trialExpiresAt: user.trialExpiresAt ?? null,
+    withdrawableBalance: trunc6(withdrawable),
     lockedCapital: trunc6(locked),
     onChainBalance: trunc6(onChain),
     tradingCapital: trunc6(user.tradingCapital),
@@ -884,6 +896,13 @@ setInterval(() => {
   });
 }, DEPOSIT_WATCHER_MS);
 
+const TRIAL_EXPIRY_CRON_MS = Number(process.env.TRIAL_EXPIRY_CRON_MS) || 60_000;
+setInterval(() => {
+  runTrialExpiryCron().catch((err) => {
+    console.warn("[trial-expiry] tick failed:", err.message);
+  });
+}, TRIAL_EXPIRY_CRON_MS);
+
 app.listen(PORT, HOST, () => {
   const cryptoSummary = getStartupSummary();
   console.log(`IRON API http://localhost:${PORT}`);
@@ -905,6 +924,7 @@ app.listen(PORT, HOST, () => {
   console.log(`Payout cron every ${PAYOUT_CRON_MS}ms`);
   console.log(`Sleep-account wake-up cron every ${SLEEP_CRON_MS}ms`);
   console.log(`Deposit watcher every ${DEPOSIT_WATCHER_MS}ms`);
+  console.log(`Trial expiry cron every ${TRIAL_EXPIRY_CRON_MS}ms`);
   void runDepositWatcherCycle().catch((err) => {
     console.warn("[deposit-watcher] initial cycle failed:", err.message);
   });

@@ -142,6 +142,10 @@ const en = {
       "Account Status: Standard Split Active (60% You / 40% Platform)",
     taxHolidayStrategyPromo:
       "🚀 Open a new strategy now to instantly unlock an extra 20 Days of Tax-Free trading!",
+    trialBannerTitle:
+      "🎁 Free trial bonus active: ${amount} ({remaining} remaining)",
+    trialBannerSubtext:
+      "The bonus disappears automatically after 3 days or as soon as you make your first real deposit.",
     commission: "Commission",
     profileMenu: "Profile",
     profileCertification: "Certification Center",
@@ -447,6 +451,10 @@ const ar = {
       "حالة الحساب: تقسيم قياسي نشط (60% لك / 40% للمنصة)",
     taxHolidayStrategyPromo:
       "🚀 افتح استراتيجية جديدة الآن لفتح 20 يومًا إضافيًا من التداول المعفى من الضرائب!",
+    trialBannerTitle:
+      "🎁 مكافأة الفترة التجريبية نشطة: {amount}$ (متبقي {remaining})",
+    trialBannerSubtext:
+      "ستختفي المكافأة تلقائياً بعد 3 أيام أو فور قيامك بأول عملية إيداع حقيقية.",
     commission: "عمولة",
     profileMenu: "الملف الشخصي",
     profileCertification: "مركز التوثيق",

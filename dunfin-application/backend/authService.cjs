@@ -11,6 +11,7 @@ const {
   findReferrerByInviteCode,
 } = require("./lib/referralCodeGenerator.cjs");
 const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
+const { registrationTrialFields } = require("./lib/trialBalance.cjs");
 const { getDepositAddress } = require("./deposit.cjs");
 
 const BCRYPT_ROUNDS = 10;
@@ -185,6 +186,7 @@ async function registerUser({
       displayName: uname,
       referralCode,
       referredById,
+      ...registrationTrialFields(),
       ...(referredById ? inviteRegistrationTaxFields() : {}),
     },
     include: {

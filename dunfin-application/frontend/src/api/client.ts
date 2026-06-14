@@ -318,6 +318,10 @@ export interface UserProfile {
   activeStrategy: number | null;
   fundAccount: number;
   tradingAccount: number;
+  trialBalance?: number;
+  isTrialActive?: boolean;
+  trialExpiresAt?: string | null;
+  withdrawableBalance?: number;
   todayPnl: number;
   totalPnl: number;
   affiliate: TradeStatus["affiliate"];

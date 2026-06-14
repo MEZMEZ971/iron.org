@@ -3,6 +3,7 @@ import { useUserProfile } from "../hooks/useUserProfile";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TransactionRow } from "../api/client";
 import { formatAmount, safeNumber } from "../lib/formatNumbers";
+import { formatTrialRemaining } from "../lib/trialRemaining";
 
 function txStatusLabel(
   status: string,
@@ -49,7 +50,7 @@ function txAmountClass(tx: TransactionRow) {
 }
 
 export default function Personal() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { userId, displayName } = useUser();
   const { profile, loading, error } = useUserProfile(userId);
 
@@ -60,9 +61,27 @@ export default function Personal() {
 
   const todayPnl = safeNumber(profile?.todayPnl);
   const totalPnl = safeNumber(profile?.totalPnl);
+  const trialRemaining = formatTrialRemaining(profile?.trialExpiresAt, locale);
 
   return (
     <div className="space-y-4 pb-4">
+      {profile?.isTrialActive && safeNumber(profile.trialBalance) > 0 && (
+        <div className="relative overflow-hidden rounded-2xl border border-[#fcd535]/30 bg-gradient-to-br from-[#121824] via-[#1a1408] to-[#0f131c] p-4 shadow-lg shadow-amber-500/10">
+          <div className="pointer-events-none absolute -end-8 -top-8 h-24 w-24 rounded-full bg-[#fcd535]/10 blur-2xl" />
+          <p className="relative text-sm font-semibold leading-relaxed text-[#fcd535]">
+            {t("trialBannerTitle", {
+              amount: formatAmount(safeNumber(profile.trialBalance), undefined, {
+                maximumFractionDigits: 0,
+              }),
+              remaining: trialRemaining,
+            })}
+          </p>
+          <p className="relative mt-2 text-xs leading-relaxed text-slate-300">
+            {t("trialBannerSubtext")}
+          </p>
+        </div>
+      )}
+
       <div className="glass-card rounded-2xl p-4">
         <p className="text-[10px] uppercase tracking-wide text-df-faint">
           {t("userId")}

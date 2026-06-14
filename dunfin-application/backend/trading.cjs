@@ -13,6 +13,10 @@ const {
 const { processDuePayouts, settleUserTradePayout } = require("./cron/payouts.cjs");
 const { touchUserActivity } = require("./lib/userActivity.cjs");
 const { applyStrategyActivationBonus } = require("./lib/taxHoliday.cjs");
+const {
+  getEffectiveTradingBalance,
+  splitTradeCapitalDeduction,
+} = require("./lib/trialBalance.cjs");
 
 async function releaseExpiredLock(userId) {
   const row = await prisma.user.findUnique({
@@ -82,11 +86,13 @@ async function executeTrade(userId) {
   }
 
   const walletBalance = Number(user.walletBalance) || 0;
+  const trialBalance = user.isTrialActive ? Number(user.trialBalance) || 0 : 0;
+  const tradingBalance = getEffectiveTradingBalance(user);
   const allUsers = await db.getAllUsers();
   const network = getAffiliateNetwork(allUsers, userId);
   const activeTeamCount = network.totalActiveMembers;
 
-  const resolved = autoResolveStrategy(walletBalance, activeTeamCount);
+  const resolved = autoResolveStrategy(tradingBalance, activeTeamCount);
 
   if (!resolved.ok) {
     return {
@@ -99,13 +105,13 @@ async function executeTrade(userId) {
       requiredTeam: resolved.requiredTeam ?? ENTRY_STRATEGY.minTeam,
       network: {
         totalActiveMembers: activeTeamCount,
-        walletBalance: trunc6(walletBalance),
+        walletBalance: trunc6(tradingBalance),
       },
     };
   }
 
   const capital = resolved.capitalAmount;
-  if (capital > walletBalance) {
+  if (capital > tradingBalance) {
     return {
       ok: false,
       status: 400,
@@ -118,12 +124,14 @@ async function executeTrade(userId) {
   const sessionEndsAt = new Date(
     Date.now() + pickTradeSessionDurationMs()
   ).toISOString();
-  const newWalletBalance = walletBalance - capital;
+  const { walletBalance: newWalletBalance, trialBalance: newTrialBalance } =
+    splitTradeCapitalDeduction(user, capital);
 
   await db.updateUser(userId, {
     last_trade_time: now,
     tradeSessionEndsAt: sessionEndsAt,
     walletBalance: newWalletBalance,
+    trialBalance: newTrialBalance,
     tradingCapital: capital,
     lockedCapital: capital,
     activeStrategy: resolved.strategy.id,
@@ -174,6 +182,8 @@ async function getTradeStatus(userId) {
   const allUsers = await db.getAllUsers();
   const network = getAffiliateNetwork(allUsers, userId);
   const walletBalance = Number(user.walletBalance) || 0;
+  const trialBalance = user.isTrialActive ? Number(user.trialBalance) || 0 : 0;
+  const tradingBalance = getEffectiveTradingBalance(user);
   const lockedCapital = Number(user.lockedCapital) || 0;
   const activeTeamCount = network.totalActiveMembers;
 
@@ -183,13 +193,14 @@ async function getTradeStatus(userId) {
     tradeSessionEndsAt: user.tradeSessionEndsAt,
     lockedCapital,
   });
-  const strategies = getStrategyEligibility(walletBalance, activeTeamCount);
-  const resolved = autoResolveStrategy(walletBalance, activeTeamCount);
+  const strategies = getStrategyEligibility(tradingBalance, activeTeamCount);
+  const resolved = autoResolveStrategy(tradingBalance, activeTeamCount);
 
   return {
     userId,
     walletBalance: trunc6(walletBalance),
-    availableBalance: trunc6(walletBalance),
+    trialBalance: trunc6(trialBalance),
+    availableBalance: trunc6(tradingBalance),
     lockedCapital: trunc6(lockedCapital),
     tradingCapital: trunc6(user.tradingCapital),
     activeStrategy: user.activeStrategy ?? null,

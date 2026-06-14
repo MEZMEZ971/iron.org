@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const { prisma } = require("./lib/prisma.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
+const { getWithdrawableBalance } = require("./lib/trialBalance.cjs");
 
 const MIN_WITHDRAW = 5;
 const MAX_WITHDRAW = 10000;
@@ -47,6 +48,8 @@ async function getWithdrawPreflight(userId) {
     where: { id: userId },
     select: {
       walletBalance: true,
+      trialBalance: true,
+      isTrialActive: true,
       paymentPasswordHash: true,
     },
   });
@@ -57,7 +60,9 @@ async function getWithdrawPreflight(userId) {
   }
 
   return {
-    walletBalance: trunc6(user.walletBalance),
+    walletBalance: getWithdrawableBalance(user),
+    withdrawableBalance: getWithdrawableBalance(user),
+    trialBalance: user.isTrialActive ? trunc6(user.trialBalance) : 0,
     requiresPaymentPin: Boolean(user.paymentPasswordHash),
     minAmount: MIN_WITHDRAW,
     maxAmount: MAX_WITHDRAW,
@@ -117,7 +122,7 @@ async function processWithdraw(userId, body) {
     throw err;
   }
 
-  const balance = trunc6(user.walletBalance);
+  const balance = getWithdrawableBalance(user);
   if (balance < amount) {
     const err = new Error("Insufficient balance");
     err.code = "INSUFFICIENT_BALANCE";
