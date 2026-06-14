@@ -9,6 +9,7 @@ import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
 import { AppDownloadLinks } from "./layout/ApkDownloadLink";
 import { useUserProfile } from "../hooks/useUserProfile";
+import { lockBodyScroll, unlockBodyScroll } from "../lib/scrollLock";
 import {
   IconActivity,
   IconCertification,
@@ -267,10 +268,10 @@ export function ProfileMenuDrawer({ open, onClose }: ProfileMenuDrawerProps) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = "";
+      unlockBodyScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);

@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminRoute } from "./components/auth/AdminRoute";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { FomoUserCountProvider } from "./context/FomoUserCountContext";
@@ -28,6 +29,15 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import { resetBodyScrollLock } from "./lib/scrollLock";
+
+function ScrollLockRouteReset() {
+  const location = useLocation();
+  useEffect(() => {
+    resetBodyScrollLock();
+  }, [location.pathname]);
+  return null;
+}
 
 export default function App() {
   return (
@@ -40,6 +50,7 @@ export default function App() {
                 <ProfileMenuProvider>
                   <SuccessFeedbackProvider>
                     <BrowserRouter>
+                      <ScrollLockRouteReset />
                       <Routes>
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
