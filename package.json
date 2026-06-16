@@ -12,7 +12,7 @@
     "test:trading": "node dunfin-application/backend/test-trading.cjs",
     "test:uid": "node dunfin-application/backend/test-uid.cjs",
     "test:contracts": "npm run test --prefix smart-forwarder",
-    "install:all": "npm install && npm install --prefix dunfin-application/backend && npm install --prefix dunfin-application/frontend && npm install --prefix smart-forwarder"
+    "install:all": "npm install --legacy-peer-deps && npm install --legacy-peer-deps --prefix dunfin-application/backend && npm install --legacy-peer-deps --prefix dunfin-application/frontend && npm install --legacy-peer-deps --prefix smart-forwarder"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.6.1",
