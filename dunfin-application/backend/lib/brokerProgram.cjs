@@ -4,72 +4,87 @@ const { countDownlineTeamSize } = require("../teamAnalytics.cjs");
 
 const BROKER_RANK_NONE = "NONE";
 const BONUS_DESC_PREFIX = "[BROKER_RANK_UPGRADE_BONUS]";
+const SALARY_DESC_PREFIX = "[15_DAY_BROKER_SALARY_PAYOUT]";
 const SALARY_INTERVAL_MS = 15 * 24 * 60 * 60 * 1000;
 
-/** Ascending tier matrix — must match frontend `brokerProgram.ts`. */
+/** Bracket matrix — must match frontend `brokerProgram.ts`. */
 const BROKER_TIERS = Object.freeze([
   {
     rank: "SILVER_1",
     labelEn: "Silver Broker",
     labelAr: "وسيط فضي",
     minTeamSize: 10,
+    maxTeamSize: 29,
     badge: "🌟 Silver Star",
     oneTimeBonus: 30,
     salary15Day: 15,
+    family: "SILVER",
   },
   {
     rank: "GOLD_1",
     labelEn: "Golden Broker 1",
     labelAr: "وسيط ذهبي 1",
     minTeamSize: 30,
+    maxTeamSize: 99,
     badge: "👑 1 Golden Star",
     oneTimeBonus: 100,
     salary15Day: 30,
+    family: "GOLD",
   },
   {
     rank: "GOLD_2",
     labelEn: "Golden Broker 2",
     labelAr: "وسيط ذهبي 2",
     minTeamSize: 100,
+    maxTeamSize: 199,
     badge: "👑👑 2 Golden Stars",
     oneTimeBonus: 300,
     salary15Day: 100,
+    family: "GOLD",
   },
   {
     rank: "GOLD_3",
     labelEn: "Golden Broker 3",
     labelAr: "وسيط ذهبي 3",
     minTeamSize: 200,
+    maxTeamSize: 399,
     badge: "👑👑👑 3 Golden Stars",
     oneTimeBonus: 500,
     salary15Day: 200,
+    family: "GOLD",
   },
   {
     rank: "PLATINUM_1",
     labelEn: "Platinum Broker 1",
     labelAr: "وسيط بلاتيني 1",
     minTeamSize: 400,
+    maxTeamSize: 599,
     badge: "💎 1 Platinum Star",
     oneTimeBonus: 1000,
     salary15Day: 300,
+    family: "PLATINUM",
   },
   {
     rank: "PLATINUM_2",
     labelEn: "Platinum Broker 2",
     labelAr: "وسيط بلاتيني 2",
     minTeamSize: 600,
+    maxTeamSize: 999,
     badge: "💎💎 2 Platinum Stars",
     oneTimeBonus: 1500,
     salary15Day: 500,
+    family: "PLATINUM",
   },
   {
     rank: "PLATINUM_3",
     labelEn: "Platinum Broker 3",
     labelAr: "وسيط بلاتيني 3",
     minTeamSize: 1000,
+    maxTeamSize: Number.MAX_SAFE_INTEGER,
     badge: "💎💎💎 3 Platinum Stars",
     oneTimeBonus: 2000,
     salary15Day: 1000,
+    family: "PLATINUM",
   },
 ]);
 
@@ -88,11 +103,86 @@ function rankIndex(rank) {
 }
 
 function resolveRankFromTeamSize(teamSize) {
-  let matched = BROKER_RANK_NONE;
+  if (teamSize < 10) return BROKER_RANK_NONE;
   for (const tier of BROKER_TIERS) {
-    if (teamSize >= tier.minTeamSize) matched = tier.rank;
+    if (teamSize >= tier.minTeamSize && teamSize <= tier.maxTeamSize) {
+      return tier.rank;
+    }
   }
-  return matched;
+  return BROKER_RANK_NONE;
+}
+
+function isSalaryPayoutDue(lastSalaryPayoutAt, nowMs = Date.now()) {
+  if (!lastSalaryPayoutAt) return true;
+  return nowMs - lastSalaryPayoutAt.getTime() >= SALARY_INTERVAL_MS;
+}
+
+function buildReferralChildrenMap(users) {
+  const map = new Map();
+  for (const user of users) {
+    if (!user.referredById) continue;
+    if (!map.has(user.referredById)) map.set(user.referredById, []);
+    map.get(user.referredById).push(user.id);
+  }
+  return map;
+}
+
+function countThreeGenDownline(userId, childrenMap) {
+  const gen1 = childrenMap.get(userId) || [];
+  const gen2 = gen1.flatMap((id) => childrenMap.get(id) || []);
+  const gen3 = gen2.flatMap((id) => childrenMap.get(id) || []);
+  return gen1.length + gen2.length + gen3.length;
+}
+
+async function loadActiveUsersForBrokerIndex() {
+  return prisma.user.findMany({
+    where: { accountActive: true },
+    select: {
+      id: true,
+      uid: true,
+      username: true,
+      displayName: true,
+      referredById: true,
+      brokerRank: true,
+      walletBalance: true,
+      brokerSalaryBalance: true,
+      lastSalaryPayoutAt: true,
+    },
+  });
+}
+
+async function buildBrokerRows() {
+  const users = await loadActiveUsersForBrokerIndex();
+  const childrenMap = buildReferralChildrenMap(users);
+  const nowMs = Date.now();
+
+  const rows = [];
+  for (const user of users) {
+    const totalTeamCount = countThreeGenDownline(user.id, childrenMap);
+    const brokerRank = resolveRankFromTeamSize(totalTeamCount);
+    if (brokerRank === BROKER_RANK_NONE) continue;
+
+    const tier = getTierByRank(brokerRank);
+    rows.push({
+      id: user.id,
+      username: user.username || user.displayName || user.id,
+      uid: user.uid,
+      totalTeamCount,
+      brokerRank,
+      calculatedSalary: tier?.salary15Day ?? 0,
+      badge: tier?.badge ?? null,
+      labelEn: tier?.labelEn ?? null,
+      labelAr: tier?.labelAr ?? null,
+      family: tier?.family ?? null,
+      lastSalaryPayoutAt: user.lastSalaryPayoutAt
+        ? user.lastSalaryPayoutAt.toISOString()
+        : null,
+      salaryEligible: isSalaryPayoutDue(user.lastSalaryPayoutAt, nowMs),
+    });
+  }
+
+  rows.sort((a, b) => b.totalTeamCount - a.totalTeamCount);
+  return rows;
 }
 
 function getTierByRank(rank) {
@@ -259,41 +349,58 @@ async function propagateBrokerRankCheckFromReferral(newUserReferrerId) {
 }
 
 async function processBrokerSalaryPayouts() {
-  const now = Date.now();
-  const users = await prisma.user.findMany({
-    where: { brokerRank: { not: BROKER_RANK_NONE } },
-    select: {
-      id: true,
-      brokerRank: true,
-      walletBalance: true,
-      brokerSalaryBalance: true,
-      lastSalaryPayoutAt: true,
-    },
-  });
+  const result = await adminPayoutBrokerSalaries({ force: false });
+  return { paid: result.brokersPaid, totalAmount: result.totalUsdtPaid };
+}
 
-  let paid = 0;
-  let totalAmount = 0;
+async function adminPayoutBrokerSalaries({ force = false } = {}) {
+  const users = await loadActiveUsersForBrokerIndex();
+  const childrenMap = buildReferralChildrenMap(users);
+  const nowMs = Date.now();
+  const payoutAt = new Date();
 
+  const eligible = [];
   for (const user of users) {
-    const tier = getTierByRank(user.brokerRank);
+    const totalTeamCount = countThreeGenDownline(user.id, childrenMap);
+    const brokerRank = resolveRankFromTeamSize(totalTeamCount);
+    if (brokerRank === BROKER_RANK_NONE) continue;
+
+    const tier = getTierByRank(brokerRank);
     if (!tier || tier.salary15Day <= 0) continue;
 
-    const lastAt = user.lastSalaryPayoutAt?.getTime() ?? 0;
-    const due = !user.lastSalaryPayoutAt || now - lastAt >= SALARY_INTERVAL_MS;
+    const due = force || isSalaryPayoutDue(user.lastSalaryPayoutAt, nowMs);
     if (!due) continue;
 
-    const salary = trunc6(tier.salary15Day);
-    const payoutAt = new Date();
+    eligible.push({
+      user,
+      totalTeamCount,
+      brokerRank,
+      salary: trunc6(tier.salary15Day),
+    });
+  }
 
-    await prisma.$transaction(async (tx) => {
-      const walletBalance = trunc6(Number(user.walletBalance) + salary);
+  if (eligible.length === 0) {
+    return {
+      success: true,
+      brokersPaid: 0,
+      totalUsdtPaid: 0,
+      paidUserIds: [],
+    };
+  }
+
+  const paidUserIds = [];
+
+  await prisma.$transaction(async (tx) => {
+    for (const entry of eligible) {
+      const walletBalance = trunc6(Number(entry.user.walletBalance) + entry.salary);
       const brokerSalaryBalance = trunc6(
-        Number(user.brokerSalaryBalance) + salary
+        Number(entry.user.brokerSalaryBalance) + entry.salary
       );
 
       await tx.user.update({
-        where: { id: user.id },
+        where: { id: entry.user.id },
         data: {
+          brokerRank: entry.brokerRank,
           walletBalance,
           brokerSalaryBalance,
           lastSalaryPayoutAt: payoutAt,
@@ -302,26 +409,35 @@ async function processBrokerSalaryPayouts() {
 
       await tx.transactionRecord.create({
         data: {
-          userId: user.id,
+          userId: entry.user.id,
           type: "BROKER_SALARY",
-          amount: salary,
+          amount: entry.salary,
           status: "SUCCESS",
-          description: `[BROKER_SALARY] ${user.brokerRank}`,
+          description: `${SALARY_DESC_PREFIX} ${entry.brokerRank}`,
         },
       });
-    });
 
-    paid += 1;
-    totalAmount = trunc6(totalAmount + salary);
-  }
+      paidUserIds.push(entry.user.id);
+    }
+  });
 
-  return { paid, totalAmount };
+  const totalUsdtPaid = trunc6(
+    eligible.reduce((sum, entry) => sum + entry.salary, 0)
+  );
+
+  return {
+    success: true,
+    brokersPaid: paidUserIds.length,
+    totalUsdtPaid,
+    paidUserIds,
+  };
 }
 
 module.exports = {
   BROKER_RANK_NONE,
   BROKER_TIERS,
   SALARY_INTERVAL_MS,
+  SALARY_DESC_PREFIX,
   resolveRankFromTeamSize,
   getTierByRank,
   getNextTier,
@@ -329,4 +445,7 @@ module.exports = {
   checkAndUpgradeBrokerRank,
   propagateBrokerRankCheckFromReferral,
   processBrokerSalaryPayouts,
+  buildBrokerRows,
+  adminPayoutBrokerSalaries,
+  isSalaryPayoutDue,
 };

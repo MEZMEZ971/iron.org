@@ -30,7 +30,11 @@ const {
   getEffectiveTradingBalance,
   getWithdrawableBalance,
 } = require("./lib/trialBalance.cjs");
-const { checkAndUpgradeBrokerRank } = require("./lib/brokerProgram.cjs");
+const {
+  checkAndUpgradeBrokerRank,
+  buildBrokerRows,
+  adminPayoutBrokerSalaries,
+} = require("./lib/brokerProgram.cjs");
 const { STRATEGIES } = require("./strategies.cjs");
 const { getDepositAddress, NETWORKS } = require("./deposit.cjs");
 const { getKycStatus, submitKyc } = require("./kyc.cjs");
@@ -486,6 +490,37 @@ app.get("/api/admin/finance/user-summary", adminRequired, async (req, res) => {
     const { search, page, limit } = req.query ?? {};
     const data = await getUserFinanceSummary({ search, page, limit });
     res.json({ success: true, ...data });
+  } catch (error) {
+    sendApiError(res, error, { status: 500, success: false });
+  }
+});
+
+app.get("/api/admin/brokers", adminRequired, async (_req, res) => {
+  try {
+    const brokers = await buildBrokerRows();
+    const eligible = brokers.filter((b) => b.salaryEligible);
+    const estimatedPayoutUsdt = trunc6(
+      eligible.reduce((sum, b) => sum + b.calculatedSalary, 0)
+    );
+    res.json({
+      success: true,
+      brokers,
+      summary: {
+        totalBrokers: brokers.length,
+        eligibleForPayout: eligible.length,
+        estimatedPayoutUsdt,
+      },
+    });
+  } catch (error) {
+    sendApiError(res, error, { status: 500, success: false });
+  }
+});
+
+app.post("/api/admin/brokers/payout-salaries", adminRequired, async (req, res) => {
+  try {
+    const force = req.body?.force === true;
+    const result = await adminPayoutBrokerSalaries({ force });
+    res.json(result);
   } catch (error) {
     sendApiError(res, error, { status: 500, success: false });
   }

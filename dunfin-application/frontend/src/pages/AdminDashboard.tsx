@@ -11,6 +11,7 @@ import {
   type AdminWithdrawalRow,
 } from "../api/client";
 import { ActivitySleepTracker } from "../components/admin/ActivitySleepTracker";
+import { BrokerManager } from "../components/admin/BrokerManager";
 import { UserControlHub } from "../components/admin/UserControlHub";
 import { UserWalletsAuditor } from "../components/admin/UserWalletsAuditor";
 import {
@@ -25,7 +26,7 @@ import {
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
 
-type AdminTab = "withdrawals" | "kyc" | "stats" | "users" | "activity" | "finance";
+type AdminTab = "withdrawals" | "kyc" | "stats" | "users" | "activity" | "finance" | "brokers";
 
 const PANEL = ADMIN_PANEL;
 
@@ -183,6 +184,11 @@ export default function AdminDashboard() {
       labelKey: "adminTabFinanceAuditor",
       icon: "fa-money-bill-transfer",
     },
+    {
+      id: "brokers",
+      labelKey: "adminTabBrokers",
+      icon: "fa-users-gear",
+    },
     { id: "withdrawals", labelKey: "adminTabWithdrawals" },
     { id: "kyc", labelKey: "adminTabKyc" },
     { id: "stats", labelKey: "adminTabStats" },
@@ -259,6 +265,8 @@ export default function AdminDashboard() {
         {tab === "activity" && <ActivitySleepTracker onNotice={flash} />}
 
         {tab === "finance" && <UserWalletsAuditor onNotice={flash} />}
+
+        {tab === "brokers" && <BrokerManager onNotice={flash} />}
 
         {!loading && tab === "stats" && stats && (
           <div className="grid gap-4 sm:grid-cols-2">

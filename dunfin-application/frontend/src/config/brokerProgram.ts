@@ -10,14 +10,18 @@ export type BrokerRank =
   | "PLATINUM_2"
   | "PLATINUM_3";
 
+export type BrokerTierFamily = "SILVER" | "GOLD" | "PLATINUM";
+
 export type BrokerTierRow = {
   rank: Exclude<BrokerRank, "NONE">;
   labelEn: string;
   labelAr: string;
   minTeamSize: number;
+  maxTeamSize: number;
   badge: string;
   oneTimeBonus: number;
   salary15Day: number;
+  family: BrokerTierFamily;
 };
 
 export const BROKER_TIERS: readonly BrokerTierRow[] = [
@@ -26,63 +30,77 @@ export const BROKER_TIERS: readonly BrokerTierRow[] = [
     labelEn: "Silver Broker",
     labelAr: "وسيط فضي",
     minTeamSize: 10,
+    maxTeamSize: 29,
     badge: "🌟 Silver Star",
     oneTimeBonus: 30,
     salary15Day: 15,
+    family: "SILVER",
   },
   {
     rank: "GOLD_1",
     labelEn: "Golden Broker 1",
     labelAr: "وسيط ذهبي 1",
     minTeamSize: 30,
+    maxTeamSize: 99,
     badge: "👑 1 Golden Star",
     oneTimeBonus: 100,
     salary15Day: 30,
+    family: "GOLD",
   },
   {
     rank: "GOLD_2",
     labelEn: "Golden Broker 2",
     labelAr: "وسيط ذهبي 2",
     minTeamSize: 100,
+    maxTeamSize: 199,
     badge: "👑👑 2 Golden Stars",
     oneTimeBonus: 300,
     salary15Day: 100,
+    family: "GOLD",
   },
   {
     rank: "GOLD_3",
     labelEn: "Golden Broker 3",
     labelAr: "وسيط ذهبي 3",
     minTeamSize: 200,
+    maxTeamSize: 399,
     badge: "👑👑👑 3 Golden Stars",
     oneTimeBonus: 500,
     salary15Day: 200,
+    family: "GOLD",
   },
   {
     rank: "PLATINUM_1",
     labelEn: "Platinum Broker 1",
     labelAr: "وسيط بلاتيني 1",
     minTeamSize: 400,
+    maxTeamSize: 599,
     badge: "💎 1 Platinum Star",
     oneTimeBonus: 1000,
     salary15Day: 300,
+    family: "PLATINUM",
   },
   {
     rank: "PLATINUM_2",
     labelEn: "Platinum Broker 2",
     labelAr: "وسيط بلاتيني 2",
     minTeamSize: 600,
+    maxTeamSize: 999,
     badge: "💎💎 2 Platinum Stars",
     oneTimeBonus: 1500,
     salary15Day: 500,
+    family: "PLATINUM",
   },
   {
     rank: "PLATINUM_3",
     labelEn: "Platinum Broker 3",
     labelAr: "وسيط بلاتيني 3",
     minTeamSize: 1000,
+    maxTeamSize: Number.MAX_SAFE_INTEGER,
     badge: "💎💎💎 3 Platinum Stars",
     oneTimeBonus: 2000,
     salary15Day: 1000,
+    family: "PLATINUM",
   },
 ] as const;
 
@@ -109,6 +127,20 @@ export type BrokerProfileSnapshot = {
     }
   >;
 };
+
+export function resolveRankFromTeamSize(teamSize: number): BrokerRank {
+  if (teamSize < 10) return BROKER_RANK_NONE;
+  for (const tier of BROKER_TIERS) {
+    if (teamSize >= tier.minTeamSize && teamSize <= tier.maxTeamSize) {
+      return tier.rank;
+    }
+  }
+  return BROKER_RANK_NONE;
+}
+
+export function getTierByRank(rank: BrokerRank) {
+  return BROKER_TIERS.find((t) => t.rank === rank) ?? null;
+}
 
 export function getTierLabel(
   tier: Pick<BrokerTierRow, "labelEn" | "labelAr">,

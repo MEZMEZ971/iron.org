@@ -674,6 +674,49 @@ export function fetchAdminFinanceUserSummary(params?: {
   );
 }
 
+export interface AdminBrokerRow {
+  id: string;
+  username: string;
+  uid: string;
+  totalTeamCount: number;
+  brokerRank: string;
+  calculatedSalary: number;
+  badge: string | null;
+  labelEn: string | null;
+  labelAr: string | null;
+  family: string | null;
+  lastSalaryPayoutAt: string | null;
+  salaryEligible: boolean;
+}
+
+export interface AdminBrokersSummary {
+  totalBrokers: number;
+  eligibleForPayout: number;
+  estimatedPayoutUsdt: number;
+}
+
+export interface AdminBrokersResponse {
+  success: boolean;
+  brokers: AdminBrokerRow[];
+  summary: AdminBrokersSummary;
+}
+
+export function fetchAdminBrokers() {
+  return request<AdminBrokersResponse>("/api/admin/brokers");
+}
+
+export function adminPayoutBrokerSalaries(payload?: { force?: boolean }) {
+  return request<{
+    success: boolean;
+    brokersPaid: number;
+    totalUsdtPaid: number;
+    paidUserIds: string[];
+  }>("/api/admin/brokers/payout-salaries", {
+    method: "POST",
+    body: JSON.stringify(payload ?? {}),
+  });
+}
+
 export function adminWakeUpSleepers() {
   return request<{
     success: boolean;
