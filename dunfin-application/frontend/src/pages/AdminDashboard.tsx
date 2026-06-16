@@ -11,7 +11,7 @@ import {
   type AdminWithdrawalRow,
 } from "../api/client";
 import { ActivitySleepTracker } from "../components/admin/ActivitySleepTracker";
-import { BrokerManager } from "../components/admin/BrokerManager";
+import BrokerManager from "../components/admin/BrokerManager";
 import { UserControlHub } from "../components/admin/UserControlHub";
 import { UserWalletsAuditor } from "../components/admin/UserWalletsAuditor";
 import {
@@ -26,7 +26,14 @@ import {
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
 
-type AdminTab = "withdrawals" | "kyc" | "stats" | "users" | "activity" | "finance" | "brokers";
+type AdminTab =
+  | "withdrawals"
+  | "kyc"
+  | "stats"
+  | "users"
+  | "activity"
+  | "finance"
+  | "broker-management";
 
 const PANEL = ADMIN_PANEL;
 
@@ -70,7 +77,7 @@ export default function AdminDashboard() {
   const { t, dir } = useLocale();
   const rtl = dir === "rtl";
 
-  const [tab, setTab] = useState<AdminTab>("users");
+  const [activeTab, setActiveTab] = useState<AdminTab>("users");
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [withdrawals, setWithdrawals] = useState<AdminWithdrawalRow[]>([]);
   const [kycList, setKycList] = useState<AdminKycRow[]>([]);
@@ -185,7 +192,7 @@ export default function AdminDashboard() {
       icon: "fa-money-bill-transfer",
     },
     {
-      id: "brokers",
+      id: "broker-management",
       labelKey: "adminTabBrokers",
       icon: "fa-users-gear",
     },
@@ -228,9 +235,9 @@ export default function AdminDashboard() {
             <button
               key={id}
               type="button"
-              onClick={() => setTab(id)}
+              onClick={() => setActiveTab(id)}
               className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-in-out ${
-                tab === id
+                activeTab === id
                   ? "bg-[#f0b90b]/15 text-[#f0b90b] shadow-[inset_0_0_0_1px_rgba(240,185,11,0.25)]"
                   : ADMIN_TAB_INACTIVE
               }`}
@@ -260,15 +267,17 @@ export default function AdminDashboard() {
           <p className={`text-center ${ADMIN_MUTED}`}>{t("adminLoading")}</p>
         )}
 
-        {!loading && tab === "users" && <UserControlHub onNotice={flash} />}
+        {!loading && activeTab === "users" && <UserControlHub onNotice={flash} />}
 
-        {tab === "activity" && <ActivitySleepTracker onNotice={flash} />}
+        {activeTab === "activity" && <ActivitySleepTracker onNotice={flash} />}
 
-        {tab === "finance" && <UserWalletsAuditor onNotice={flash} />}
+        {activeTab === "finance" && <UserWalletsAuditor onNotice={flash} />}
 
-        {tab === "brokers" && <BrokerManager onNotice={flash} />}
+        {activeTab === "broker-management" && (
+          <BrokerManager onNotice={flash} />
+        )}
 
-        {!loading && tab === "stats" && stats && (
+        {!loading && activeTab === "stats" && stats && (
           <div className="grid gap-4 sm:grid-cols-2">
             {[
               { key: "adminStatLiquidity" as const, value: stats.totalManagedLiquidity },
@@ -286,7 +295,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {!loading && tab === "withdrawals" && (
+        {!loading && activeTab === "withdrawals" && (
           <div className={`${PANEL} overflow-x-auto`}>
             {withdrawals.length === 0 ? (
               <p className={`p-8 text-center ${ADMIN_MUTED}`}>
@@ -367,7 +376,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {!loading && tab === "kyc" && (
+        {!loading && activeTab === "kyc" && (
           <div className="space-y-4">
             {kycList.length === 0 && (
               <p className={`${PANEL} p-8 text-center ${ADMIN_MUTED}`}>

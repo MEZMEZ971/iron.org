@@ -328,3 +328,5 @@ export function BrokerManager({ onNotice }: Props) {
     </div>
   );
 }
+
+export default BrokerManager;
