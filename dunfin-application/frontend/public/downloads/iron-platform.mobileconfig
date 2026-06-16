@@ -24,13 +24,13 @@
       <key>PayloadType</key>
       <string>com.apple.webClip.managed</string>
       <key>PayloadUUID</key>
-      <string>4213b200-a05d-47bf-9df9-fdae888ebee8</string>
+      <string>add704c4-f180-40ec-89bc-1043b8cf71b8</string>
       <key>PayloadVersion</key>
       <integer>1</integer>
       <key>Precomposed</key>
       <true/>
       <key>URL</key>
-      <string>https://iron-org.vercel.app</string>
+      <string>https://www.iron.wales</string>
       <key>IgnoreManifestScope</key>
       <true/>
     </dict>
@@ -48,7 +48,7 @@
   <key>PayloadType</key>
   <string>Configuration</string>
   <key>PayloadUUID</key>
-  <string>f21e56c5-12c0-4378-b5c9-38641d082456</string>
+  <string>6e9f3275-86ce-4c51-a795-b0090ca2ff9c</string>
   <key>PayloadVersion</key>
   <integer>1</integer>
 </dict>

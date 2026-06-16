@@ -10,8 +10,12 @@ const { mkdirSync, writeFileSync, existsSync, statSync } = require("fs");
 const { join } = require("path");
 const { randomUUID } = require("crypto");
 
-require("dotenv").config({ path: join(__dirname, "..", ".env.production") });
-require("dotenv").config({ path: join(__dirname, "..", ".env") });
+try {
+  require("dotenv").config({ path: join(__dirname, "..", ".env.production") });
+  require("dotenv").config({ path: join(__dirname, "..", ".env") });
+} catch {
+  // Optional in CI/Vercel — use process.env when dotenv is unavailable.
+}
 
 const ROOT = join(__dirname, "..");
 const DOWNLOADS_DIR = join(ROOT, "public", "downloads");
