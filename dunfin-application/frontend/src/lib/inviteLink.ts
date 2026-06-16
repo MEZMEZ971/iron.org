@@ -1,13 +1,15 @@
+import { getWebAppOrigin } from "../config/appUrls";
+
 /**
  * Rebuilds an invitation link on the origin the user is currently browsing,
- * so copied/QR/shared links always match the live domain (Vercel, preview,
- * or localhost) instead of whatever origin the backend was configured with.
+ * so copied/QR/shared links always match the live domain (custom domain,
+ * Vercel preview, or localhost) instead of a stale backend-configured origin.
  */
 export function buildInvitationLink(
   serverInviteLink: string | null | undefined,
   referralCode?: string | null
 ): string {
-  const origin = window.location.origin;
+  const origin = getWebAppOrigin();
 
   if (serverInviteLink) {
     try {

@@ -10,10 +10,16 @@ const { mkdirSync, writeFileSync, existsSync, statSync } = require("fs");
 const { join } = require("path");
 const { randomUUID } = require("crypto");
 
+require("dotenv").config({ path: join(__dirname, "..", ".env.production") });
+require("dotenv").config({ path: join(__dirname, "..", ".env") });
+
 const ROOT = join(__dirname, "..");
 const DOWNLOADS_DIR = join(ROOT, "public", "downloads");
-const WEB_APP_URL = "https://iron-org.vercel.app";
-const ICON_URL = `${WEB_APP_URL}/iron-logo.png`;
+const WEB_APP_URL =
+  process.env.VITE_FRONTEND_URL ||
+  process.env.FRONTEND_URL ||
+  "http://localhost:5173";
+const ICON_URL = `${WEB_APP_URL.replace(/\/$/, "")}/iron-logo.png`;
 
 const force = process.argv.includes("--force");
 

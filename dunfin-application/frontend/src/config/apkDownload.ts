@@ -1,5 +1,4 @@
-/** Production web origin used by the iOS WebClip profile. */
-export const IRON_WEB_APP_URL = "https://iron-org.vercel.app";
+export { WEB_APP_ORIGIN as IRON_WEB_APP_URL } from "./appUrls";
 
 export const IRON_APP_DOWNLOADS = {
   android: {

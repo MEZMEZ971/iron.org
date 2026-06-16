@@ -75,32 +75,28 @@ const {
   processWithdraw,
 } = require("./withdraw.cjs");
 const { spinWheel, getWheelStatus } = require("./routes/rewards.cjs");
+const { getAllowedCorsOrigins } = require("./lib/appUrls.cjs");
 
 const app = express();
 installProcessHandlers();
 app.use(express.json());
 
-const DEFAULT_CORS_ORIGINS = [
-  "https://iron-org.vercel.app",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-];
+const ALLOWED_CORS_ORIGINS = getAllowedCorsOrigins();
 
-// Merge defaults with any comma-separated CORS_ORIGIN env additions.
-const ALLOWED_CORS_ORIGINS = [
-  ...new Set([
-    ...DEFAULT_CORS_ORIGINS,
-    ...(process.env.CORS_ORIGIN || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s && s !== "*"),
-  ]),
-];
+if (
+  process.env.NODE_ENV === "production" &&
+  ALLOWED_CORS_ORIGINS !== "*" &&
+  ALLOWED_CORS_ORIGINS.length === 0
+) {
+  console.warn(
+    "[cors] No origins configured. Set FRONTEND_URL and/or ALLOWED_ORIGINS."
+  );
+}
 
 app.use(
   cors({
     origin:
-      process.env.CORS_ORIGIN === "*"
+      ALLOWED_CORS_ORIGINS === "*"
         ? true // reflect request origin (credentials-safe wildcard)
         : ALLOWED_CORS_ORIGINS,
     credentials: true,
@@ -961,7 +957,11 @@ app.listen(PORT, HOST, () => {
   const cryptoSummary = getStartupSummary();
   console.log(`IRON API http://localhost:${PORT}`);
   console.log(
-    `CORS origins: ${process.env.CORS_ORIGIN === "*" ? "* (reflective)" : ALLOWED_CORS_ORIGINS.join(", ")}`
+    `CORS origins: ${
+      ALLOWED_CORS_ORIGINS === "*"
+        ? "* (reflective)"
+        : ALLOWED_CORS_ORIGINS.join(", ") || "(none configured)"
+    }`
   );
   console.log(`Network: ${cryptoSummary.network} (chainId ${cryptoSummary.chainId})`);
   console.log(`Active factory: ${cryptoSummary.activeFactory}`);

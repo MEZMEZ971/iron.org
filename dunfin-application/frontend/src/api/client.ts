@@ -58,8 +58,7 @@ import {
   getStoredToken,
 } from "../lib/authStorage";
 
-/** Live Railway backend — used when VITE_API_URL is not provided at build time. */
-const PRODUCTION_API_URL = "https://ironorg-production.up.railway.app";
+/** Production API origin — must be set via VITE_API_URL at build time. */
 const DEV_API_URL = "http://localhost:3000";
 
 /** Strip trailing slashes so `${baseURL}${path}` never yields `...app//api/...`. */
@@ -69,8 +68,14 @@ function sanitizeBaseURL(url: string): string {
 
 const baseURL = sanitizeBaseURL(
   import.meta.env.VITE_API_URL ||
-    (import.meta.env.PROD ? PRODUCTION_API_URL : DEV_API_URL)
+    (import.meta.env.DEV ? DEV_API_URL : "")
 );
+
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.error(
+    "[api] VITE_API_URL is required for production builds. Set it in .env.production or Vercel env."
+  );
+}
 
 /** Join base + path with exactly one slash between them. */
 function buildRequestUrl(path: string): string {

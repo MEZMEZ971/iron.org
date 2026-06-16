@@ -35,10 +35,15 @@ function shortInviteCode(referralCode) {
   return clean.slice(0, 5) || referralCode.slice(0, 5).toUpperCase();
 }
 
-const PRODUCTION_FRONTEND_URL = "https://iron-org.vercel.app";
+const { getFrontendUrl } = require("./lib/appUrls.cjs");
 
 function buildInviteLink(referralCode, baseUrl) {
-  const origin = baseUrl || process.env.FRONTEND_URL || PRODUCTION_FRONTEND_URL;
+  const origin = baseUrl || getFrontendUrl();
+  if (!origin) {
+    const err = new Error("FRONTEND_URL is not configured");
+    err.code = "FRONTEND_URL_MISSING";
+    throw err;
+  }
   const url = new URL("/register", origin.replace(/\/$/, ""));
   const code = shortInviteCode(referralCode) || referralCode;
   url.searchParams.set("code", code);
