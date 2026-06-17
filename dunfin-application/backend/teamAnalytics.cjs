@@ -235,10 +235,19 @@ async function fetchContributionLogs(
     .slice(0, limit);
 }
 
-function buildGenStats(rows, rebate, activeCount) {
+function buildGenStats(rows, rebate) {
+  const activeCount = rows.filter((r) =>
+    isActiveMember({
+      hasDeposited: r.hasDeposited,
+      tradingCapital: decimalToNumber(r.tradingCapital),
+      lockedCapital: decimalToNumber(r.lockedCapital),
+    })
+  ).length;
+
   return {
     rebate: trunc6(rebate),
-    count: activeCount,
+    count: rows.length,
+    activeCount,
     members: rows.map(mapMember),
   };
 }
@@ -272,15 +281,6 @@ async function getTeamAnalytics(userId) {
   const headcount = downline.allIds.length;
   const newRegistrationsToday = await countNewRegistrationsToday(downline.allIds);
 
-  const countActive = (rows) =>
-    rows.filter((r) =>
-      isActiveMember({
-        hasDeposited: r.hasDeposited,
-        tradingCapital: decimalToNumber(r.tradingCapital),
-        lockedCapital: decimalToNumber(r.lockedCapital),
-      })
-    ).length;
-
   const contributionLogs = await fetchContributionLogs(
     userId,
     downline.resolveGeneration,
@@ -295,9 +295,9 @@ async function getTeamAnalytics(userId) {
     headcount,
     newRegistrationsToday,
     statsPerGen: {
-      gen1: buildGenStats(downline.gen1, rebates[1], countActive(downline.gen1)),
-      gen2: buildGenStats(downline.gen2, rebates[2], countActive(downline.gen2)),
-      gen3: buildGenStats(downline.gen3, rebates[3], countActive(downline.gen3)),
+      gen1: buildGenStats(downline.gen1, rebates[1]),
+      gen2: buildGenStats(downline.gen2, rebates[2]),
+      gen3: buildGenStats(downline.gen3, rebates[3]),
     },
     contributionLogs,
     broker: rankResult.broker,

@@ -438,6 +438,9 @@ export interface InviteInfo {
   affiliate: {
     totalActiveMembers: number;
     totalMembers: number;
+    gen1Count: number;
+    gen2Count: number;
+    gen3Count: number;
     gen1Active: number;
     gen2Active: number;
     gen3Active: number;
@@ -461,6 +464,7 @@ export interface TeamMemberRow {
 export interface TeamGenStats {
   rebate: number;
   count: number;
+  activeCount: number;
   members: TeamMemberRow[];
 }
 

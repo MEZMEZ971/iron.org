@@ -65,15 +65,15 @@ export default function Invite() {
             <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
               <div className="rounded-lg bg-df-inset py-2">
                 <p className="text-df-faint">{t("gen1")}</p>
-                <p className="font-bold text-[#00d4aa]">{data.affiliate.gen1Active}</p>
+                <p className="font-bold text-[#00d4aa]">{data.affiliate.gen1Count}</p>
               </div>
               <div className="rounded-lg bg-df-inset py-2">
                 <p className="text-df-faint">{t("gen2")}</p>
-                <p className="font-bold text-[#00d4aa]">{data.affiliate.gen2Active}</p>
+                <p className="font-bold text-[#00d4aa]">{data.affiliate.gen2Count}</p>
               </div>
               <div className="rounded-lg bg-df-inset py-2">
                 <p className="text-df-faint">{t("gen3")}</p>
-                <p className="font-bold text-[#00d4aa]">{data.affiliate.gen3Active}</p>
+                <p className="font-bold text-[#00d4aa]">{data.affiliate.gen3Count}</p>
               </div>
             </div>
           </div>

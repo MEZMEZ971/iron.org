@@ -40,9 +40,9 @@ function getAffiliateNetwork(allUsers, rootUserId) {
 
   return {
     generations: {
-      gen1: { ids: gen1, activeCount: gen1Active },
-      gen2: { ids: gen2, activeCount: gen2Active },
-      gen3: { ids: gen3, activeCount: gen3Active },
+      gen1: { ids: gen1, activeCount: gen1Active, memberCount: gen1.length },
+      gen2: { ids: gen2, activeCount: gen2Active, memberCount: gen2.length },
+      gen3: { ids: gen3, activeCount: gen3Active, memberCount: gen3.length },
     },
     totalActiveMembers: gen1Active + gen2Active + gen3Active,
     totalMembers: gen1.length + gen2.length + gen3.length,

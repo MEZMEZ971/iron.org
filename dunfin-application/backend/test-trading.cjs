@@ -58,6 +58,7 @@ const users = {
 const network = getAffiliateNetwork(users, "root");
 assert.strictEqual(network.totalActiveMembers, 2);
 assert.strictEqual(network.generations.gen1.activeCount, 1);
+assert.strictEqual(network.generations.gen1.memberCount, 2);
 
 const cooldown = getCooldownState(new Date().toISOString());
 assert.strictEqual(cooldown.onCooldown, true);
