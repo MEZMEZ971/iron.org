@@ -5,6 +5,7 @@ dotenv.config();
 
 const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY ?? "";
 const MAINNET_RPC = process.env.ETH_RPC_URL ?? "https://mainnet.infura.io/v3/placeholder";
+const BSC_RPC = process.env.BSC_RPC_URL ?? "https://bsc-dataseed.binance.org";
 const SEPOLIA_RPC = process.env.SEPOLIA_RPC_URL ?? "https://sepolia.infura.io/v3/placeholder";
 
 const config: HardhatUserConfig = {
@@ -21,6 +22,12 @@ const config: HardhatUserConfig = {
     mainnet: {
       type: "http",
       url: MAINNET_RPC,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    },
+    bsc: {
+      type: "http",
+      chainId: 56,
+      url: BSC_RPC,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
     sepolia: {

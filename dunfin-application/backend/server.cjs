@@ -13,6 +13,7 @@ const {
   getBlockchainClients,
   getDepositClients,
   getStartupSummary,
+  validateRpcChainId,
 } = require("./config/crypto.cjs");
 const { prisma } = require("./lib/prisma.cjs");
 const {
@@ -956,34 +957,48 @@ setInterval(() => {
   });
 }, BROKER_SALARY_CRON_MS);
 
-app.listen(PORT, HOST, () => {
-  const cryptoSummary = getStartupSummary();
-  console.log(`IRON API http://localhost:${PORT}`);
-  console.log(
-    `CORS origins: ${
-      ALLOWED_CORS_ORIGINS === "*"
-        ? "* (reflective)"
-        : ALLOWED_CORS_ORIGINS.join(", ") || "(none configured)"
-    }`
-  );
-  console.log(`Network: ${cryptoSummary.network} (chainId ${cryptoSummary.chainId})`);
-  console.log(`Active factory: ${cryptoSummary.activeFactory}`);
-  if (cryptoSummary.legacyFactory) {
-    console.log(`Legacy factory: ${cryptoSummary.legacyFactory}`);
-  }
-  console.log(`Main partner wallet: ${cryptoSummary.mainPartnerWallet ?? "(not set)"}`);
-  console.log(`USDT: ${cryptoSummary.usdt}`);
-  if (cryptoSummary.deployerKeyPlaceholder) {
-    console.warn(
-      "⚠️ Deployer wallet: dummy placeholder key active — set a valid 64-char DEPLOYER_PRIVATE_KEY in backend/.env for on-chain writes."
-    );
-  }
-  console.log(`Payout cron every ${PAYOUT_CRON_MS}ms`);
-  console.log(`Sleep-account wake-up cron every ${SLEEP_CRON_MS}ms`);
-  console.log(`Deposit watcher every ${DEPOSIT_WATCHER_MS}ms`);
-  console.log(`Trial expiry cron every ${TRIAL_EXPIRY_CRON_MS}ms`);
-  console.log(`Broker salary cron every ${BROKER_SALARY_CRON_MS}ms`);
-  void runDepositWatcherCycle().catch((err) => {
-    console.warn("[deposit-watcher] initial cycle failed:", err.message);
+validateRpcChainId()
+  .then(() => {
+    app.listen(PORT, HOST, () => {
+      const cryptoSummary = getStartupSummary();
+      console.log(`IRON API http://localhost:${PORT}`);
+      console.log(
+        `CORS origins: ${
+          ALLOWED_CORS_ORIGINS === "*"
+            ? "* (reflective)"
+            : ALLOWED_CORS_ORIGINS.join(", ") || "(none configured)"
+        }`
+      );
+      console.log(
+        `Network: ${cryptoSummary.network} (chainId ${cryptoSummary.chainId})`
+      );
+      console.log(`Active factory: ${cryptoSummary.activeFactory}`);
+      if (cryptoSummary.legacyFactory) {
+        console.log(`Legacy factory: ${cryptoSummary.legacyFactory}`);
+      }
+      console.log(
+        `Main partner wallet: ${cryptoSummary.mainPartnerWallet ?? "(not set)"}`
+      );
+      console.log(`USDT: ${cryptoSummary.usdt}`);
+      if (cryptoSummary.usdc) {
+        console.log(`USDC: ${cryptoSummary.usdc}`);
+      }
+      if (cryptoSummary.deployerKeyPlaceholder) {
+        console.warn(
+          "⚠️ Deployer wallet: dummy placeholder key active — set a valid 64-char DEPLOYER_PRIVATE_KEY in backend/.env for on-chain writes."
+        );
+      }
+      console.log(`Payout cron every ${PAYOUT_CRON_MS}ms`);
+      console.log(`Sleep-account wake-up cron every ${SLEEP_CRON_MS}ms`);
+      console.log(`Deposit watcher every ${DEPOSIT_WATCHER_MS}ms`);
+      console.log(`Trial expiry cron every ${TRIAL_EXPIRY_CRON_MS}ms`);
+      console.log(`Broker salary cron every ${BROKER_SALARY_CRON_MS}ms`);
+      void runDepositWatcherCycle().catch((err) => {
+        console.warn("[deposit-watcher] initial cycle failed:", err.message);
+      });
+    });
+  })
+  .catch((err) => {
+    console.error(err?.message || err);
+    process.exitCode = 1;
   });
-});

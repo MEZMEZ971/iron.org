@@ -1,6 +1,6 @@
 import { createPublicClient, createWalletClient, http, formatEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { sepolia } from "viem/chains";
+import { bsc, mainnet, sepolia } from "viem/chains";
 import { readFileSync, writeFileSync } from "fs";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -25,18 +25,30 @@ async function main() {
         throw new Error("❌ Check your .env file!");
     }
 
+    const TARGET = String(process.env.TARGET_CHAIN || process.env.HARDHAT_NETWORK || "sepolia")
+        .trim()
+        .toLowerCase();
+    const CHAIN = TARGET === "mainnet" ? mainnet : TARGET === "bsc" ? bsc : sepolia;
+
     const account = privateKeyToAccount(PRIVATE_KEY);
     
     const publicClient = createPublicClient({
-        chain: sepolia,
+        chain: CHAIN,
         transport: http(RPC_URL),
     });
 
     const walletClient = createWalletClient({
         account,
-        chain: sepolia,
+        chain: CHAIN,
         transport: http(RPC_URL),
     });
+
+    const chainId = await publicClient.getChainId();
+    if (chainId !== CHAIN.id) {
+        throw new Error(
+            `❌ RPC chainId mismatch. Expected ${CHAIN.id} (${TARGET}), got ${chainId}.`
+        );
+    }
 
     console.log("🚀 Deploying with:", account.address);
     const balance = await publicClient.getBalance({ address: account.address });
@@ -68,7 +80,7 @@ async function main() {
         implementation: implAddress,
         factory: factoryAddress,
         centralWallet: CENTRAL_WALLET,
-        network: "sepolia",
+        network: TARGET,
         deployedAt: new Date().toISOString()
     };
 

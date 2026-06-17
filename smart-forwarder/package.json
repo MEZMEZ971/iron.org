@@ -6,7 +6,8 @@
   "scripts": {
     "test": "npx hardhat test",
     "compile": "npx hardhat compile",
-    "deploy:mainnet": "node scripts/deployMainNet.cjs"
+    "deploy:eth": "node scripts/deployMainNet.cjs",
+    "deploy:bsc": "node scripts/deployBscMainNet.cjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.12",

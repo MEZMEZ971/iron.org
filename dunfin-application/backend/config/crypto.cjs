@@ -14,7 +14,7 @@ const {
   parseAbi,
 } = require("viem");
 const { privateKeyToAccount } = require("viem/accounts");
-const { mainnet } = require("viem/chains");
+const { mainnet, bsc } = require("viem/chains");
 
 function requireAddress(name, value) {
   const trimmed = String(value || "").trim();
@@ -82,7 +82,28 @@ const _deployerKey = resolveDeployerPrivateKey();
 const DEPLOYER_PRIVATE_KEY = _deployerKey.privateKey;
 const DEPLOYER_KEY_IS_PLACEHOLDER = _deployerKey.usingPlaceholder;
 
-const ETH_RPC_URL = requireAddress("ETH_RPC_URL", process.env.ETH_RPC_URL);
+const EVM_CHAIN =
+  String(process.env.EVM_CHAIN || process.env.EVM_NETWORK || "ETH")
+    .trim()
+    .toUpperCase();
+
+const ETH_RPC_URL = process.env.ETH_RPC_URL || "";
+const BSC_RPC_URL = process.env.BSC_RPC_URL || "";
+
+function resolveChainConfig() {
+  if (EVM_CHAIN === "BSC" || EVM_CHAIN === "BEP20") {
+    return {
+      chain: bsc,
+      rpcUrl: requireAddress("BSC_RPC_URL", BSC_RPC_URL),
+      networkLabel: "bsc",
+    };
+  }
+  return {
+    chain: mainnet,
+    rpcUrl: requireAddress("ETH_RPC_URL", ETH_RPC_URL),
+    networkLabel: "mainnet",
+  };
+}
 
 /** Active CREATE2 factory — swap this after mainnet deploy (zero DB migration). */
 const ACTIVE_FACTORY_ADDRESS = requireAddress(
@@ -101,13 +122,22 @@ const MAIN_PARTNER_WALLET_ADDRESS =
   process.env.CENTRAL_WALLET ||
   null;
 
+const { chain: CHAIN, rpcUrl: RPC_URL, networkLabel: NETWORK_LABEL } =
+  resolveChainConfig();
+
 const USDT_ADDRESS = requireAddress("USDT_ADDRESS", process.env.USDT_ADDRESS);
-
+const DEFAULT_USDC_ETH = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const USDC_ADDRESS =
-  optionalAddress("USDC_ADDRESS", process.env.USDC_ADDRESS) ||
-  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+  optionalAddress("USDC_ADDRESS", process.env.USDC_ADDRESS) || DEFAULT_USDC_ETH;
 
-const CHAIN = mainnet;
+const DEFAULT_USDT_BEP20 = "0x55d398326f99059fF775485246999027B3197955";
+const DEFAULT_USDC_BEP20 = "0x8AC76a51cc950d9822D68b83FE1Ad97B32CD580d";
+const USDT_ADDRESS_BEP20 =
+  optionalAddress("USDT_ADDRESS_BEP20", process.env.USDT_ADDRESS_BEP20) ||
+  DEFAULT_USDT_BEP20;
+const USDC_ADDRESS_BEP20 =
+  optionalAddress("USDC_ADDRESS_BEP20", process.env.USDC_ADDRESS_BEP20) ||
+  DEFAULT_USDC_BEP20;
 
 const FACTORY_ABI = parseAbi([
   "function createForwarder(bytes32 userId) returns (address)",
@@ -125,7 +155,7 @@ let _clients;
 
 function createBlockchainClients() {
   const account = privateKeyToAccount(DEPLOYER_PRIVATE_KEY);
-  const transport = http(ETH_RPC_URL);
+  const transport = http(RPC_URL);
 
   const publicClient = createPublicClient({
     chain: CHAIN,
@@ -173,32 +203,52 @@ function getMonitoredFactoryAddresses() {
 
 function getStartupSummary() {
   return {
-    network: "mainnet",
+    network: NETWORK_LABEL,
     chainId: CHAIN.id,
     activeFactory: ACTIVE_FACTORY_ADDRESS,
     legacyFactory: LEGACY_FACTORY_ADDRESS,
     mainPartnerWallet: MAIN_PARTNER_WALLET_ADDRESS,
     usdt: USDT_ADDRESS,
     usdc: USDC_ADDRESS,
+    usdtBep20: USDT_ADDRESS_BEP20,
+    usdcBep20: USDC_ADDRESS_BEP20,
     monitoredFactories: getMonitoredFactoryAddresses(),
     deployerKeyPlaceholder: DEPLOYER_KEY_IS_PLACEHOLDER,
   };
 }
 
+async function validateRpcChainId() {
+  const { publicClient } = getBlockchainClients();
+  const actual = await publicClient.getChainId();
+  const expected = CHAIN.id;
+  if (actual !== expected) {
+    throw new Error(
+      `[chain-guard] RPC chainId mismatch: expected ${expected} (${NETWORK_LABEL}), got ${actual}. Check ETH_RPC_URL/BSC_RPC_URL and EVM_CHAIN.`
+    );
+  }
+  return { chainId: actual, network: NETWORK_LABEL };
+}
+
 module.exports = {
   CHAIN,
-  ETH_RPC_URL,
+  ETH_RPC_URL: ETH_RPC_URL || null,
+  BSC_RPC_URL: BSC_RPC_URL || null,
+  EVM_CHAIN,
+  RPC_URL,
   ACTIVE_FACTORY_ADDRESS,
   LEGACY_FACTORY_ADDRESS,
   MAIN_PARTNER_WALLET_ADDRESS,
   USDT_ADDRESS,
   USDC_ADDRESS,
+  USDT_ADDRESS_BEP20,
+  USDC_ADDRESS_BEP20,
   FACTORY_ABI,
   ERC20_ABI,
   getBlockchainClients,
   getDepositClients,
   getMonitoredFactoryAddresses,
   getStartupSummary,
+  validateRpcChainId,
   DEPLOYER_KEY_IS_PLACEHOLDER,
   sanitizePrivateKey,
 };
