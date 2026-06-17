@@ -1,0 +1,12 @@
+{
+  "network": "bsc",
+  "chainId": 56,
+  "implementation": "0x496D48aC23E4073d7827cAf1BA4B64adB1FeEdA2",
+  "factory": "0xEc37EEeb2390Cee4476269BB9a14A9D29e30b666",
+  "NewFactoryAddress": "0xEc37EEeb2390Cee4476269BB9a14A9D29e30b666",
+  "mainPartnerWallet": "0xE061A3FDC1e39ad672fcFb07C5f1aF0F4aeA6e02",
+  "deployedAt": "2026-06-17T11:13:46.089Z",
+  "deployer": "0xA25Bb9243Ea97EE37d3Ba07Bc34477aAb7340941",
+  "factoryTxHash": "0x4a31cc5ff8c7b1321bee6ff53eb18c76db0cd2c3a88d39023900f72363d5e9f7",
+  "gasPriceGwei": 0.055000001
+}
