@@ -76,11 +76,10 @@ const {
   processWithdraw,
 } = require("./withdraw.cjs");
 const { spinWheel, getWheelStatus } = require("./routes/rewards.cjs");
-const { getAllowedCorsOrigins } = require("./lib/appUrls.cjs");
+const { getAllowedCorsOrigins, trimOrigin } = require("./lib/appUrls.cjs");
 
 const app = express();
 installProcessHandlers();
-app.use(express.json());
 
 const ALLOWED_CORS_ORIGINS = getAllowedCorsOrigins();
 
@@ -94,17 +93,35 @@ if (
   );
 }
 
-app.use(
-  cors({
-    origin:
-      ALLOWED_CORS_ORIGINS === "*"
-        ? true // reflect request origin (credentials-safe wildcard)
-        : ALLOWED_CORS_ORIGINS,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const corsOptions = {
+  origin(origin, callback) {
+    if (ALLOWED_CORS_ORIGINS === "*") {
+      return callback(null, true);
+    }
+    // Allow non-browser clients (curl, health checks) with no Origin header.
+    if (!origin) {
+      return callback(null, true);
+    }
+    const normalized = trimOrigin(origin);
+    const allowed = ALLOWED_CORS_ORIGINS.some(
+      (entry) => trimOrigin(entry) === normalized
+    );
+    if (allowed) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS blocked origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
+};
+
+// CORS must be first — before body parsers and route handlers.
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
+
+app.use(express.json());
 
 const { publicClient, walletClient } = getBlockchainClients();
 

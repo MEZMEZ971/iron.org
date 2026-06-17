@@ -170,6 +170,9 @@ function notFoundApiHandler(req, res, next) {
   if (!req.path.startsWith("/api")) {
     return next();
   }
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
   return sendClientError(res, "NOT_FOUND", "API route not found.", 404);
 }
 

@@ -11,6 +11,10 @@ function splitOrigins(value) {
     .filter(Boolean);
 }
 
+function normalizeOriginList(origins) {
+  return [...new Set(origins.map((entry) => trimOrigin(entry)).filter(Boolean))];
+}
+
 /** Canonical public frontend origin for invite links, emails, etc. */
 function getFrontendUrl() {
   const configured = trimOrigin(process.env.FRONTEND_URL);
@@ -41,12 +45,13 @@ function getAllowedCorsOrigins() {
     origins.add("http://127.0.0.1:5173");
   }
 
-  return [...origins];
+  return normalizeOriginList([...origins]);
 }
 
 module.exports = {
   trimOrigin,
   splitOrigins,
+  normalizeOriginList,
   getFrontendUrl,
   getAllowedCorsOrigins,
 };
