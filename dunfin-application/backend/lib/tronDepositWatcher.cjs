@@ -9,7 +9,8 @@ const { TRON_STABLECOINS } = require("./depositStablecoins.cjs");
 const TRON_API_BASE = (
   process.env.TRON_API_URL || "https://api.trongrid.io"
 ).replace(/\/+$/, "");
-const TRON_API_KEY = process.env.TRON_API_KEY || "";
+const TRON_API_KEY =99701d12-6304-4aa1-9da8-37a368fc25fa
+  process.env.TRONGRID_API_KEY || process.env.TRON_API_KEY || "";
 const LOOKBACK_MS =
   Number(process.env.DEPOSIT_WATCHER_LOOKBACK_MS) || 24 * 60 * 60 * 1000;
 

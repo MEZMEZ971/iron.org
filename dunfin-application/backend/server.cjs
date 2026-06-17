@@ -931,7 +931,10 @@ setInterval(() => {
   });
 }, SLEEP_CRON_MS);
 
-const DEPOSIT_WATCHER_MS = Number(process.env.DEPOSIT_WATCHER_MS) || 45_000;
+const DEPOSIT_WATCHER_MS = Math.max(
+  Number(process.env.DEPOSIT_WATCHER_MS) || 30_000,
+  20_000
+);
 setInterval(() => {
   runDepositWatcherCycle().catch((err) => {
     console.warn("[deposit-watcher] tick failed:", err.message);
