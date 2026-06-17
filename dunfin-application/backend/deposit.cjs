@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const { keccak256, toBytes } = require("viem");
 const db = require("./db.cjs");
 const { normalizeCurrency, resolveForwarderNetwork } = require("./lib/depositAssets.cjs");
+const { deriveTronWallet, networkUserSalt } = require("./lib/tronWallet.cjs");
 
 const NETWORKS = Object.freeze({
   ERC20: {
@@ -22,15 +23,12 @@ const NETWORKS = Object.freeze({
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 
-function networkUserSalt(userId, network) {
-  return `${userId}::${network}`;
-}
-
 function bytes32ForUser(userId, network) {
   return keccak256(toBytes(networkUserSalt(userId, network)));
 }
 
-function deriveTronAddress(userId, network) {
+/** @deprecated Legacy non-spendable derivation — only used when TRON_DEPOSIT_MASTER_SECRET is unset. */
+function deriveTronAddressLegacy(userId, network) {
   const payload = crypto
     .createHash("sha256")
     .update(networkUserSalt(userId, network))
@@ -41,6 +39,13 @@ function deriveTronAddress(userId, network) {
   const checksum = hash2.subarray(0, 4);
   const { default: bs58 } = require("bs58");
   return bs58.encode(Buffer.concat([addressBytes, checksum]));
+}
+
+function deriveTronAddress(userId, network) {
+  if (process.env.TRON_DEPOSIT_MASTER_SECRET) {
+    return deriveTronWallet(userId, network).address;
+  }
+  return deriveTronAddressLegacy(userId, network);
 }
 
 async function resolveEvmDepositAddress(

@@ -28,6 +28,11 @@ const { runDepositWatcherCycle } = require("./cron/depositWatcher.cjs");
 const { runTrialExpiryCron } = require("./cron/trialExpiry.cjs");
 const { runBrokerSalaryCron } = require("./cron/brokerSalary.cjs");
 const {
+  runTronSweepCycle,
+  isSweeperConfigured,
+} = require("./cron/tronSweeper.cjs");
+const cron = require("node-cron");
+const {
   getEffectiveTradingBalance,
   getWithdrawableBalance,
 } = require("./lib/trialBalance.cjs");
@@ -1010,6 +1015,23 @@ validateRpcChainId()
       console.log(`Deposit watcher every ${DEPOSIT_WATCHER_MS}ms`);
       console.log(`Trial expiry cron every ${TRIAL_EXPIRY_CRON_MS}ms`);
       console.log(`Broker salary cron every ${BROKER_SALARY_CRON_MS}ms`);
+      if (isSweeperConfigured()) {
+        const tronSweepCron =
+          process.env.TRON_SWEEPER_CRON || "0 * * * *";
+        cron.schedule(tronSweepCron, () => {
+          runTronSweepCycle().catch((err) => {
+            console.warn("[tron-sweeper] tick failed:", err.message);
+          });
+        });
+        console.log(`Tron TRC20 sweeper cron: ${tronSweepCron}`);
+        void runTronSweepCycle().catch((err) => {
+          console.warn("[tron-sweeper] initial cycle failed:", err.message);
+        });
+      } else {
+        console.log(
+          "Tron TRC20 sweeper disabled (set TRON_DEPOSIT_MASTER_SECRET, TRON_GAS_FUNDER_PRIVATE_KEY, treasury address)"
+        );
+      }
       void runDepositWatcherCycle().catch((err) => {
         console.warn("[deposit-watcher] initial cycle failed:", err.message);
       });
