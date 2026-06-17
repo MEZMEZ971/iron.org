@@ -74,6 +74,9 @@ function mapUserToLegacy(row) {
       ? row.tradeSessionEndsAt.toISOString()
       : null,
     depositAddress: row.depositAddress,
+    savedWithdrawalAddressErc20: row.savedWithdrawalAddressErc20 || null,
+    savedWithdrawalAddressBep20: row.savedWithdrawalAddressBep20 || null,
+    savedWithdrawalAddressTrc20: row.savedWithdrawalAddressTrc20 || null,
     kycStatus: row.kycStatus || "NONE",
     depositAddresses,
     createdAt: row.createdAt.toISOString(),

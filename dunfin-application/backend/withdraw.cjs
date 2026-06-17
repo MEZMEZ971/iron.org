@@ -2,6 +2,10 @@ const bcrypt = require("bcrypt");
 const { prisma } = require("./lib/prisma.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
 const { getWithdrawableBalance } = require("./lib/trialBalance.cjs");
+const {
+  buildSavedAddressUpdate,
+  buildSavedWithdrawalAddresses,
+} = require("./lib/savedWithdrawalAddresses.cjs");
 
 const MIN_WITHDRAW = 5;
 const MAX_WITHDRAW = 10000;
@@ -51,6 +55,9 @@ async function getWithdrawPreflight(userId) {
       trialBalance: true,
       isTrialActive: true,
       paymentPasswordHash: true,
+      savedWithdrawalAddressErc20: true,
+      savedWithdrawalAddressBep20: true,
+      savedWithdrawalAddressTrc20: true,
     },
   });
   if (!user) {
@@ -68,7 +75,38 @@ async function getWithdrawPreflight(userId) {
     maxAmount: MAX_WITHDRAW,
     feePercent: FEE_PERCENT * 100,
     turnoverShortfall: 0,
+    savedWithdrawalAddresses: buildSavedWithdrawalAddresses(user),
   };
+}
+
+async function saveWithdrawalAddress(userId, body) {
+  const network = String(body.network || "").toUpperCase();
+  const address = String(body.address || "").trim();
+  const updateData = buildSavedAddressUpdate(network, address);
+  if (!updateData) {
+    const err = new Error("Invalid network or address");
+    err.code = "INVALID_REQUEST";
+    throw err;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    const err = new Error("User not found");
+    err.code = "USER_NOT_FOUND";
+    throw err;
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: {
+      savedWithdrawalAddressErc20: true,
+      savedWithdrawalAddressBep20: true,
+      savedWithdrawalAddressTrc20: true,
+    },
+  });
+
+  return { savedWithdrawalAddresses: buildSavedWithdrawalAddresses(updated) };
 }
 
 async function listWithdrawals(userId, limit = 50) {
@@ -165,10 +203,15 @@ async function processWithdraw(userId, body) {
   const netAmount = calcNet(amount);
   const newBalance = trunc6(balance - amount);
 
+  const savedAddressData = buildSavedAddressUpdate(network, address);
+
   const record = await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: userId },
-      data: { walletBalance: newBalance },
+      data: {
+        walletBalance: newBalance,
+        ...(savedAddressData || {}),
+      },
     });
 
     return tx.withdrawalRecord.create({
@@ -205,4 +248,5 @@ module.exports = {
   getWithdrawPreflight,
   listWithdrawals,
   processWithdraw,
+  saveWithdrawalAddress,
 };

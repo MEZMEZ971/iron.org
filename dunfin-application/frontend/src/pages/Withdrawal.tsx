@@ -55,6 +55,13 @@ function calcNet(amount: number) {
   return Number((amount - calcFee(amount)).toFixed(6));
 }
 
+function savedAddressForNetwork(
+  saved: WithdrawPreflight["savedWithdrawalAddresses"],
+  net: Network
+) {
+  return saved?.[net]?.trim() || "";
+}
+
 export default function Withdrawal() {
   const { t, dir, locale } = useLocale();
   const rtl = dir === "rtl";
@@ -103,6 +110,11 @@ export default function Withdrawal() {
   useEffect(() => {
     loadPreflight();
   }, [loadPreflight]);
+
+  useEffect(() => {
+    if (!preflight?.savedWithdrawalAddresses) return;
+    setAddress(savedAddressForNetwork(preflight.savedWithdrawalAddresses, network));
+  }, [preflight, network]);
 
   useEffect(() => {
     if (view === "history") loadHistory();
@@ -163,7 +175,6 @@ export default function Withdrawal() {
       });
       setIsPasswordModalOpen(false);
       setQuantity("");
-      setAddress("");
       await loadPreflight();
       emitWalletRefresh({ userId, walletBalance: result.walletBalance });
       await refreshProfile();

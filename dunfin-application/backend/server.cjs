@@ -79,7 +79,9 @@ const {
   getWithdrawPreflight,
   listWithdrawals,
   processWithdraw,
+  saveWithdrawalAddress,
 } = require("./withdraw.cjs");
+const { buildSavedWithdrawalAddresses } = require("./lib/savedWithdrawalAddresses.cjs");
 const { spinWheel, getWheelStatus } = require("./routes/rewards.cjs");
 const { getAllowedCorsOrigins, trimOrigin } = require("./lib/appUrls.cjs");
 
@@ -585,6 +587,15 @@ app.post("/api/wallet/withdraw", requireAuth, async (req, res) => {
   }
 });
 
+app.put("/api/wallet/withdrawal-address", requireAuth, async (req, res) => {
+  try {
+    const result = await saveWithdrawalAddress(req.auth.userId, req.body);
+    res.json(result);
+  } catch (error) {
+    sendApiError(res, error);
+  }
+});
+
 app.post("/api/users/profile/send-email-otp", requireAuth, async (req, res) => {
   try {
     const userId = req.auth.userId;
@@ -653,6 +664,7 @@ async function buildUserProfileResponse(userId) {
     transactions,
     assets: buildAssetLedger(available, locked, pendingWithdrawals),
     pendingWithdrawals: trunc6(pendingWithdrawals),
+    savedWithdrawalAddresses: buildSavedWithdrawalAddresses(user),
     ...buildTaxHolidayProfile({
       isInvited: user.isInvited,
       hasActivatedBonusStrategy: user.hasActivatedBonusStrategy,

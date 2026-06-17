@@ -84,6 +84,11 @@ model User {
 
   depositAddress String?
 
+  /// Last withdrawal destination per network (auto-saved on withdraw)
+  savedWithdrawalAddressErc20 String?
+  savedWithdrawalAddressBep20 String?
+  savedWithdrawalAddressTrc20 String?
+
   kycStatus KycStatus @default(NONE)
   /// When false, login and authenticated API access are blocked
   accountActive Boolean @default(true)

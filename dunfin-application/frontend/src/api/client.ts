@@ -346,6 +346,7 @@ export interface UserProfile {
   userProfitSharePercent?: number;
   platformProfitSharePercent?: number;
   broker?: BrokerProfileSnapshot;
+  savedWithdrawalAddresses?: SavedWithdrawalAddresses;
 }
 
 /** Authenticated profile for the current JWT subject */
@@ -517,6 +518,10 @@ export function sendProfileEmailOtp(email: string) {
   );
 }
 
+export type WithdrawNetwork = "ERC20" | "BEP20" | "TRC20";
+
+export type SavedWithdrawalAddresses = Record<WithdrawNetwork, string | null>;
+
 export interface WithdrawPreflight {
   walletBalance: number;
   requiresPaymentPin: boolean;
@@ -524,6 +529,7 @@ export interface WithdrawPreflight {
   maxAmount: number;
   feePercent: number;
   turnoverShortfall: number;
+  savedWithdrawalAddresses?: SavedWithdrawalAddresses;
 }
 
 export interface WithdrawalRecordRow {
@@ -542,6 +548,16 @@ export interface WithdrawalRecordRow {
 
 export function fetchWithdrawPreflight() {
   return request<WithdrawPreflight>("/api/wallet/withdraw/preflight");
+}
+
+export function saveWithdrawalAddress(payload: {
+  network: WithdrawNetwork;
+  address: string;
+}) {
+  return request<{ savedWithdrawalAddresses: SavedWithdrawalAddresses }>(
+    "/api/wallet/withdrawal-address",
+    { method: "PUT", body: JSON.stringify(payload) }
+  );
 }
 
 export function fetchWithdrawalHistory() {
