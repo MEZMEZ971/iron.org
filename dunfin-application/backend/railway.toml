@@ -1,13 +1,7 @@
-# Railway deployment configuration for the IRON Express backend.
-# Set the service "Root Directory" to dunfin-application/backend in the
-# Railway dashboard so this file is picked up.
-
 [build]
-builder = "NIXPACKS"
-buildCommand = "npm install --legacy-peer-deps --prefix ../frontend && npm run build --prefix ../frontend"
+builder = "nixpacks"
 
 [deploy]
 startCommand = "node server.cjs"
-restartPolicyType = "ON_FAILURE"
-healthcheckPath = "/health"
-healthcheckTimeout = 120
+healthCheckPath = "/health"
+healthCheckTimeout = 100
