@@ -1,6 +1,7 @@
 const { prisma } = require("./lib/prisma.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
 const { decimalToNumber } = require("./lib/userMapper.cjs");
+const { isTrialCurrentlyActive } = require("./lib/trialBalance.cjs");
 const { getCooldownState } = require("./strategies.cjs");
 const { computeDailyProfit } = require("./lib/strategyRoi.cjs");
 const { splitDailyProfit } = require("./lib/taxHoliday.cjs");
@@ -37,7 +38,7 @@ async function getTradeEarnings(userId) {
   }
 
   const walletBalance = trunc6(decimalToNumber(user.walletBalance));
-  const trialBalance = user.isTrialActive
+  const trialBalance = isTrialCurrentlyActive(user)
     ? trunc6(decimalToNumber(user.trialBalance))
     : 0;
   const lockedCapital = trunc6(decimalToNumber(user.lockedCapital));

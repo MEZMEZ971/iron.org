@@ -46,7 +46,11 @@ async function settleUserTradePayout(userRow, tx) {
   const grossDailyProfit = computeDailyProfit(locked, userRow.activeStrategy);
   const split = splitDailyProfit(userRow, grossDailyProfit);
   const wallet = decimalToNumber(userRow.walletBalance);
-  const newWallet = trunc6(wallet + locked + split.userShare);
+  const trialBalance = decimalToNumber(userRow.trialBalance);
+  const lockedTrial = trunc6(decimalToNumber(userRow.lockedTrialCapital));
+  const lockedWallet = trunc6(Math.max(0, locked - lockedTrial));
+  const newWallet = trunc6(wallet + lockedWallet + split.userShare);
+  const newTrial = trunc6(trialBalance + lockedTrial);
   const monthlyPatch = normalizeMonthlyProceeds(userRow, split.userShare);
 
   const lastTrade = await db.trade.findFirst({
@@ -58,7 +62,9 @@ async function settleUserTradePayout(userRow, tx) {
     where: { id: userRow.id },
     data: {
       walletBalance: newWallet,
+      trialBalance: newTrial,
       lockedCapital: 0,
+      lockedTrialCapital: 0,
       tradingCapital: 0,
       activeStrategy: null,
       tradeSessionEndsAt: null,
@@ -102,6 +108,8 @@ async function processDuePayouts() {
     select: {
       id: true,
       walletBalance: true,
+      trialBalance: true,
+      lockedTrialCapital: true,
       lockedCapital: true,
       activeStrategy: true,
       lastTradeTime: true,

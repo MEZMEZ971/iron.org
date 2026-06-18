@@ -15,6 +15,7 @@ const { touchUserActivity } = require("./lib/userActivity.cjs");
 const { applyStrategyActivationBonus } = require("./lib/taxHoliday.cjs");
 const {
   getEffectiveTradingBalance,
+  isTrialCurrentlyActive,
   splitTradeCapitalDeduction,
 } = require("./lib/trialBalance.cjs");
 
@@ -24,6 +25,8 @@ async function releaseExpiredLock(userId) {
     select: {
       id: true,
       walletBalance: true,
+      trialBalance: true,
+      lockedTrialCapital: true,
       lockedCapital: true,
       activeStrategy: true,
       lastTradeTime: true,
@@ -86,7 +89,9 @@ async function executeTrade(userId) {
   }
 
   const walletBalance = Number(user.walletBalance) || 0;
-  const trialBalance = user.isTrialActive ? Number(user.trialBalance) || 0 : 0;
+  const trialBalance = isTrialCurrentlyActive(user)
+    ? Number(user.trialBalance) || 0
+    : 0;
   const tradingBalance = getEffectiveTradingBalance(user);
   const allUsers = await db.getAllUsers();
   const network = getAffiliateNetwork(allUsers, userId);
@@ -124,7 +129,7 @@ async function executeTrade(userId) {
   const sessionEndsAt = new Date(
     Date.now() + pickTradeSessionDurationMs()
   ).toISOString();
-  const { walletBalance: newWalletBalance, trialBalance: newTrialBalance } =
+  const { walletBalance: newWalletBalance, trialBalance: newTrialBalance, lockedTrialCapital } =
     splitTradeCapitalDeduction(user, capital);
 
   await db.updateUser(userId, {
@@ -132,6 +137,7 @@ async function executeTrade(userId) {
     tradeSessionEndsAt: sessionEndsAt,
     walletBalance: newWalletBalance,
     trialBalance: newTrialBalance,
+    lockedTrialCapital,
     tradingCapital: capital,
     lockedCapital: capital,
     activeStrategy: resolved.strategy.id,
@@ -182,7 +188,9 @@ async function getTradeStatus(userId) {
   const allUsers = await db.getAllUsers();
   const network = getAffiliateNetwork(allUsers, userId);
   const walletBalance = Number(user.walletBalance) || 0;
-  const trialBalance = user.isTrialActive ? Number(user.trialBalance) || 0 : 0;
+  const trialBalance = isTrialCurrentlyActive(user)
+    ? Number(user.trialBalance) || 0
+    : 0;
   const tradingBalance = getEffectiveTradingBalance(user);
   const lockedCapital = Number(user.lockedCapital) || 0;
   const activeTeamCount = network.totalActiveMembers;

@@ -76,6 +76,9 @@ async function updateUser(userId, patch) {
   if (patch.onChainBalance !== undefined) data.onChainBalance = patch.onChainBalance;
   if (patch.tradingCapital !== undefined) data.tradingCapital = patch.tradingCapital;
   if (patch.lockedCapital !== undefined) data.lockedCapital = patch.lockedCapital;
+  if (patch.lockedTrialCapital !== undefined) {
+    data.lockedTrialCapital = patch.lockedTrialCapital;
+  }
   if (patch.activeStrategy !== undefined) data.activeStrategy = patch.activeStrategy;
   if (patch.hasDeposited !== undefined) data.hasDeposited = patch.hasDeposited;
   if (patch.depositAddress !== undefined) data.depositAddress = patch.depositAddress;

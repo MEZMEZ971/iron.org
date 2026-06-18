@@ -39,9 +39,28 @@ async function grantRegistrationTrial(userId, tx) {
   return fields;
 }
 
-function getEffectiveTradingBalance(user) {
+function isTrialCurrentlyActive(user, now = new Date()) {
+  if (!user?.isTrialActive) return false;
+
+  const trial = trunc6(user?.trialBalance);
+  if (trial <= 0) return false;
+
+  if (user.trialExpiresAt) {
+    const expiresAt =
+      user.trialExpiresAt instanceof Date
+        ? user.trialExpiresAt
+        : new Date(user.trialExpiresAt);
+    if (!Number.isNaN(expiresAt.getTime()) && expiresAt.getTime() <= now.getTime()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function getEffectiveTradingBalance(user, now = new Date()) {
   const wallet = trunc6(user?.walletBalance);
-  if (!user?.isTrialActive) return wallet;
+  if (!isTrialCurrentlyActive(user, now)) return wallet;
   return trunc6(wallet + (user.trialBalance ?? 0));
 }
 
@@ -52,16 +71,18 @@ function getWithdrawableBalance(user) {
 
 /**
  * Allocate trade capital: consume trial balance first, then wallet.
+ * lockedTrialCapital tracks non-withdrawable trial principal in escrow.
  */
-function splitTradeCapitalDeduction(user, capitalAmount) {
+function splitTradeCapitalDeduction(user, capitalAmount, now = new Date()) {
   const capital = trunc6(capitalAmount);
   const wallet = trunc6(user?.walletBalance);
-  const trial = user?.isTrialActive ? trunc6(user?.trialBalance) : 0;
+  const trial = isTrialCurrentlyActive(user, now) ? trunc6(user?.trialBalance) : 0;
   const fromTrial = trunc6(Math.min(trial, capital));
   const fromWallet = trunc6(capital - fromTrial);
   return {
     trialBalance: trunc6(trial - fromTrial),
     walletBalance: trunc6(wallet - fromWallet),
+    lockedTrialCapital: fromTrial,
   };
 }
 
@@ -112,6 +133,7 @@ module.exports = {
   registrationTrialFields,
   recordTrialWelcomeBonus,
   grantRegistrationTrial,
+  isTrialCurrentlyActive,
   getEffectiveTradingBalance,
   getWithdrawableBalance,
   splitTradeCapitalDeduction,

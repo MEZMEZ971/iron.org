@@ -81,4 +81,37 @@ const expiredSession = getTradeSessionState({
 });
 assert.strictEqual(expiredSession.active, false);
 
+const {
+  getEffectiveTradingBalance,
+  isTrialCurrentlyActive,
+  splitTradeCapitalDeduction,
+} = require("./lib/trialBalance.cjs");
+
+const trialUser = {
+  walletBalance: 0,
+  trialBalance: 100,
+  isTrialActive: true,
+  trialExpiresAt: new Date(Date.now() + 86400000).toISOString(),
+};
+assert.strictEqual(getEffectiveTradingBalance(trialUser), 100);
+assert.strictEqual(isTrialCurrentlyActive(trialUser), true);
+
+const expiredTrialUser = {
+  ...trialUser,
+  trialExpiresAt: new Date(Date.now() - 1000).toISOString(),
+};
+assert.strictEqual(isTrialCurrentlyActive(expiredTrialUser), false);
+assert.strictEqual(getEffectiveTradingBalance(expiredTrialUser), 0);
+
+const split = splitTradeCapitalDeduction(trialUser, 100);
+assert.strictEqual(split.trialBalance, 0);
+assert.strictEqual(split.walletBalance, 0);
+assert.strictEqual(split.lockedTrialCapital, 100);
+
+const mixedUser = { walletBalance: 50, trialBalance: 100, isTrialActive: true, trialExpiresAt: trialUser.trialExpiresAt };
+const mixedSplit = splitTradeCapitalDeduction(mixedUser, 120);
+assert.strictEqual(mixedSplit.trialBalance, 0);
+assert.strictEqual(mixedSplit.walletBalance, 30);
+assert.strictEqual(mixedSplit.lockedTrialCapital, 100);
+
 console.log("All trading unit checks passed.");

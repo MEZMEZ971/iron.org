@@ -33,6 +33,7 @@ const cron = require("node-cron");
 const {
   getEffectiveTradingBalance,
   getWithdrawableBalance,
+  isTrialCurrentlyActive,
 } = require("./lib/trialBalance.cjs");
 const {
   checkAndUpgradeBrokerRank,
@@ -669,7 +670,9 @@ async function buildUserProfileResponse(userId) {
 
   const locked = Number(user.lockedCapital) || 0;
   const walletOnly = Number(user.walletBalance) || 0;
-  const trialBalance = user.isTrialActive ? Number(user.trialBalance) || 0 : 0;
+  const trialBalance = isTrialCurrentlyActive(user)
+    ? Number(user.trialBalance) || 0
+    : 0;
   const available = getEffectiveTradingBalance(user);
   const withdrawable = getWithdrawableBalance(user);
   const onChain = Number(user.onChainBalance) || walletOnly + locked;
@@ -730,7 +733,9 @@ app.post("/api/users/profile/sync-balance", requireAuth, async (req, res) => {
     if (!user?.depositAddress) {
       return sendClientError(res, "NOT_FOUND", "User has no deposit address", 404);
     }
-    const trialBalance = user.isTrialActive ? Number(user.trialBalance) || 0 : 0;
+    const trialBalance = isTrialCurrentlyActive(user)
+    ? Number(user.trialBalance) || 0
+    : 0;
     const fundAccount = getEffectiveTradingBalance(user);
     res.json({
       success: true,

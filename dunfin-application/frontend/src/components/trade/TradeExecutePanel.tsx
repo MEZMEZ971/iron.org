@@ -55,14 +55,15 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
   const botActive = (status?.cooldown.onCooldown ?? false) && !sessionActive;
 
   const walletBalance = status?.walletBalance ?? 0;
-  const belowEntryMinimum = walletBalance < 100;
+  const availableBalance = status?.availableBalance ?? walletBalance;
+  const belowEntryMinimum = availableBalance < 100;
 
   const canExecute =
     !loading &&
     !onCooldown &&
     !executing &&
     status?.eligibility?.eligible === true &&
-    walletBalance >= 100;
+    availableBalance >= 100;
 
   async function handleExecute() {
     setActionError(null);
@@ -192,7 +193,7 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
         <Strategies
           strategies={status.strategies}
           activeStrategyId={status.activeStrategy}
-          walletBalance={status.walletBalance}
+          walletBalance={status.availableBalance ?? status.walletBalance}
           executeSectionRef={executeSectionRef}
         />
       )}

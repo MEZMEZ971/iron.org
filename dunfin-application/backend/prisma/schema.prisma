@@ -78,6 +78,8 @@ model User {
   onChainBalance Decimal   @default(0) @db.Decimal(18, 6)
   tradingCapital Decimal   @default(0) @db.Decimal(18, 6)
   lockedCapital  Decimal   @default(0) @db.Decimal(18, 6)
+  /// Trial principal locked in the current trade session (non-withdrawable)
+  lockedTrialCapital Decimal @default(0) @db.Decimal(18, 6)
   activeStrategy Int?
   lastTradeTime  DateTime?
   /// When the current 5–10 min trading session ends (payout + unlock)
