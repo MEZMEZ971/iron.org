@@ -1,8 +1,6 @@
 require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
-const fs = require("fs");
 const { formatUnits } = require("viem");
 const db = require("./db.cjs");
 const {
@@ -942,33 +940,11 @@ app.use((req, _res, next) => {
 app.get("/api/trade/status/:userId", getTradeStatusHandler);
 app.post("/api/trade/execute", postTradeExecuteHandler);
 
-const frontendDist = path.join(__dirname, "..", "frontend", "dist");
-const frontendIndex = path.join(frontendDist, "index.html");
-const serveFrontend = fs.existsSync(frontendIndex);
-
+// API-only gateway — frontend is hosted separately on Vercel.
 app.use(notFoundApiHandler);
 
-if (serveFrontend) {
-  app.use(express.static(frontendDist, { index: false }));
-  console.log(`Serving frontend from ${frontendDist}`);
-} else {
-  console.log(
-    `Frontend bundle not found at ${frontendDist} — only /api routes are served`
-  );
-}
-
-// SPA fallback for client-side routes (/register, /login, etc.)
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api")) {
-    return next();
-  }
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    return next();
-  }
-  if (serveFrontend) {
-    return res.sendFile(frontendIndex);
-  }
-  return next();
+app.use((req, res) => {
+  sendClientError(res, "NOT_FOUND", "Not found.", 404);
 });
 
 app.use(errorMiddleware);
