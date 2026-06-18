@@ -11,7 +11,11 @@ const {
   findReferrerByInviteCode,
 } = require("./lib/referralCodeGenerator.cjs");
 const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
-const { registrationTrialFields } = require("./lib/trialBalance.cjs");
+const {
+  registrationTrialFields,
+  recordTrialWelcomeBonus,
+} = require("./lib/trialBalance.cjs");
+const { trunc6 } = require("./lib/formatNumbers.cjs");
 const {
   propagateBrokerRankCheckFromReferral,
 } = require("./lib/brokerProgram.cjs");
@@ -66,6 +70,8 @@ function verifyToken(token) {
 
 function mapPublicUser(row) {
   if (!row) return null;
+  const trialBalance = row.isTrialActive ? trunc6(row.trialBalance) : 0;
+  const walletBalance = trunc6(row.walletBalance);
   return {
     id: row.id,
     userId: row.id,
@@ -77,6 +83,11 @@ function mapPublicUser(row) {
     uid: row.uid,
     referralCode: row.referralCode,
     role: row.role || "USER",
+    walletBalance,
+    trialBalance,
+    isTrialActive: Boolean(row.isTrialActive),
+    trialExpiresAt: row.trialExpiresAt ? row.trialExpiresAt.toISOString() : null,
+    fundAccount: trunc6(walletBalance + trialBalance),
   };
 }
 
@@ -182,26 +193,34 @@ async function registerUser({
   const uid = await allocateUniqueUid();
   const referralCode = await allocateUniqueReferralCode();
 
-  const row = await prisma.user.create({
-    data: {
-      id,
-      uid,
-      username: uname,
-      email: mail,
-      phone: phoneDigits,
-      phoneCountryCode: country,
-      passwordHash,
-      displayName: uname,
-      referralCode,
-      referredById,
-      ...registrationTrialFields(),
-      ...(referredById ? inviteRegistrationTaxFields() : {}),
-    },
-    include: {
-      deposits: true,
-      trades: true,
-      networkAddresses: true,
-    },
+  const row = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: {
+        id,
+        uid,
+        username: uname,
+        email: mail,
+        phone: phoneDigits,
+        phoneCountryCode: country,
+        passwordHash,
+        displayName: uname,
+        referralCode,
+        referredById,
+        ...registrationTrialFields(),
+        ...(referredById ? inviteRegistrationTaxFields() : {}),
+      },
+    });
+
+    await recordTrialWelcomeBonus(created.id, tx);
+
+    return tx.user.findUnique({
+      where: { id: created.id },
+      include: {
+        deposits: true,
+        trades: true,
+        networkAddresses: true,
+      },
+    });
   });
 
   if (referredById) {

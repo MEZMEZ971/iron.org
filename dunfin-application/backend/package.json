@@ -14,7 +14,10 @@
     "db:backfill-referrals": "node scripts/backfillLegacyReferrals.cjs",
     "db:backfill-referrals:apply": "node scripts/backfillLegacyReferrals.cjs --apply --fix-invite-tax-flags",
     "db:backfill-invite-codes": "node scripts/backfillSixCharInviteCodes.cjs",
-    "db:backfill-invite-codes:apply": "node scripts/backfillSixCharInviteCodes.cjs --apply"
+    "db:backfill-invite-codes:apply": "node scripts/backfillSixCharInviteCodes.cjs --apply",
+    "db:backfill-trial": "node scripts/backfillTrialBonus.cjs",
+    "db:backfill-trial:apply": "node scripts/backfillTrialBonus.cjs --apply",
+    "db:check-trial": "node scripts/checkTrialStatus.cjs"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",

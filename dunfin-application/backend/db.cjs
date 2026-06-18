@@ -7,7 +7,7 @@ const {
 const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
 const { allocateUniqueReferralCode } = require("./lib/referralCodeGenerator.cjs");
 const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
-const { evictTrialBalance, registrationTrialFields } = require("./lib/trialBalance.cjs");
+const { evictTrialBalance, registrationTrialFields, recordTrialWelcomeBonus } = require("./lib/trialBalance.cjs");
 const {
   propagateBrokerRankCheckFromReferral,
 } = require("./lib/brokerProgram.cjs");
@@ -45,9 +45,13 @@ async function getOrCreateUser(userId, extras = {}) {
         displayName: extras.displayName || null,
         referralCode,
         referredById,
+        ...registrationTrialFields(),
         ...(referredById ? inviteRegistrationTaxFields() : {}),
       },
       include: userInclude,
+    });
+    await recordTrialWelcomeBonus(row.id).catch((err) => {
+      console.warn("[trial] welcome ledger for legacy user create:", err.message);
     });
   } else if (Object.keys(extras).length > 0) {
     row = await prisma.user.update({
@@ -181,16 +185,22 @@ async function registerUser(userId, { referredBy } = {}) {
 
   const uid = await allocateUniqueUid();
   const referralCode = await allocateUniqueReferralCode();
-  const row = await prisma.user.create({
-    data: {
-      id: userId,
-      uid,
-      referralCode,
-      referredById: referredBy || null,
-      ...registrationTrialFields(),
-      ...(referredBy ? inviteRegistrationTaxFields() : {}),
-    },
-    include: userInclude,
+  const row = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: {
+        id: userId,
+        uid,
+        referralCode,
+        referredById: referredBy || null,
+        ...registrationTrialFields(),
+        ...(referredBy ? inviteRegistrationTaxFields() : {}),
+      },
+    });
+    await recordTrialWelcomeBonus(created.id, tx);
+    return tx.user.findUnique({
+      where: { id: created.id },
+      include: userInclude,
+    });
   });
 
   if (referredBy) {

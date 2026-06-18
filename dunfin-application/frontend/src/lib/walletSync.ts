@@ -2,6 +2,9 @@ export type WalletRefreshPayload = {
   userId?: string;
   uid?: string;
   walletBalance?: number;
+  trialBalance?: number;
+  isTrialActive?: boolean;
+  fundAccount?: number;
 };
 
 type WalletRefreshListener = (payload?: WalletRefreshPayload) => void;

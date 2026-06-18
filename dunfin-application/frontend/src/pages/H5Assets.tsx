@@ -5,6 +5,7 @@ import { LockboxInfoModal } from "../components/h5/LockboxInfoModal";
 import { TaxHolidayStatusBanner } from "../components/TaxHolidayStatusBanner";
 import { useH5Portfolio } from "../context/H5PortfolioContext";
 import { useLocale } from "../i18n/LocaleContext";
+import { formatTrialRemaining } from "../lib/trialRemaining";
 
 function fmt(n: number) {
   return Number(n).toLocaleString(undefined, {
@@ -14,15 +15,20 @@ function fmt(n: number) {
 }
 
 export default function H5Assets() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const navigate = useNavigate();
   const {
     availableBalance,
     lockedBalance,
+    trialBalance,
+    isTrialActive,
+    trialExpiresAt,
     activeStrategyLabel,
     isTrading,
     loading,
   } = useH5Portfolio();
+
+  const trialRemaining = formatTrialRemaining(trialExpiresAt, locale);
 
   const [lockboxInfoOpen, setLockboxInfoOpen] = useState(false);
   const [lockboxHover, setLockboxHover] = useState(false);
@@ -40,6 +46,20 @@ export default function H5Assets() {
       <h1 className="text-center text-lg font-bold">{t("navAssets")}</h1>
 
       <TaxHolidayStatusBanner />
+
+      {isTrialActive && trialBalance > 0 && (
+        <div className="rounded-2xl border border-[#fcd535]/30 bg-gradient-to-br from-[#121824] via-[#1a1408] to-[#0f131c] p-4 shadow-lg shadow-amber-500/10">
+          <p className="text-sm font-semibold leading-relaxed text-[#fcd535]">
+            {t("trialBannerTitle", {
+              amount: fmt(trialBalance),
+              remaining: trialRemaining,
+            })}
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-slate-300">
+            {t("trialBannerSubtext")}
+          </p>
+        </div>
+      )}
 
       <section className="rounded-2xl bg-[#fdfcf0] p-4 text-amber-950 shadow-xl dark:bg-gradient-to-b dark:from-[#1a1510] dark:to-[#121820] dark:text-white">
         <p className="text-center text-xs text-amber-900/70 dark:text-amber-200/70">

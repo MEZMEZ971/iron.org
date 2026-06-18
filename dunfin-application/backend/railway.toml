@@ -2,6 +2,6 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "node server.cjs"
+startCommand = "npx prisma db push --skip-generate && node server.cjs"
 healthCheckPath = "/health"
 healthCheckTimeout = 100

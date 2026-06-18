@@ -12,6 +12,33 @@ function registrationTrialFields(now = new Date()) {
   };
 }
 
+async function recordTrialWelcomeBonus(userId, dbClient = prisma) {
+  return dbClient.transactionRecord.create({
+    data: {
+      userId,
+      type: "TRIAL_WELCOME_BONUS",
+      amount: TRIAL_AMOUNT,
+      status: "SUCCESS",
+      description: "3-day welcome trial — 100 USDT trading credit (non-withdrawable)",
+    },
+  });
+}
+
+/**
+ * Persists trial fields + immutable ledger row in the same DB transaction as signup.
+ * @param {import('@prisma/client').Prisma.TransactionClient} tx
+ * @param {string} userId
+ */
+async function grantRegistrationTrial(userId, tx) {
+  const fields = registrationTrialFields();
+  await tx.user.update({
+    where: { id: userId },
+    data: fields,
+  });
+  await recordTrialWelcomeBonus(userId, tx);
+  return fields;
+}
+
 function getEffectiveTradingBalance(user) {
   const wallet = trunc6(user?.walletBalance);
   if (!user?.isTrialActive) return wallet;
@@ -83,6 +110,8 @@ module.exports = {
   TRIAL_AMOUNT,
   TRIAL_DURATION_MS,
   registrationTrialFields,
+  recordTrialWelcomeBonus,
+  grantRegistrationTrial,
   getEffectiveTradingBalance,
   getWithdrawableBalance,
   splitTradeCapitalDeduction,

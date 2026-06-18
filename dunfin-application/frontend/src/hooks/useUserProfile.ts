@@ -66,15 +66,25 @@ export function useUserProfile(userId: string) {
       if (!userId) return;
       if (payload?.userId && payload.userId !== userId && payload.uid !== uid) return;
       if (payload?.walletBalance != null) {
-        setProfile((prev) =>
-          prev
-            ? {
-                ...prev,
-                walletBalance: payload.walletBalance!,
-                fundAccount: payload.walletBalance!,
-              }
-            : prev
-        );
+        setProfile((prev) => {
+          if (!prev) return prev;
+          const trial =
+            payload.fundAccount != null
+              ? Math.max(0, payload.fundAccount - payload.walletBalance!)
+              : prev.isTrialActive && prev.trialBalance
+                ? prev.trialBalance
+                : 0;
+          const fundAccount =
+            payload.fundAccount ??
+            payload.walletBalance! + (prev.isTrialActive ? trial : 0);
+          return {
+            ...prev,
+            walletBalance: payload.walletBalance!,
+            trialBalance: payload.trialBalance ?? prev.trialBalance,
+            isTrialActive: payload.isTrialActive ?? prev.isTrialActive,
+            fundAccount,
+          };
+        });
       }
       void refresh({ skipChainSync: true });
     });

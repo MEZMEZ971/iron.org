@@ -128,6 +128,11 @@ export interface AuthUser {
   uid: string;
   referralCode?: string;
   role?: UserRole;
+  walletBalance?: number;
+  trialBalance?: number;
+  isTrialActive?: boolean;
+  trialExpiresAt?: string | null;
+  fundAccount?: number;
 }
 
 export interface AuthResponse {
@@ -228,6 +233,7 @@ export function authLogin(payload: { identifier: string; password: string }) {
 export interface TradeEarnings {
   accountBalance: number;
   walletBalance: number;
+  trialBalance?: number;
   lockedCapital: number;
   currency: string;
   totalTransactionProceeds: number;

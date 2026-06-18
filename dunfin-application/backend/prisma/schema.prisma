@@ -42,6 +42,7 @@ enum TransactionRecordType {
   DEPOSIT_INTENT
   BROKER_RANK_UPGRADE_BONUS
   BROKER_SALARY
+  TRIAL_WELCOME_BONUS
 }
 
 enum TransactionRecordStatus {

@@ -19,6 +19,8 @@ async function getTradeEarnings(userId) {
     where: { id: userId },
     select: {
       walletBalance: true,
+      trialBalance: true,
+      isTrialActive: true,
       lockedCapital: true,
       activeStrategy: true,
       lastTradeTime: true,
@@ -35,8 +37,11 @@ async function getTradeEarnings(userId) {
   }
 
   const walletBalance = trunc6(decimalToNumber(user.walletBalance));
+  const trialBalance = user.isTrialActive
+    ? trunc6(decimalToNumber(user.trialBalance))
+    : 0;
   const lockedCapital = trunc6(decimalToNumber(user.lockedCapital));
-  const accountBalance = trunc6(walletBalance + lockedCapital);
+  const accountBalance = trunc6(walletBalance + trialBalance + lockedCapital);
 
   const cooldown = getCooldownState(
     user.lastTradeTime ? user.lastTradeTime.toISOString() : null
@@ -91,6 +96,7 @@ async function getTradeEarnings(userId) {
     ok: true,
     accountBalance,
     walletBalance,
+    trialBalance,
     lockedCapital,
     currency: "USDT",
     totalTransactionProceeds,

@@ -321,6 +321,11 @@ app.post("/api/auth/register", async (req, res) => {
       success: true,
       token: result.token,
       user: result.user,
+      trial: {
+        amount: result.user.trialBalance ?? 100,
+        isTrialActive: result.user.isTrialActive ?? true,
+        trialExpiresAt: result.user.trialExpiresAt ?? null,
+      },
     });
   } catch (error) {
     sendApiError(res, error);
@@ -725,9 +730,14 @@ app.post("/api/users/profile/sync-balance", requireAuth, async (req, res) => {
     if (!user?.depositAddress) {
       return sendClientError(res, "NOT_FOUND", "User has no deposit address", 404);
     }
+    const trialBalance = user.isTrialActive ? Number(user.trialBalance) || 0 : 0;
+    const fundAccount = getEffectiveTradingBalance(user);
     res.json({
       success: true,
       walletBalance: user.walletBalance,
+      trialBalance: trunc6(trialBalance),
+      isTrialActive: Boolean(user.isTrialActive),
+      fundAccount: trunc6(fundAccount),
       onChainBalance: user.onChainBalance,
       lockedCapital: user.lockedCapital,
     });
@@ -813,15 +823,22 @@ async function buildTransactionFeed(userId, user) {
 
   for (const e of txnRecords) {
     const isLucky = e.type === "LUCKY_WHEEL_REWARD";
+    const isTrialWelcome = e.type === "TRIAL_WELCOME_BONUS";
     const isBrokerBonus = e.type === "BROKER_RANK_UPGRADE_BONUS";
     const isBrokerSalary = e.type === "BROKER_SALARY";
     const isReward =
-      e.type === "ADMIN_REWARD" || isLucky || isBrokerBonus || isBrokerSalary;
+      e.type === "ADMIN_REWARD" ||
+      isLucky ||
+      isTrialWelcome ||
+      isBrokerBonus ||
+      isBrokerSalary;
     rows.push({
       id: e.id,
       type: isLucky
         ? "Lucky Wheel"
-        : isBrokerBonus
+        : isTrialWelcome
+          ? "Welcome Trial"
+          : isBrokerBonus
           ? "Broker Rank Bonus"
           : isBrokerSalary
             ? "Broker Salary"

@@ -43,8 +43,11 @@ type H5PortfolioValue = {
   earnings: TradeEarnings | null;
   tradeStatus: TradeStatus | null;
   walletBalance: number;
-  /** Liquid USDT — same as walletBalance / flexibleFunds */
+  /** Liquid USDT including active trial credit */
   availableBalance: number;
+  trialBalance: number;
+  isTrialActive: boolean;
+  trialExpiresAt: string | null;
   /** Strategy principal locked in escrow — same as lockedCapital / pendingFunds */
   lockedBalance: number;
   pendingFunds: number;
@@ -120,20 +123,41 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
       if (!matchesUser) return;
 
       if (payload?.walletBalance != null) {
-        setProfile((prev) =>
-          prev
-            ? {
-                ...prev,
-                walletBalance: payload.walletBalance!,
-                fundAccount: payload.walletBalance!,
-              }
-            : prev
-        );
-        setEarnings((prev) =>
-          prev
-            ? { ...prev, accountBalance: payload.walletBalance!, walletBalance: payload.walletBalance! }
-            : prev
-        );
+        setProfile((prev) => {
+          if (!prev) return prev;
+          const trial =
+            payload.trialBalance ??
+            (prev.isTrialActive && prev.trialBalance ? prev.trialBalance : 0);
+          const nextWallet = payload.walletBalance!;
+          const fundAccount =
+            payload.fundAccount ??
+            nextWallet + (payload.isTrialActive ?? prev.isTrialActive ? trial : 0);
+          return {
+            ...prev,
+            walletBalance: nextWallet,
+            trialBalance: trial,
+            isTrialActive: payload.isTrialActive ?? prev.isTrialActive,
+            fundAccount,
+          };
+        });
+        setEarnings((prev) => {
+          if (!prev) return prev;
+          const trial =
+            payload.trialBalance ??
+            (prev.trialBalance && (payload.isTrialActive ?? true) ? prev.trialBalance : 0);
+          const locked = prev.lockedCapital ?? 0;
+          const wallet = payload.walletBalance!;
+          const accountBalance =
+            payload.fundAccount != null
+              ? payload.fundAccount + locked
+              : wallet + trial + locked;
+          return {
+            ...prev,
+            walletBalance: wallet,
+            trialBalance: trial,
+            accountBalance,
+          };
+        });
         setTradeStatus((prev) =>
           prev ? { ...prev, walletBalance: payload.walletBalance! } : prev
         );
@@ -144,12 +168,21 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
   }, [refresh, uid, userId]);
 
   const walletBalance = profile?.walletBalance ?? earnings?.walletBalance ?? 0;
+  const trialBalance =
+    profile?.isTrialActive && profile.trialBalance
+      ? profile.trialBalance
+      : earnings?.trialBalance ?? 0;
+  const isTrialActive = Boolean(profile?.isTrialActive && trialBalance > 0);
+  const trialExpiresAt = profile?.trialExpiresAt ?? null;
   const lockedBalance =
     tradeStatus?.lockedCapital ??
     profile?.lockedCapital ??
     earnings?.lockedCapital ??
     0;
-  const availableBalance = walletBalance;
+  const availableBalance =
+    profile?.fundAccount ??
+    tradeStatus?.availableBalance ??
+    walletBalance + (isTrialActive ? trialBalance : 0);
   const pendingFunds = lockedBalance;
   const flexibleFunds = availableBalance;
 
@@ -160,6 +193,9 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
       tradeStatus,
       walletBalance,
       availableBalance,
+      trialBalance,
+      isTrialActive,
+      trialExpiresAt,
       lockedBalance,
       pendingFunds,
       flexibleFunds,
@@ -183,6 +219,9 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
       tradeStatus,
       walletBalance,
       availableBalance,
+      trialBalance,
+      isTrialActive,
+      trialExpiresAt,
       lockedBalance,
       pendingFunds,
       flexibleFunds,
