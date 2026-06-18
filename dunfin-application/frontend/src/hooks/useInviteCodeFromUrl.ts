@@ -2,12 +2,13 @@ import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   getStoredReferralCode,
+  normalizeReferralCode,
   resolveReferralCode,
   setStoredReferralCode,
 } from "../lib/referralStorage";
 
 /**
- * Reads invitation code from `?code=` or `?ref=` query parameters.
+ * Reads the 6-character invite code from `?ref=` (legacy `?code=` still accepted).
  * Persists detected codes to sessionStorage so refreshes keep referral context.
  */
 export function useInviteCodeFromUrl() {
@@ -15,9 +16,9 @@ export function useInviteCodeFromUrl() {
 
   const codeFromUrl = useMemo(() => {
     const ref = searchParams.get("ref")?.trim();
-    if (ref) return ref;
-    const code = searchParams.get("code")?.trim();
-    if (code) return code;
+    if (ref) return normalizeReferralCode(ref);
+    const legacyCode = searchParams.get("code")?.trim();
+    if (legacyCode) return normalizeReferralCode(legacyCode);
     return "";
   }, [searchParams]);
 

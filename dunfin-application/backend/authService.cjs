@@ -170,6 +170,11 @@ async function registerUser({
   const inviteCodeRaw = String(invitationCode || "").trim();
   if (inviteCodeRaw) {
     referredById = await findReferrerByInviteCode(inviteCodeRaw);
+    if (!referredById) {
+      const err = new Error("Invalid invitation code");
+      err.code = "REFERRER_NOT_FOUND";
+      throw err;
+    }
   }
 
   const id = `user_${crypto.randomBytes(12).toString("hex")}`;

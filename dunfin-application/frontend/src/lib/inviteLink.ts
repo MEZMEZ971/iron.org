@@ -1,20 +1,19 @@
 import { getWebAppOrigin } from "../config/appUrls";
+import {
+  INVITE_CODE_LENGTH,
+  normalizeReferralCode,
+} from "./referralStorage";
 
 /**
  * Builds a registration invite URL on the frontend origin only.
- * Format: https://iron.wales/register?code=SHORT&ref=FULL_REFERRAL_CODE
+ * Format: https://iron.wales/register?ref=X7F29A
  */
-export function buildInvitationLink(
-  referralCode?: string | null,
-  inviteCode?: string | null
-): string {
-  const ref = String(referralCode || "").trim();
-  if (!ref) return "";
+export function buildInvitationLink(inviteCode?: string | null): string {
+  const ref = normalizeReferralCode(inviteCode);
+  if (ref.length !== INVITE_CODE_LENGTH) return "";
 
   const origin = getWebAppOrigin();
   const url = new URL("/register", origin);
-  const code = String(inviteCode || "").trim() || ref.slice(0, 5).toUpperCase();
-  url.searchParams.set("code", code);
   url.searchParams.set("ref", ref);
   return url.toString();
 }

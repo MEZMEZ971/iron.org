@@ -64,6 +64,7 @@ model User {
   paymentPasswordHash  String?
   displayName          String?
   role                 UserRole  @default(USER)
+  /// Public 6-character invite code (A–Z, 2–9) — unique referral identifier
   referralCode     String    @unique
   referredById   String?
   referredBy     User?     @relation("AffiliateTree", fields: [referredById], references: [id], onDelete: SetNull)

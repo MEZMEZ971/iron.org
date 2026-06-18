@@ -1,18 +1,40 @@
 const crypto = require("crypto");
 const { prisma } = require("./prisma.cjs");
-const { shortInviteCode } = require("../invite.cjs");
 
-const REFERRAL_PREFIX = "IRON";
-const MAX_ALLOCATION_ATTEMPTS = 16;
+const INVITE_CODE_LENGTH = 6;
+/** Uppercase letters + digits, excluding ambiguous 0/O, 1/I/L. */
+const INVITE_CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+const MAX_ALLOCATION_ATTEMPTS = 32;
 
-/** One random IRON-XXXXXX candidate (not uniqueness-checked). */
+function normalizeInviteCode(code) {
+  return String(code || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, INVITE_CODE_LENGTH);
+}
+
+function isValidInviteCode(code) {
+  const normalized = normalizeInviteCode(code);
+  if (normalized.length !== INVITE_CODE_LENGTH) return false;
+  for (const ch of normalized) {
+    if (!INVITE_CODE_CHARS.includes(ch)) return false;
+  }
+  return true;
+}
+
+/** One random 6-character candidate (not uniqueness-checked). */
 function generateReferralCodeCandidate() {
-  const suffix = crypto.randomBytes(3).toString("hex").toUpperCase();
-  return `${REFERRAL_PREFIX}-${suffix}`;
+  const bytes = crypto.randomBytes(INVITE_CODE_LENGTH);
+  let code = "";
+  for (let i = 0; i < INVITE_CODE_LENGTH; i += 1) {
+    code += INVITE_CODE_CHARS[bytes[i] % INVITE_CODE_CHARS.length];
+  }
+  return code;
 }
 
 /**
- * Allocate a referral code that is not already present in `User.referralCode`.
+ * Allocate a unique 6-character referral code for `User.referralCode`.
  * @param {import('@prisma/client').PrismaClient} [db]
  */
 async function allocateUniqueReferralCode(db = prisma) {
@@ -31,46 +53,37 @@ async function allocateUniqueReferralCode(db = prisma) {
 }
 
 /**
- * Resolve sponsor user id from an incoming invite / referral token.
- * Returns null when missing, unknown, or ambiguous — never a fallback admin.
+ * Resolve sponsor user id from a 6-character invite code (or legacy full code).
+ * Returns null when missing, unknown, or ambiguous.
  */
 async function findReferrerByInviteCode(code, db = prisma) {
   const raw = String(code || "").trim();
   if (!raw) return null;
 
-  const exact = await db.user.findFirst({
+  const normalized = normalizeInviteCode(raw);
+  if (normalized.length === INVITE_CODE_LENGTH) {
+    const match = await db.user.findFirst({
+      where: { referralCode: { equals: normalized, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (match) return match.id;
+  }
+
+  const legacy = await db.user.findFirst({
     where: { referralCode: { equals: raw, mode: "insensitive" } },
     select: { id: true },
   });
-  if (exact) return exact.id;
-
-  const byUid = await db.user.findFirst({
-    where: { uid: { equals: raw, mode: "insensitive" } },
-    select: { id: true },
-  });
-  if (byUid) return byUid.id;
-
-  const normalizedShort = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  if (normalizedShort.length < 4) return null;
-
-  const users = await db.user.findMany({
-    select: { id: true, referralCode: true },
-  });
-
-  const shortMatches = users.filter(
-    (user) => shortInviteCode(user.referralCode) === normalizedShort
-  );
-
-  if (shortMatches.length === 1) {
-    return shortMatches[0].id;
-  }
+  if (legacy) return legacy.id;
 
   return null;
 }
 
 module.exports = {
-  REFERRAL_PREFIX,
+  INVITE_CODE_LENGTH,
+  INVITE_CODE_CHARS,
   MAX_ALLOCATION_ATTEMPTS,
+  normalizeInviteCode,
+  isValidInviteCode,
   generateReferralCodeCandidate,
   allocateUniqueReferralCode,
   findReferrerByInviteCode,

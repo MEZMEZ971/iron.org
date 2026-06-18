@@ -12,7 +12,9 @@
     "db:migrate:deploy": "prisma migrate deploy --schema=./prisma/schema.prisma",
     "db:studio": "prisma studio --schema=./prisma/schema.prisma",
     "db:backfill-referrals": "node scripts/backfillLegacyReferrals.cjs",
-    "db:backfill-referrals:apply": "node scripts/backfillLegacyReferrals.cjs --apply --fix-invite-tax-flags"
+    "db:backfill-referrals:apply": "node scripts/backfillLegacyReferrals.cjs --apply --fix-invite-tax-flags",
+    "db:backfill-invite-codes": "node scripts/backfillSixCharInviteCodes.cjs",
+    "db:backfill-invite-codes:apply": "node scripts/backfillSixCharInviteCodes.cjs --apply"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",

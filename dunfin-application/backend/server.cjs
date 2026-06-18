@@ -45,6 +45,11 @@ const { getKycStatus, submitKyc } = require("./kyc.cjs");
 const { getInviteInfo } = require("./inviteService.cjs");
 const { getTeamAnalytics } = require("./teamAnalytics.cjs");
 const { registerUser: registerAuthUser, loginUser } = require("./authService.cjs");
+const {
+  findReferrerByInviteCode,
+  isValidInviteCode,
+  normalizeInviteCode,
+} = require("./lib/referralCodeGenerator.cjs");
 const { requireAuth, adminRequired } = require("./middleware/auth.cjs");
 const {
   getAdminStats,
@@ -336,6 +341,34 @@ app.post("/api/auth/login", async (req, res) => {
 
     const result = await loginUser({ identifier, password }, depositClients());
     res.json(result);
+  } catch (error) {
+    sendApiError(res, error);
+  }
+});
+
+app.get("/api/auth/referral/:code", async (req, res) => {
+  try {
+    const code = normalizeInviteCode(req.params.code);
+    if (!isValidInviteCode(code)) {
+      return sendClientError(res, "REFERRER_NOT_FOUND", "Invalid invitation code.", 404);
+    }
+    const referrerId = await findReferrerByInviteCode(code);
+    if (!referrerId) {
+      return sendClientError(res, "REFERRER_NOT_FOUND", "Invitation code not found.", 404);
+    }
+    const referrer = await prisma.user.findUnique({
+      where: { id: referrerId },
+      select: { uid: true, username: true, displayName: true, referralCode: true },
+    });
+    res.json({
+      valid: true,
+      code: referrer.referralCode,
+      referrer: {
+        uid: referrer.uid,
+        username: referrer.username,
+        displayName: referrer.displayName,
+      },
+    });
   } catch (error) {
     sendApiError(res, error);
   }

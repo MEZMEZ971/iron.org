@@ -1,4 +1,6 @@
 const { STRATEGIES } = require("./strategies.cjs");
+const { getFrontendUrl } = require("./lib/appUrls.cjs");
+const { normalizeInviteCode } = require("./lib/referralCodeGenerator.cjs");
 
 const STRATEGY_PRODUCT_NAMES = Object.freeze({
   1: "Alpha Grid Master",
@@ -29,14 +31,6 @@ function getInviteRewardMatrix() {
   }));
 }
 
-function shortInviteCode(referralCode) {
-  if (!referralCode) return "";
-  const clean = referralCode.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-  return clean.slice(0, 5) || referralCode.slice(0, 5).toUpperCase();
-}
-
-const { getFrontendUrl } = require("./lib/appUrls.cjs");
-
 function buildInviteLink(referralCode, baseUrl) {
   const origin = baseUrl || getFrontendUrl();
   if (!origin) {
@@ -44,17 +38,20 @@ function buildInviteLink(referralCode, baseUrl) {
     err.code = "FRONTEND_URL_MISSING";
     throw err;
   }
+  const code = normalizeInviteCode(referralCode);
+  if (!code) {
+    const err = new Error("Invalid invite code");
+    err.code = "INVALID_INVITE_CODE";
+    throw err;
+  }
   const url = new URL("/register", origin.replace(/\/$/, ""));
-  const code = shortInviteCode(referralCode) || referralCode;
-  url.searchParams.set("code", code);
-  url.searchParams.set("ref", referralCode);
+  url.searchParams.set("ref", code);
   return url.toString();
 }
 
 module.exports = {
   getInviteRewardMatrix,
   buildInviteLink,
-  shortInviteCode,
   STRATEGY_PRODUCT_NAMES,
   REWARD_TIERS,
 };

@@ -92,10 +92,9 @@ function generateUid() {
   return generateUidCandidate();
 }
 
-function generateReferralCode(userId) {
-  const crypto = require("crypto");
-  const suffix = crypto.randomBytes(3).toString("hex").toUpperCase();
-  return `IRON-${suffix}`;
+function generateReferralCode() {
+  const { generateReferralCodeCandidate } = require("./referralCodeGenerator.cjs");
+  return generateReferralCodeCandidate();
 }
 
 module.exports = {

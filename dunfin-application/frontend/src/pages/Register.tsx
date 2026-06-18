@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useInviteCodeFromUrl } from "../hooks/useInviteCodeFromUrl";
 import {
   clearStoredReferralCode,
+  INVITE_CODE_LENGTH,
   normalizeReferralCode,
   setStoredReferralCode,
 } from "../lib/referralStorage";
@@ -162,15 +163,17 @@ export default function Register() {
             type="text"
             value={invitationCode}
             onChange={(e) => {
-              const next = e.target.value.toUpperCase();
+              const next = normalizeReferralCode(e.target.value);
               setInvitationCode(next);
-              const normalized = normalizeReferralCode(next);
-              if (normalized) setStoredReferralCode(normalized);
+              if (next) setStoredReferralCode(next);
             }}
             disabled={formDisabled}
             readOnly={lockInvite && hasUrlCode}
+            maxLength={INVITE_CODE_LENGTH}
             className={`${inputClass} ${lockInvite && hasUrlCode ? "border-[#f0b90b]/40 bg-[#f0b90b]/5" : ""}`}
             placeholder={t("authInvitationOptional")}
+            autoCapitalize="characters"
+            spellCheck={false}
           />
           {hasUrlCode && (
             <p className="mt-1 text-[10px] text-[#00d4aa]">{t("authInviteAutoFilled")}</p>
