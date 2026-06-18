@@ -5,6 +5,7 @@ import type { TransactionRow } from "../api/client";
 import { formatAmount, safeNumber } from "../lib/formatNumbers";
 import { formatTrialRemaining } from "../lib/trialRemaining";
 import { BrokerRankBadge } from "../components/broker/BrokerRankBadge";
+import { CustomerManagerContacts } from "../components/support/CustomerManagerContacts";
 
 function txStatusLabel(
   status: string,
@@ -130,6 +131,11 @@ export default function Personal() {
           </span>
         </div>
       </div>
+
+      <CustomerManagerContacts
+        title={t("supportManagersTitle")}
+        subtitle={t("supportManagersSubtitle")}
+      />
 
       <div className="df-table-shell glass-card overflow-hidden rounded-2xl">
         <h2 className="border-b border-df bg-df-table-head px-4 py-3 text-sm font-bold text-df">

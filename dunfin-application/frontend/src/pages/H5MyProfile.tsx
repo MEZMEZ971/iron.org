@@ -11,6 +11,7 @@ import {
   getStrategyTierName,
   resolveActiveStrategyTier,
 } from "../lib/strategyTiers";
+import { CustomerManagerContacts } from "../components/support/CustomerManagerContacts";
 
 type GridItem = {
   key: TranslationKey;
@@ -147,6 +148,12 @@ export default function H5MyProfile() {
       </div>
 
       <div className="-mt-2 rounded-t-3xl border border-slate-200/80 bg-white px-4 pb-6 pt-5 text-slate-900 dark:border-white/10 dark:bg-slate-900 dark:text-white">
+        <CustomerManagerContacts
+          title={t("supportManagersTitle")}
+          subtitle={t("supportManagersSubtitle")}
+          className="mb-5 border-slate-200/80 bg-slate-50/90 dark:border-white/10 dark:bg-white/[0.04]"
+        />
+
         <button
           type="button"
           onClick={() => setWheelOpen(true)}

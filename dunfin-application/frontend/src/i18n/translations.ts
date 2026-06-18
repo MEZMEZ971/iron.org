@@ -169,6 +169,9 @@ const en = {
     profileCustomerService: "Customer Service",
     profileTeam: "Team",
     profileHelp: "Help Center",
+    supportManagersTitle: "Customer Support",
+    supportManagersSubtitle:
+      "Reach our dedicated managers on Telegram for account assistance.",
     profileSetting: "Setting",
     settingsHubTitle: "Settings",
     settingsEmail: "e-mail",
@@ -492,6 +495,9 @@ const ar = {
     profileCustomerService: "خدمة العملاء",
     profileTeam: "فريقي",
     profileHelp: "مركز المساعدة",
+    supportManagersTitle: "دعم العملاء",
+    supportManagersSubtitle:
+      "تواصل مع مديري الحسابات المخصصين عبر تيليجرام للمساعدة.",
     profileSetting: "الإعدادات",
     settingsHubTitle: "الإعدادات",
     settingsEmail: "البريد الإلكتروني",

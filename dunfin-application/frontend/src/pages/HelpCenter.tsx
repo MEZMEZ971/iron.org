@@ -6,6 +6,7 @@ import {
   HelpSubBlock,
   type HelpSectionDef,
 } from "../components/help/HelpAccordion";
+import { CustomerManagerContacts } from "../components/support/CustomerManagerContacts";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
 
@@ -189,7 +190,11 @@ export default function HelpCenter() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-2xl px-4 py-5">
+      <div className="mx-auto max-w-2xl space-y-5 px-4 py-5">
+        <CustomerManagerContacts
+          title={t("supportManagersTitle")}
+          subtitle={t("supportManagersSubtitle")}
+        />
         <HelpAccordion sections={HELP_SECTIONS} />
       </div>
     </div>
