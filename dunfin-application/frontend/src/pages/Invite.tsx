@@ -16,8 +16,8 @@ export default function Invite() {
 
   // Always anchored to the live origin the user is browsing.
   const invitationLink = useMemo(
-    () => buildInvitationLink(data?.inviteLink, data?.referralCode),
-    [data?.inviteLink, data?.referralCode]
+    () => buildInvitationLink(data?.referralCode, data?.inviteCode),
+    [data?.referralCode, data?.inviteCode]
   );
 
   async function copyInviteLink() {

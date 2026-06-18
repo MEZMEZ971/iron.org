@@ -1,33 +1,20 @@
 import { getWebAppOrigin } from "../config/appUrls";
 
 /**
- * Rebuilds an invitation link on the origin the user is currently browsing,
- * so copied/QR/shared links always match the live domain (custom domain,
- * Vercel preview, or localhost) instead of a stale backend-configured origin.
+ * Builds a registration invite URL on the frontend origin only.
+ * Format: https://iron.wales/register?code=SHORT&ref=FULL_REFERRAL_CODE
  */
 export function buildInvitationLink(
-  serverInviteLink: string | null | undefined,
-  referralCode?: string | null
+  referralCode?: string | null,
+  inviteCode?: string | null
 ): string {
+  const ref = String(referralCode || "").trim();
+  if (!ref) return "";
+
   const origin = getWebAppOrigin();
-
-  if (serverInviteLink) {
-    try {
-      const parsed = new URL(serverInviteLink);
-      return new URL(
-        `${parsed.pathname}${parsed.search}${parsed.hash}`,
-        origin
-      ).toString();
-    } catch {
-      // fall through to referral-code construction
-    }
-  }
-
-  if (referralCode) {
-    const url = new URL("/register", origin);
-    url.searchParams.set("ref", referralCode);
-    return url.toString();
-  }
-
-  return "";
+  const url = new URL("/register", origin);
+  const code = String(inviteCode || "").trim() || ref.slice(0, 5).toUpperCase();
+  url.searchParams.set("code", code);
+  url.searchParams.set("ref", ref);
+  return url.toString();
 }
