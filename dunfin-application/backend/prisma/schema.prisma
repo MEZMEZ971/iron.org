@@ -67,6 +67,8 @@ model User {
   role                 UserRole  @default(USER)
   /// Public 6-character invite code (A–Z, 2–9) — unique referral identifier
   referralCode     String    @unique
+  /// Previous long-format code (e.g. DFUSER…) — resolves old invitation links after migration
+  legacyReferralCode String? @unique
   referredById   String?
   referredBy     User?     @relation("AffiliateTree", fields: [referredById], references: [id], onDelete: SetNull)
   referrals      User[]    @relation("AffiliateTree")
@@ -137,6 +139,7 @@ model User {
 
   @@index([referredById])
   @@index([referralCode])
+  @@index([legacyReferralCode])
   @@index([createdAt])
 }
 

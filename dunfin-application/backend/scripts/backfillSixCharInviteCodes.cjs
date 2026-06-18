@@ -33,13 +33,17 @@ async function main() {
   }
 
   for (const user of toUpdate) {
+    const oldCode = String(user.referralCode || "").trim();
     const referralCode = await allocateUniqueReferralCode();
     await prisma.user.update({
       where: { id: user.id },
-      data: { referralCode },
+      data: {
+        referralCode,
+        legacyReferralCode: oldCode || null,
+      },
     });
     console.log(
-      `[backfill] ${user.uid}: ${user.referralCode} -> ${referralCode}`
+      `[backfill] ${user.uid}: ${oldCode} -> ${referralCode}`
     );
   }
 

@@ -15,9 +15,13 @@
     "db:backfill-referrals:apply": "node scripts/backfillLegacyReferrals.cjs --apply --fix-invite-tax-flags",
     "db:backfill-invite-codes": "node scripts/backfillSixCharInviteCodes.cjs",
     "db:backfill-invite-codes:apply": "node scripts/backfillSixCharInviteCodes.cjs --apply",
+    "db:force-backfill-legacy-codes": "node scripts/forceBackfillLegacyCodes.cjs",
+    "db:force-backfill-legacy-codes:apply": "node scripts/forceBackfillLegacyCodes.cjs --apply",
     "db:backfill-trial": "node scripts/backfillTrialBonus.cjs",
     "db:backfill-trial:apply": "node scripts/backfillTrialBonus.cjs --apply",
-    "db:check-trial": "node scripts/checkTrialStatus.cjs"
+    "db:check-trial": "node scripts/checkTrialStatus.cjs",
+    "tron:sweep:dry-run": "node scripts/tronSweeperDryRun.cjs",
+    "tron:sweep:dry-run:json": "node scripts/tronSweeperDryRun.cjs --json"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",

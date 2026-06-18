@@ -12,10 +12,18 @@ async function ensureSixCharReferralCode(userId, currentCode) {
   if (isValidInviteCode(currentCode)) {
     return normalizeInviteCode(currentCode);
   }
+  const oldCode = String(currentCode || "").trim();
   const referralCode = await allocateUniqueReferralCode();
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { legacyReferralCode: true },
+  });
   await prisma.user.update({
     where: { id: userId },
-    data: { referralCode },
+    data: {
+      referralCode,
+      legacyReferralCode: existing?.legacyReferralCode || oldCode || null,
+    },
   });
   return referralCode;
 }

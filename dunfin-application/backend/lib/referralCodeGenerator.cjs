@@ -52,28 +52,47 @@ async function allocateUniqueReferralCode(db = prisma) {
   throw err;
 }
 
+function isLegacyReferralCode(code) {
+  const raw = String(code || "").trim().toUpperCase();
+  if (!raw) return false;
+  if (raw.startsWith("DFUSER")) return true;
+  if (raw.length > INVITE_CODE_LENGTH) return true;
+  return !isValidInviteCode(raw);
+}
+
 /**
- * Resolve sponsor user id from a 6-character invite code (or legacy full code).
+ * Resolve sponsor user id from invite code (6-char or legacy long format).
  * Returns null when missing, unknown, or ambiguous.
  */
 async function findReferrerByInviteCode(code, db = prisma) {
   const raw = String(code || "").trim();
   if (!raw) return null;
 
-  const normalized = normalizeInviteCode(raw);
-  if (normalized.length === INVITE_CODE_LENGTH) {
-    const match = await db.user.findFirst({
+  const upper = raw.toUpperCase();
+
+  // 1. Exact match on current referralCode (handles legacy codes still in DB)
+  const exactReferral = await db.user.findFirst({
+    where: { referralCode: { equals: upper, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (exactReferral) return exactReferral.id;
+
+  // 2. Exact match on stored legacy alias (after forceBackfill migration)
+  const legacyAlias = await db.user.findFirst({
+    where: { legacyReferralCode: { equals: upper, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (legacyAlias) return legacyAlias.id;
+
+  // 3. Valid 6-character code only — never truncate long legacy strings
+  if (isValidInviteCode(raw)) {
+    const normalized = normalizeInviteCode(raw);
+    const shortMatch = await db.user.findFirst({
       where: { referralCode: { equals: normalized, mode: "insensitive" } },
       select: { id: true },
     });
-    if (match) return match.id;
+    if (shortMatch) return shortMatch.id;
   }
-
-  const legacy = await db.user.findFirst({
-    where: { referralCode: { equals: raw, mode: "insensitive" } },
-    select: { id: true },
-  });
-  if (legacy) return legacy.id;
 
   return null;
 }
@@ -84,6 +103,7 @@ module.exports = {
   MAX_ALLOCATION_ATTEMPTS,
   normalizeInviteCode,
   isValidInviteCode,
+  isLegacyReferralCode,
   generateReferralCodeCandidate,
   allocateUniqueReferralCode,
   findReferrerByInviteCode,
