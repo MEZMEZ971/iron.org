@@ -23,7 +23,7 @@ const LABEL =
   "text-xs font-medium text-slate-700 transition-all duration-300 ease-in-out dark:text-slate-400";
 
 const INPUT =
-  "min-w-0 flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-300 ease-in-out focus:outline-none dark:text-white dark:placeholder:text-df-faint";
+  "min-w-0 flex-1 bg-transparent text-base text-slate-900 placeholder:text-slate-400 transition-all duration-300 ease-in-out focus:outline-none dark:text-white dark:placeholder:text-df-faint";
 
 const SUMMARY_LABEL =
   "text-slate-800 transition-all duration-300 ease-in-out dark:text-slate-300";
@@ -255,7 +255,7 @@ export default function Withdrawal() {
             </p>
           )}
           {history.map((row) => (
-            <div key={row.id} className={`${PANEL} p-4`}>
+            <div key={row.id} className={`${PANEL} p-3 sm:p-4`}>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-bold text-df">
@@ -281,7 +281,7 @@ export default function Withdrawal() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 pb-28">
+    <div className="mx-auto max-w-lg space-y-3 pb-24 sm:space-y-4 sm:pb-28">
       <header className="sticky top-0 z-10 border-b border-slate-200/80 bg-df-page/95 py-3 backdrop-blur-xl transition-all duration-300 ease-in-out dark:border-white/[0.06] dark:bg-[#0a0e1a]/95">
         <div className="relative flex items-center justify-center">
           <button
@@ -320,7 +320,7 @@ export default function Withdrawal() {
       )}
 
       <div className="space-y-3 px-1">
-        <div className={`${PANEL} p-4`}>
+        <div className={`${PANEL} p-3 sm:p-4`}>
           <p className={LABEL}>{t("withdrawChooseCurrency")}</p>
           <button
             type="button"
@@ -355,7 +355,7 @@ export default function Withdrawal() {
           )}
         </div>
 
-        <div className={`${PANEL} p-4`}>
+        <div className={`${PANEL} p-3 sm:p-4`}>
           <p className={LABEL}>{t("withdrawPaymentChannels")}</p>
           <button
             type="button"
@@ -395,7 +395,7 @@ export default function Withdrawal() {
           )}
         </div>
 
-        <div className={`${PANEL} p-4`}>
+        <div className={`${PANEL} p-3 sm:p-4`}>
           <p className={`mb-2 ${LABEL}`}>{t("withdrawAddress")}</p>
           <div className="flex items-center gap-2">
             <input
@@ -416,7 +416,7 @@ export default function Withdrawal() {
           </div>
         </div>
 
-        <div className={`${PANEL} p-4`}>
+        <div className={`${PANEL} p-3 sm:p-4`}>
           <p className={`mb-2 ${LABEL}`}>{t("withdrawQuantity")}</p>
           <div className="flex items-center gap-2">
             <input

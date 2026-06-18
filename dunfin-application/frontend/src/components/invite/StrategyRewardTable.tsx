@@ -12,7 +12,35 @@ export function StrategyRewardTable({ rows }: Props) {
 
   return (
     <div className="df-table-shell overflow-hidden rounded-2xl">
-      <div className="overflow-x-auto">
+      <div className="space-y-2 p-3 md:hidden">
+        {rows.map((row) => (
+          <div key={row.strategyId} className="df-mobile-card space-y-2">
+            <div className="flex items-start gap-2">
+              <StrategyStarBadge tierId={row.strategyId} size="md" />
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-sm font-semibold text-[#f0b90b]">
+                  {row.productName}
+                </p>
+                <p className="text-[10px] text-df-faint">
+                  {getStrategyTierName(row.strategyId, locale)}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="text-df-faint">{t("inviteTeamSize")}</span>
+              <span className="font-medium text-df">
+                {row.minTeam === 0 ? t("inviteTeamNone") : row.minTeam}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="text-df-faint">{t("inviteReward")}</span>
+              <span className="text-end font-medium text-[#00d4aa]">{row.rewardTier}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[320px] text-xs">
           <thead>
             <tr className="border-b border-df text-[10px] uppercase tracking-wide text-df-faint">
@@ -41,9 +69,7 @@ export function StrategyRewardTable({ rows }: Props) {
                   </div>
                 </td>
                 <td className="px-3 py-3 text-center font-medium text-df">
-                  {row.minTeam === 0
-                    ? t("inviteTeamNone")
-                    : `${row.minTeam}`}
+                  {row.minTeam === 0 ? t("inviteTeamNone") : `${row.minTeam}`}
                 </td>
                 <td className="px-3 py-3 text-end">
                   <div className="flex flex-col items-end gap-1">

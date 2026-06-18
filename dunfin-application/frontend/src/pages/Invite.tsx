@@ -28,7 +28,7 @@ export default function Invite() {
   }
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="space-y-4 pb-6 sm:space-y-5 sm:pb-8">
       <PageHeader title={t("h5InviteFriends")} />
 
       {loading && <p className="text-xs text-df-faint">{t("loading")}</p>}
@@ -36,7 +36,7 @@ export default function Invite() {
 
       {data && (
         <>
-          <div className="glass-card space-y-4 rounded-2xl p-5">
+          <div className="glass-card space-y-4 rounded-2xl p-4 sm:p-5">
             <CopyField label={t("h5MemberId")} value={data.memberId} />
 
             <div className="flex justify-center">

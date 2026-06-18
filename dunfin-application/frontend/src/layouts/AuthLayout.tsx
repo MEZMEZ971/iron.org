@@ -42,14 +42,14 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           <IronBrandLockup layout="stack" className="mb-6" />
           <FomoUsersBanner variant="auth" />
 
-          <div className="glass-card mb-6 rounded-2xl p-6 shadow-lg transition-all duration-300 ease-in-out">
-            <h1 className="text-center text-xl font-bold text-df">{title}</h1>
+          <div className="glass-card mb-4 rounded-2xl p-4 shadow-lg transition-all duration-300 ease-in-out sm:mb-6 sm:p-6">
+            <h1 className="text-center text-lg font-bold text-df sm:text-xl">{title}</h1>
             {subtitle && (
               <p className="mt-2 text-center text-sm text-df-muted">{subtitle}</p>
             )}
           </div>
 
-          <div className="glass-card rounded-2xl p-6 transition-all duration-300 ease-in-out">
+          <div className="glass-card rounded-2xl p-4 transition-all duration-300 ease-in-out sm:p-6">
             {children}
           </div>
         </div>

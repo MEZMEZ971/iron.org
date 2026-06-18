@@ -72,7 +72,7 @@ export default function Register() {
 
   const formDisabled = loading;
   const inputClass =
-    "w-full rounded-xl border border-df-strong bg-df-inset px-3 py-2.5 text-sm text-df placeholder:text-df-faint focus:border-[#f0b90b]/50 focus:outline-none transition-all duration-300 disabled:opacity-50";
+    "w-full rounded-xl border border-df-strong bg-df-inset px-3 py-2.5 text-base text-df placeholder:text-df-faint focus:border-[#f0b90b]/50 focus:outline-none transition-all duration-300 disabled:opacity-50";
 
   return (
     <AuthLayout title={t("authSignupTitle")} subtitle={t("authSignupSubtitle")}>

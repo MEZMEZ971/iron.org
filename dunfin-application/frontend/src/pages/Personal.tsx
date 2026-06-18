@@ -140,32 +140,56 @@ export default function Personal() {
         ) : error ? (
           <p className="p-4 text-xs text-red-400">{error}</p>
         ) : (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-df-faint">
-                <th className="px-3 py-2 text-start font-medium">{t("asset")}</th>
-                <th className="px-2 py-2 text-end font-medium">{t("total")}</th>
-                <th className="px-2 py-2 text-end font-medium">{t("available")}</th>
-                <th className="px-3 py-2 text-end font-medium">{t("freeze")}</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            <div className="space-y-2 p-3 md:hidden">
               {profile?.assets.map((a) => (
-                <tr key={a.symbol} className="border-t border-df hover:bg-df-hover">
-                  <td className="px-3 py-2.5 font-semibold text-df">{a.symbol}</td>
-                  <td className="px-2 py-2.5 text-end text-df-muted">
-                    {formatAmount(a.total)}
-                  </td>
-                  <td className="px-2 py-2.5 text-end text-[#00d4aa]">
-                    {formatAmount(a.available)}
-                  </td>
-                  <td className="px-3 py-2.5 text-end text-[#f0b90b]">
-                    {formatAmount(a.freeze)}
-                  </td>
-                </tr>
+                <div key={a.symbol} className="df-mobile-card space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-bold text-df">{a.symbol}</span>
+                    <span className="text-xs font-semibold text-df-muted">
+                      {t("total")}: {formatAmount(a.total)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-lg bg-df-page/60 px-2 py-1.5">
+                      <p className="text-[10px] text-df-faint">{t("available")}</p>
+                      <p className="font-semibold text-[#00d4aa]">{formatAmount(a.available)}</p>
+                    </div>
+                    <div className="rounded-lg bg-df-page/60 px-2 py-1.5 text-end">
+                      <p className="text-[10px] text-df-faint">{t("freeze")}</p>
+                      <p className="font-semibold text-[#f0b90b]">{formatAmount(a.freeze)}</p>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+            <table className="hidden w-full text-xs md:table">
+              <thead>
+                <tr className="text-df-faint">
+                  <th className="px-3 py-2 text-start font-medium">{t("asset")}</th>
+                  <th className="px-2 py-2 text-end font-medium">{t("total")}</th>
+                  <th className="px-2 py-2 text-end font-medium">{t("available")}</th>
+                  <th className="px-3 py-2 text-end font-medium">{t("freeze")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profile?.assets.map((a) => (
+                  <tr key={a.symbol} className="border-t border-df hover:bg-df-hover">
+                    <td className="px-3 py-2.5 font-semibold text-df">{a.symbol}</td>
+                    <td className="px-2 py-2.5 text-end text-df-muted">
+                      {formatAmount(a.total)}
+                    </td>
+                    <td className="px-2 py-2.5 text-end text-[#00d4aa]">
+                      {formatAmount(a.available)}
+                    </td>
+                    <td className="px-3 py-2.5 text-end text-[#f0b90b]">
+                      {formatAmount(a.freeze)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
 

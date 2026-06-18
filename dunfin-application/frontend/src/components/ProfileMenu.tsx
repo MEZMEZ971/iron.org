@@ -7,7 +7,6 @@ import { useUser } from "../context/UserContext";
 import { LanguageSwitcherOverlay } from "../i18n/LanguageSwitcherOverlay";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
-import { AppDownloadLinks } from "./layout/ApkDownloadLink";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { lockBodyScroll, unlockBodyScroll } from "../lib/scrollLock";
 import {
@@ -207,9 +206,6 @@ export function ProfileMenuContent({
                 </button>
               </li>
             ))}
-            <li className="px-1 pt-2">
-              <AppDownloadLinks variant="drawer" />
-            </li>
           </ul>
         </nav>
       </div>

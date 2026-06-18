@@ -664,3 +664,29 @@ html:not(.dark) .hover\:bg-white\/\[0\.04\]:hover {
   animation: lockbox-metallic-gleam 4.5s ease-in-out infinite;
   pointer-events: none;
 }
+
+/* Mobile web — native-feel spacing, no horizontal bleed, iOS input zoom guard */
+@media (max-width: 767px) {
+  html,
+  body {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .df-mobile-card {
+    border-radius: 0.75rem;
+    border: 1px solid var(--df-border);
+    background: var(--df-inset);
+    padding: 0.75rem;
+  }
+
+  .df-mobile-card + .df-mobile-card {
+    margin-top: 0.5rem;
+  }
+}

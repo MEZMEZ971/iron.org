@@ -55,7 +55,7 @@ export default function Login() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder={t("authIdentifierPlaceholder")}
-            className="w-full rounded-xl border border-df-strong bg-df-inset px-3 py-2.5 text-sm text-df placeholder:text-df-faint focus:border-[#f0b90b]/50 focus:outline-none transition-all duration-300"
+            className="w-full rounded-xl border border-df-strong bg-df-inset px-3 py-2.5 text-base text-df placeholder:text-df-faint focus:border-[#f0b90b]/50 focus:outline-none transition-all duration-300"
             disabled={loading}
             required
           />
@@ -70,7 +70,7 @@ export default function Login() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-df-strong bg-df-inset px-3 py-2.5 text-sm text-df focus:border-[#f0b90b]/50 focus:outline-none transition-all duration-300 disabled:opacity-50"
+            className="w-full rounded-xl border border-df-strong bg-df-inset px-3 py-2.5 text-base text-df focus:border-[#f0b90b]/50 focus:outline-none transition-all duration-300 disabled:opacity-50"
             disabled={loading}
             required
           />
