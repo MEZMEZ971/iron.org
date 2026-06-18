@@ -4,8 +4,10 @@
 
 [build]
 builder = "NIXPACKS"
-buildCommand = "echo 'Skipping build step'"
+buildCommand = "npm install --legacy-peer-deps --prefix ../frontend && npm run build --prefix ../frontend"
 
 [deploy]
 startCommand = "node server.cjs"
 restartPolicyType = "ON_FAILURE"
+healthcheckPath = "/health"
+healthcheckTimeout = 120

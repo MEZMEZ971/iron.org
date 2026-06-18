@@ -130,6 +130,10 @@ app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
 
+app.get("/health", (_req, res) => {
+  res.status(200).json({ ok: true, service: "iron-api" });
+});
+
 const { publicClient, walletClient } = getBlockchainClients();
 
 const depositClients = () => getDepositClients();
@@ -938,19 +942,39 @@ app.use((req, _res, next) => {
 app.get("/api/trade/status/:userId", getTradeStatusHandler);
 app.post("/api/trade/execute", postTradeExecuteHandler);
 
-app.use(notFoundApiHandler);
-app.use(errorMiddleware);
-
 const frontendDist = path.join(__dirname, "..", "frontend", "dist");
-if (fs.existsSync(frontendDist)) {
-  app.use(express.static(frontendDist));
-  app.get(/^(?!\/api).*/, (_req, res) => {
-    res.sendFile(path.join(frontendDist, "index.html"));
-  });
+const frontendIndex = path.join(frontendDist, "index.html");
+const serveFrontend = fs.existsSync(frontendIndex);
+
+app.use(notFoundApiHandler);
+
+if (serveFrontend) {
+  app.use(express.static(frontendDist, { index: false }));
+  console.log(`Serving frontend from ${frontendDist}`);
+} else {
+  console.log(
+    `Frontend bundle not found at ${frontendDist} — only /api routes are served`
+  );
 }
 
-const PORT = Number(process.env.PORT) || 3000;
-const HOST = process.env.HOST || "0.0.0.0";
+// SPA fallback for client-side routes (/register, /login, etc.)
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) {
+    return next();
+  }
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return next();
+  }
+  if (serveFrontend) {
+    return res.sendFile(frontendIndex);
+  }
+  return next();
+});
+
+app.use(errorMiddleware);
+
+const PORT = Number(process.env.PORT) || 8080;
+const HOST = "0.0.0.0";
 
 const PAYOUT_CRON_MS = Number(process.env.PAYOUT_CRON_MS) || 60_000;
 setInterval(() => {
@@ -991,65 +1015,75 @@ setInterval(() => {
   });
 }, BROKER_SALARY_CRON_MS);
 
-validateRpcChainId()
-  .then(() => {
-    app.listen(PORT, HOST, () => {
-      const cryptoSummary = getStartupSummary();
-      console.log(`IRON API http://localhost:${PORT}`);
-      console.log(
-        `CORS origins: ${
-          ALLOWED_CORS_ORIGINS === "*"
-            ? "* (reflective)"
-            : ALLOWED_CORS_ORIGINS.join(", ") || "(none configured)"
-        }`
+function startHttpServer() {
+  app.listen(PORT, HOST, () => {
+    const cryptoSummary = getStartupSummary();
+    console.log(`IRON API listening on ${HOST}:${PORT}`);
+    console.log(
+      `CORS origins: ${
+        ALLOWED_CORS_ORIGINS === "*"
+          ? "* (reflective)"
+          : ALLOWED_CORS_ORIGINS.join(", ") || "(none configured)"
+      }`
+    );
+    console.log(
+      `Network: ${cryptoSummary.network} (chainId ${cryptoSummary.chainId})`
+    );
+    console.log(`Active factory: ${cryptoSummary.activeFactory}`);
+    if (cryptoSummary.legacyFactory) {
+      console.log(`Legacy factory: ${cryptoSummary.legacyFactory}`);
+    }
+    console.log(
+      `Main partner wallet: ${cryptoSummary.mainPartnerWallet ?? "(not set)"}`
+    );
+    console.log(`USDT: ${cryptoSummary.usdt}`);
+    if (cryptoSummary.usdc) {
+      console.log(`USDC: ${cryptoSummary.usdc}`);
+    }
+    if (cryptoSummary.deployerKeyPlaceholder) {
+      console.warn(
+        "⚠️ Deployer wallet: dummy placeholder key active — set a valid 64-char DEPLOYER_PRIVATE_KEY in backend/.env for on-chain writes."
       );
-      console.log(
-        `Network: ${cryptoSummary.network} (chainId ${cryptoSummary.chainId})`
-      );
-      console.log(`Active factory: ${cryptoSummary.activeFactory}`);
-      if (cryptoSummary.legacyFactory) {
-        console.log(`Legacy factory: ${cryptoSummary.legacyFactory}`);
-      }
-      console.log(
-        `Main partner wallet: ${cryptoSummary.mainPartnerWallet ?? "(not set)"}`
-      );
-      console.log(`USDT: ${cryptoSummary.usdt}`);
-      if (cryptoSummary.usdc) {
-        console.log(`USDC: ${cryptoSummary.usdc}`);
-      }
-      if (cryptoSummary.deployerKeyPlaceholder) {
-        console.warn(
-          "⚠️ Deployer wallet: dummy placeholder key active — set a valid 64-char DEPLOYER_PRIVATE_KEY in backend/.env for on-chain writes."
-        );
-      }
-      console.log(`Payout cron every ${PAYOUT_CRON_MS}ms`);
-      console.log(`Sleep-account wake-up cron every ${SLEEP_CRON_MS}ms`);
-      console.log(`Deposit watcher every ${DEPOSIT_WATCHER_MS}ms`);
-      console.log(`Trial expiry cron every ${TRIAL_EXPIRY_CRON_MS}ms`);
-      console.log(`Broker salary cron every ${BROKER_SALARY_CRON_MS}ms`);
-      if (isSweeperConfigured()) {
-        const tronSweepCron =
-          process.env.TRON_SWEEPER_CRON || "0 * * * *";
-        cron.schedule(tronSweepCron, () => {
-          runTronSweepCycle().catch((err) => {
-            console.warn("[tron-sweeper] tick failed:", err.message);
-          });
+    }
+    console.log(`Payout cron every ${PAYOUT_CRON_MS}ms`);
+    console.log(`Sleep-account wake-up cron every ${SLEEP_CRON_MS}ms`);
+    console.log(`Deposit watcher every ${DEPOSIT_WATCHER_MS}ms`);
+    console.log(`Trial expiry cron every ${TRIAL_EXPIRY_CRON_MS}ms`);
+    console.log(`Broker salary cron every ${BROKER_SALARY_CRON_MS}ms`);
+    if (isSweeperConfigured()) {
+      const tronSweepCron = process.env.TRON_SWEEPER_CRON || "0 * * * *";
+      cron.schedule(tronSweepCron, () => {
+        runTronSweepCycle().catch((err) => {
+          console.warn("[tron-sweeper] tick failed:", err.message);
         });
-        console.log(`Tron TRC20 sweeper cron: ${tronSweepCron}`);
-        void runTronSweepCycle().catch((err) => {
-          console.warn("[tron-sweeper] initial cycle failed:", err.message);
-        });
-      } else {
-        console.log(
-          "Tron TRC20 sweeper disabled (set TRON_DEPOSIT_MASTER_SECRET, TRON_GAS_FUNDER_PRIVATE_KEY, treasury address)"
-        );
-      }
-      void runDepositWatcherCycle().catch((err) => {
-        console.warn("[deposit-watcher] initial cycle failed:", err.message);
       });
+      console.log(`Tron TRC20 sweeper cron: ${tronSweepCron}`);
+      void runTronSweepCycle().catch((err) => {
+        console.warn("[tron-sweeper] initial cycle failed:", err.message);
+      });
+    } else {
+      console.log(
+        "Tron TRC20 sweeper disabled (set TRON_DEPOSIT_MASTER_SECRET, TRON_GAS_FUNDER_PRIVATE_KEY, treasury address)"
+      );
+    }
+    void runDepositWatcherCycle().catch((err) => {
+      console.warn("[deposit-watcher] initial cycle failed:", err.message);
     });
+  });
+}
+
+validateRpcChainId()
+  .then((info) => {
+    console.log(
+      `EVM chain verified: ${info.network} (chainId ${info.chainId})`
+    );
   })
   .catch((err) => {
-    console.error(err?.message || err);
-    process.exitCode = 1;
+    console.error(
+      "[chain-guard] RPC validation failed — starting API anyway; on-chain features may be unavailable:",
+      err?.message || err
+    );
+  })
+  .finally(() => {
+    startHttpServer();
   });
