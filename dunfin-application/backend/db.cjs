@@ -6,7 +6,6 @@ const {
 } = require("./lib/userMapper.cjs");
 const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
 const { allocateUniqueReferralCode } = require("./lib/referralCodeGenerator.cjs");
-const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
 const { evictTrialBalance, registrationTrialFields, recordTrialWelcomeBonus } = require("./lib/trialBalance.cjs");
 const {
   propagateBrokerRankCheckFromReferral,
@@ -46,7 +45,7 @@ async function getOrCreateUser(userId, extras = {}) {
         referralCode,
         referredById,
         ...registrationTrialFields(),
-        ...(referredById ? inviteRegistrationTaxFields() : {}),
+        ...(referredById ? { isInvited: true } : {}),
       },
       include: userInclude,
     });
@@ -196,7 +195,7 @@ async function registerUser(userId, { referredBy } = {}) {
         referralCode,
         referredById: referredBy || null,
         ...registrationTrialFields(),
-        ...(referredBy ? inviteRegistrationTaxFields() : {}),
+        ...(referredBy ? { isInvited: true } : {}),
       },
     });
     await recordTrialWelcomeBonus(created.id, tx);

@@ -2,7 +2,6 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatedSafeBox } from "../components/h5/AnimatedSafeBox";
 import { LockboxInfoModal } from "../components/h5/LockboxInfoModal";
-import { TaxHolidayStatusBanner } from "../components/TaxHolidayStatusBanner";
 import { useH5Portfolio } from "../context/H5PortfolioContext";
 import { useLocale } from "../i18n/LocaleContext";
 import { formatTrialRemaining } from "../lib/trialRemaining";
@@ -44,8 +43,6 @@ export default function H5Assets() {
   return (
     <div className="space-y-4 pb-4 text-white">
       <h1 className="text-center text-lg font-bold">{t("navAssets")}</h1>
-
-      <TaxHolidayStatusBanner />
 
       {isTrialActive && trialBalance > 0 && (
         <div className="rounded-2xl border border-[#fcd535]/30 bg-gradient-to-br from-[#121824] via-[#1a1408] to-[#0f131c] p-4 shadow-lg shadow-amber-500/10">

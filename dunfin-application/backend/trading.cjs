@@ -12,7 +12,6 @@ const {
 } = require("./strategies.cjs");
 const { processDuePayouts, settleUserTradePayout } = require("./cron/payouts.cjs");
 const { touchUserActivity } = require("./lib/userActivity.cjs");
-const { applyStrategyActivationBonus } = require("./lib/taxHoliday.cjs");
 const {
   getEffectiveTradingBalance,
   isTrialCurrentlyActive,
@@ -33,9 +32,6 @@ async function releaseExpiredLock(userId) {
       tradeSessionEndsAt: true,
       monthlyTradingProceeds: true,
       proceedsPeriodStart: true,
-      isInvited: true,
-      taxFreeUntil: true,
-      hasActivatedBonusStrategy: true,
     },
   });
   if (!row) return null;
@@ -150,7 +146,6 @@ async function executeTrade(userId) {
       walletBalanceAfter: newWalletBalance,
     },
   });
-  const bonusTaxFreeUntil = await applyStrategyActivationBonus(userId);
   touchUserActivity(userId);
 
   return {
@@ -164,9 +159,6 @@ async function executeTrade(userId) {
       lockedCapital: capital,
       lockedUntil: sessionEndsAt,
       sessionEndsAt,
-      bonusTaxFreeUntil: bonusTaxFreeUntil
-        ? bonusTaxFreeUntil.toISOString()
-        : null,
       network: {
         totalActiveMembers: activeTeamCount,
         generations: {

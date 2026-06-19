@@ -6,11 +6,7 @@ const {
   mapUserToLegacy,
 } = require("./lib/userMapper.cjs");
 const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
-const {
-  allocateUniqueReferralCode,
-  findReferrerByInviteCode,
-} = require("./lib/referralCodeGenerator.cjs");
-const { inviteRegistrationTaxFields } = require("./lib/taxHoliday.cjs");
+const { allocateUniqueReferralCode, findReferrerByInviteCode } = require("./lib/referralCodeGenerator.cjs");
 const {
   registrationTrialFields,
   recordTrialWelcomeBonus,
@@ -210,7 +206,7 @@ async function registerUser({
         referralCode,
         referredById,
         ...registrationTrialFields(),
-        ...(referredById ? inviteRegistrationTaxFields() : {}),
+        ...(referredById ? { isInvited: true } : {}),
       },
     });
 

@@ -27,9 +27,6 @@ async function getTradeEarnings(userId) {
       lastTradeTime: true,
       monthlyTradingProceeds: true,
       proceedsPeriodStart: true,
-      isInvited: true,
-      taxFreeUntil: true,
-      hasActivatedBonusStrategy: true,
     },
   });
 
@@ -105,8 +102,7 @@ async function getTradeEarnings(userId) {
     totalIncomeToBeDistributed: trunc6(pendingDistribution),
     grossIncomeToBeDistributed: trunc6(grossPending),
     todayPendingEarnings: trunc6(todayPendingEarnings),
-    taxHolidayActive: pendingSplit.taxFree,
-    userProfitSharePercent: pendingSplit.taxFree ? 100 : 60,
+    userProfitSharePercent: 100,
     teamCommissions: {
       dailyReferralEarnings: trunc6(decimalToNumber(dailyReferralAgg._sum.amount)),
       monthlyReferralEarnings: trunc6(

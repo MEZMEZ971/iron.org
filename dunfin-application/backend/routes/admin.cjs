@@ -90,9 +90,7 @@ async function getAdminStats() {
     totalManagedLiquidity: trunc6(totalLiquidity),
     totalCumulativeDeposits: trunc6(depositAgg._sum.amount),
     totalSettledWithdrawals: trunc6(withdrawalCompleted._sum.netAmount),
-    totalPlatformRevenue: trunc6(
-      trunc6(feeAgg._sum.fee) + profitShareTaxCollected
-    ),
+    totalPlatformRevenue: trunc6(trunc6(feeAgg._sum.fee) + profitShareTaxCollected),
     profitShareTaxCollected,
     pendingWithdrawalCount: await prisma.withdrawalRecord.count({
       where: { status: { in: PENDING_WITHDRAW_STATUSES } },

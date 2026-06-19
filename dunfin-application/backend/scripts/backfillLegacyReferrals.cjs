@@ -21,7 +21,6 @@ const fs = require("fs");
 const path = require("path");
 const { prisma } = require("../lib/prisma.cjs");
 const { findReferrerByInviteCode } = require("../lib/referralCodeGenerator.cjs");
-const { inviteRegistrationTaxFields } = require("../lib/taxHoliday.cjs");
 
 const args = process.argv.slice(2);
 const APPLY = args.includes("--apply");
@@ -164,14 +163,12 @@ async function findMissingInviteTaxFlags(adminIds) {
   });
 }
 
-async function applyReferrerFix(userId, referredById, createdAt) {
-  const taxFields = inviteRegistrationTaxFields(createdAt);
+async function applyReferrerFix(userId, referredById) {
   return prisma.user.update({
     where: { id: userId },
     data: {
       referredById,
       isInvited: true,
-      taxFreeUntil: taxFields.taxFreeUntil,
     },
   });
 }
@@ -225,11 +222,7 @@ async function main() {
     );
     stats.mapped += 1;
     if (APPLY) {
-      await applyReferrerFix(
-        result.user.id,
-        result.referrerId,
-        result.user.createdAt || new Date()
-      );
+      await applyReferrerFix(result.user.id, result.referrerId);
     }
   }
 
@@ -255,20 +248,16 @@ async function main() {
 
   if (FIX_INVITE_TAX) {
     const missingTax = await findMissingInviteTaxFlags(adminIds);
-    console.log(`[backfill] missing invite tax flags: ${missingTax.length}`);
+    console.log(`[backfill] missing invite flags: ${missingTax.length}`);
     for (const user of missingTax) {
-      const taxFields = inviteRegistrationTaxFields(user.createdAt);
       console.log(
-        `[backfill] set invite tax for ${user.username || user.uid} until ${taxFields.taxFreeUntil.toISOString()}`
+        `[backfill] set isInvited for ${user.username || user.uid}`
       );
       stats.inviteTaxFixed += 1;
       if (APPLY) {
         await prisma.user.update({
           where: { id: user.id },
-          data: {
-            isInvited: true,
-            taxFreeUntil: taxFields.taxFreeUntil,
-          },
+          data: { isInvited: true },
         });
       }
     }

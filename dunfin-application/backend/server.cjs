@@ -71,7 +71,6 @@ const {
   updateUserProfile,
 } = require("./profileUpdate.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
-const { buildTaxHolidayProfile } = require("./lib/taxHoliday.cjs");
 const {
   sendApiError,
   sendClientError,
@@ -711,11 +710,6 @@ async function buildUserProfileResponse(userId) {
     assets: buildAssetLedger(available, locked, pendingWithdrawals),
     pendingWithdrawals: trunc6(pendingWithdrawals),
     savedWithdrawalAddresses: buildSavedWithdrawalAddresses(user),
-    ...buildTaxHolidayProfile({
-      isInvited: user.isInvited,
-      hasActivatedBonusStrategy: user.hasActivatedBonusStrategy,
-      taxFreeUntil: user.taxFreeUntil,
-    }),
     broker: rankResult.broker,
   };
 }

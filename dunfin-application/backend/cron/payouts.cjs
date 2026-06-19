@@ -5,7 +5,6 @@ const { getTradeSessionState, TWENTY_FOUR_HOURS_MS } = require("../strategies.cj
 const { computeDailyProfit } = require("../lib/strategyRoi.cjs");
 const { distributeReferralCommissions } = require("../teamCommission.cjs");
 const { splitDailyProfit } = require("../lib/taxHoliday.cjs");
-const { creditPlatformTax } = require("../lib/platformRevenue.cjs");
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -72,10 +71,6 @@ async function settleUserTradePayout(userRow, tx) {
     },
   });
 
-  if (split.platformShare > 0) {
-    await creditPlatformTax(split.platformShare, db);
-  }
-
   if (split.userShare > 0) {
     await distributeReferralCommissions(
       userRow.id,
@@ -90,8 +85,7 @@ async function settleUserTradePayout(userRow, tx) {
     userId: userRow.id,
     dailyProfit: split.grossProfit,
     userProfit: split.userShare,
-    platformProfit: split.platformShare,
-    taxFree: split.taxFree,
+    platformProfit: 0,
     newWalletBalance: newWallet,
   };
 }
@@ -116,9 +110,6 @@ async function processDuePayouts() {
       tradeSessionEndsAt: true,
       monthlyTradingProceeds: true,
       proceedsPeriodStart: true,
-      isInvited: true,
-      taxFreeUntil: true,
-      hasActivatedBonusStrategy: true,
     },
   });
 

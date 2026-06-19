@@ -1,27 +1,17 @@
 const { prisma } = require("./prisma.cjs");
 const { trunc6 } = require("./formatNumbers.cjs");
+const { decimalToNumber } = require("./userMapper.cjs");
 
-const LEDGER_ID = "main";
-
-async function creditPlatformTax(amount, tx) {
-  const db = tx || prisma;
-  const value = trunc6(amount);
-  if (value <= 0) return 0;
-
-  await db.platformRevenueLedger.upsert({
-    where: { id: LEDGER_ID },
-    create: { id: LEDGER_ID, totalCollected: value },
-    update: { totalCollected: { increment: value } },
-  });
-
-  return value;
+/** @deprecated Platform profit share disabled — kept for admin historical totals only. */
+async function creditPlatformTax(_amount, _tx) {
+  return { credited: 0 };
 }
 
 async function getPlatformTaxCollected() {
   const row = await prisma.platformRevenueLedger.findUnique({
-    where: { id: LEDGER_ID },
+    where: { id: "singleton" },
   });
-  return trunc6(row?.totalCollected);
+  return trunc6(decimalToNumber(row?.totalCollected));
 }
 
 module.exports = {

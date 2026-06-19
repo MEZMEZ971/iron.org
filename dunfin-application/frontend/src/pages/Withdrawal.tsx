@@ -40,19 +40,13 @@ const NETWORKS = ["ERC20", "TRC20", "BEP20"] as const;
 type Currency = (typeof CURRENCIES)[number];
 type Network = (typeof NETWORKS)[number];
 
-const FEE_RATE = 0.1;
-
 function formatAmount(n: number, digits = 6) {
   if (!Number.isFinite(n)) return "0";
   return Number(n.toFixed(digits)).toString();
 }
 
-function calcFee(amount: number) {
-  return Number((amount * FEE_RATE).toFixed(6));
-}
-
 function calcNet(amount: number) {
-  return Number((amount - calcFee(amount)).toFixed(6));
+  return Number(amount.toFixed(6));
 }
 
 function savedAddressForNetwork(
@@ -86,7 +80,6 @@ export default function Withdrawal() {
 
   const balance = preflight?.walletBalance ?? 0;
   const amountNum = Number(quantity) || 0;
-  const fee = calcFee(amountNum);
   const netReceived = calcNet(amountNum);
 
   const loadPreflight = useCallback(async () => {
@@ -440,13 +433,6 @@ export default function Withdrawal() {
           </p>
         </div>
 
-        <div className={`${PANEL} px-4 py-3`}>
-          <p className={LABEL}>{t("withdrawCommission")}</p>
-          <p className="mt-1 text-sm font-semibold text-slate-900 transition-all duration-300 ease-in-out dark:text-df">
-            {formatAmount(fee, 2)}
-          </p>
-        </div>
-
         <div className={`${PANEL} space-y-2 p-4 text-sm transition-all duration-300 ease-in-out`}>
           <div className={`flex justify-between gap-2 ${SUMMARY_LABEL}`}>
             <span>{t("withdrawSettlementAmount")}</span>
@@ -454,19 +440,11 @@ export default function Withdrawal() {
               {formatAmount(amountNum, 6)} {currency}
             </span>
           </div>
-          <div className={`flex justify-between gap-2 ${SUMMARY_LABEL}`}>
-            <span>{t("withdrawFeeLabel")}</span>
-            <span className={SUMMARY_VALUE}>{formatAmount(fee, 6)}</span>
-          </div>
           <div className="flex justify-between gap-2 transition-all duration-300 ease-in-out">
             <span className={SUMMARY_LABEL}>{t("withdrawAmountReceived")}</span>
             <span className="font-bold text-[#c99400] transition-all duration-300 ease-in-out dark:text-[#f0b90b]">
               ${formatAmount(netReceived, 6)}
             </span>
-          </div>
-          <div className={`flex justify-between gap-2 ${SUMMARY_LABEL}`}>
-            <span>{t("withdrawFeePercent")}</span>
-            <span className={SUMMARY_VALUE}>10%</span>
           </div>
           <div className={`flex justify-between gap-2 text-xs ${SUMMARY_LABEL}`}>
             <span className="max-w-[70%]">{t("withdrawTurnoverShortfall")}</span>

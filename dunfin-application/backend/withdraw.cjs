@@ -9,7 +9,7 @@ const {
 
 const MIN_WITHDRAW = 5;
 const MAX_WITHDRAW = 10000;
-const FEE_PERCENT = 0.1;
+const FEE_PERCENT = 0;
 const ALLOWED_NETWORKS = new Set(["ERC20", "BEP20", "TRC20"]);
 const ALLOWED_CURRENCIES = new Set(["USDT", "USDC"]);
 

@@ -136,12 +136,6 @@ const en = {
     txStatusCompleted: "Completed",
     txStatusRejected: "Rejected",
     txStatusLocked: "Locked",
-    taxHolidayActive:
-      "Tax-Free Period Active: {days} Days Remaining (100% Profits)",
-    taxHolidayStandardSplit:
-      "Account Status: Standard Split Active (60% You / 40% Platform)",
-    taxHolidayStrategyPromo:
-      "🚀 Open a new strategy now to instantly unlock an extra 20 Days of Tax-Free trading!",
     trialBannerTitle:
       "🎁 Free trial bonus active: ${amount} ({remaining} remaining)",
     trialBannerSubtext:
@@ -463,12 +457,6 @@ const ar = {
     txStatusCompleted: "مكتمل",
     txStatusRejected: "مرفوض",
     txStatusLocked: "مقفل",
-    taxHolidayActive:
-      "فترة معفاة من الضرائب نشطة: {days} يومًا متبقيًا (100% أرباح)",
-    taxHolidayStandardSplit:
-      "حالة الحساب: تقسيم قياسي نشط (60% لك / 40% للمنصة)",
-    taxHolidayStrategyPromo:
-      "🚀 افتح استراتيجية جديدة الآن لفتح 20 يومًا إضافيًا من التداول المعفى من الضرائب!",
     trialBannerTitle:
       "🎁 مكافأة الفترة التجريبية نشطة: {amount}$ (متبقي {remaining})",
     trialBannerSubtext:
