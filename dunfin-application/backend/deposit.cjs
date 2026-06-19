@@ -27,8 +27,8 @@ function bytes32ForUser(userId, network) {
   return keccak256(toBytes(networkUserSalt(userId, network)));
 }
 
-/** @deprecated Legacy non-spendable derivation — only used when TRON_DEPOSIT_MASTER_SECRET is unset. */
-function deriveTronAddressLegacy(userId, network) {
+/** @deprecated Legacy non-spendable derivation — pre-master-secret addresses. */
+function deriveLegacyTronAddress(userId, network) {
   const payload = crypto
     .createHash("sha256")
     .update(networkUserSalt(userId, network))
@@ -41,11 +41,46 @@ function deriveTronAddressLegacy(userId, network) {
   return bs58.encode(Buffer.concat([addressBytes, checksum]));
 }
 
-function deriveTronAddress(userId, network) {
-  if (process.env.TRON_DEPOSIT_MASTER_SECRET) {
-    return deriveTronWallet(userId, network).address;
+function isTronMasterSecretConfigured() {
+  return Boolean(String(process.env.TRON_DEPOSIT_MASTER_SECRET || "").trim());
+}
+
+/**
+ * Require TRON_DEPOSIT_MASTER_SECRET for sweepable TRC20 deposit wallets.
+ * Set TRON_ALLOW_LEGACY_DEPOSIT_ADDRESSES=true only for local dev without Tron sweep.
+ */
+function assertTronMasterSecretForTrc20() {
+  if (isTronMasterSecretConfigured()) return;
+  if (process.env.TRON_ALLOW_LEGACY_DEPOSIT_ADDRESSES === "true") {
+    console.warn(
+      "[deposit] TRON_ALLOW_LEGACY_DEPOSIT_ADDRESSES=true — using non-sweepable legacy TRC20 addresses"
+    );
+    return;
   }
-  return deriveTronAddressLegacy(userId, network);
+  const err = new Error(
+    "TRON_DEPOSIT_MASTER_SECRET is required for TRC20 deposit addresses. Configure it in backend env before assigning deposit wallets."
+  );
+  err.code = "TRON_MASTER_SECRET_MISSING";
+  throw err;
+}
+
+function deriveSweepableTronAddress(userId, network) {
+  assertTronMasterSecretForTrc20();
+  if (!isTronMasterSecretConfigured()) {
+    return deriveLegacyTronAddress(userId, network);
+  }
+  return deriveTronWallet(userId, network).address;
+}
+
+/** @deprecated Use deriveSweepableTronAddress */
+function deriveTronAddress(userId, network) {
+  return deriveSweepableTronAddress(userId, network);
+}
+
+function isLegacyTronDepositAddress(userId, network, storedAddress) {
+  if (!storedAddress || !isTronMasterSecretConfigured()) return false;
+  const sweepable = deriveTronWallet(userId, network).address;
+  return sweepable !== storedAddress;
 }
 
 async function resolveEvmDepositAddress(
@@ -95,13 +130,29 @@ async function resolveEvmDepositAddress(
 }
 
 async function resolveTrc20DepositAddress(userId, network) {
+  const sweepableAddress = deriveSweepableTronAddress(userId, network);
   const stored = await db.getNetworkDepositAddress(userId, network);
-  if (stored) {
-    return { address: stored, created: false };
+
+  if (stored === sweepableAddress) {
+    return { address: stored, created: false, upgraded: false };
   }
-  const address = deriveTronAddress(userId, network);
-  await db.saveNetworkDepositAddress(userId, network, address, { tron: true });
-  return { address, created: true, tron: true };
+
+  if (stored && stored !== sweepableAddress) {
+    await db.saveNetworkDepositAddress(userId, network, sweepableAddress, { tron: true });
+    console.warn(
+      `[deposit] upgraded TRC20 address for ${userId}: ${stored} -> ${sweepableAddress}`
+    );
+    return {
+      address: sweepableAddress,
+      created: false,
+      upgraded: true,
+      previousAddress: stored,
+      tron: true,
+    };
+  }
+
+  await db.saveNetworkDepositAddress(userId, network, sweepableAddress, { tron: true });
+  return { address: sweepableAddress, created: true, tron: true };
 }
 
 async function getDepositAddress(userId, network, clients, currency = "USDT") {
@@ -156,4 +207,9 @@ module.exports = {
   getDepositAddress,
   bytes32ForUser,
   networkUserSalt,
+  deriveLegacyTronAddress,
+  deriveSweepableTronAddress,
+  isTronMasterSecretConfigured,
+  isLegacyTronDepositAddress,
+  assertTronMasterSecretForTrc20,
 };

@@ -21,7 +21,9 @@
     "db:backfill-trial:apply": "node scripts/backfillTrialBonus.cjs --apply",
     "db:check-trial": "node scripts/checkTrialStatus.cjs",
     "tron:sweep:dry-run": "node scripts/tronSweeperDryRun.cjs",
-    "tron:sweep:dry-run:json": "node scripts/tronSweeperDryRun.cjs --json"
+    "tron:sweep:dry-run:json": "node scripts/tronSweeperDryRun.cjs --json",
+    "tron:migrate-legacy-addresses": "node scripts/migrateLegacyTronAddresses.cjs",
+    "tron:migrate-legacy-addresses:apply": "node scripts/migrateLegacyTronAddresses.cjs --apply"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",

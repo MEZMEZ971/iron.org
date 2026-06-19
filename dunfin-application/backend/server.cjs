@@ -315,6 +315,9 @@ app.post("/api/auth/register", async (req, res) => {
       await getDepositAddress(result.user.id, "BEP20", depositClients());
       await getDepositAddress(result.user.id, "TRC20", depositClients());
     } catch (forwarderErr) {
+      if (forwarderErr.code === "TRON_MASTER_SECRET_MISSING") {
+        throw forwarderErr;
+      }
       console.warn("[auth] register forwarder setup:", forwarderErr.message);
     }
 
