@@ -70,19 +70,45 @@ export const h5En = {
   h5ActiveStrategyTier: "Active tier",
   h5UsdtLiquid: "USDT · Liquid",
   h5UsdtEscrow: "USDT · In escrow",
-  h5RoiSimulatorTitle: "Investment Profit Simulator",
-  h5RoiSimulatorTitleAlt: "محاكي عوائد الاستثمار المشفر",
+  h5RoiSimulatorTitle: "Goal-Oriented ROI Simulator",
+  h5RoiSimulatorTitleAlt: "محاكي عوائد الاستثمار الموجّه بالأهداف",
   h5RoiAmountLabel: "Investment amount (USDT)",
   h5RoiAmountPlaceholder: "100 – 50,000",
+  h5RoiTargetGoalLabel: "What is your Target Goal?",
+  h5RoiSelectStrategyLabel: "Select Investment Strategy Level",
+  h5RoiSelectBrokerLabel: "Select Target Broker Level",
+  h5RoiBrokerNone: "No broker rank (0.00 USDT salary)",
   h5RoiDailyProfit: "Daily Profit",
+  h5RoiSalary15Day: "15-Day Salary",
+  h5RoiTotalMonthlyProfit: "Total Monthly Profit",
   h5RoiMonthlyIncome: "Monthly Income",
   h5RoiAnnualRevenue: "Annual Revenue",
+  h5RoiSelectedGoalsBadge:
+    "Target: Strategy {strategyId} ({yield}% daily) · {broker}",
+  h5RoiSelectedGoalsBadgeAr:
+    "الهدف: الاستراتيجية {strategyId} (عائد {yield}% يومياً) · {broker}",
+  h5RoiPotentialSalaryHint:
+    "Select a broker rank above to include recurring 15-day salary in your monthly projection.",
+  h5RoiPotentialSalaryHintAr:
+    "اختر رتبة وسيط أعلاه لإضافة راتب 15 يوم المتكرر إلى توقعاتك الشهرية.",
   h5RoiRecommendedTier:
     "Recommended Tier: Strategy {id} ({yield}% Daily Yield)",
   h5RoiRecommendedTierAr:
     "الخيار الأفضل: الاستراتيجية {id} (عائد {yield}% يومياً)",
   h5RoiInvestCta: "Invest Now & Activate Strategy",
   h5RoiTierLockTitle: "Tier Activation Requirements",
+  h5RoiUnlockGoalsHeading:
+    "To unlock {broker} & Strategy {strategyId}, you require:",
+  h5RoiUnlockGoalsHeadingAr:
+    "لفتح {broker} والاستراتيجية {strategyId}، تحتاج إلى:",
+  h5RoiReqMinCapital: "Minimum {amount} USDT locked trading capital",
+  h5RoiReqMinCapitalAr: "حد أدنى {amount} USDT رأس مال تداول مقفل",
+  h5RoiReqTeamMembers: "Minimum {count} active team members",
+  h5RoiReqTeamMembersAr: "حد أدنى {count} عضواً نشطاً في الفريق",
+  h5RoiReqBrokerBonus: "{amount} USDT one-time broker achievement bonus",
+  h5RoiReqBrokerBonusAr: "مكافأة إنجاز وسيط لمرة واحدة بقيمة {amount} USDT",
+  h5RoiCapitalShortfall: "Increase your investment by {amount} USDT to meet this strategy tier.",
+  h5RoiCapitalShortfallAr: "زِد استثمارك بمقدار {amount} USDT للوصول إلى هذا المستوى.",
   h5RoiTierUnlockIntroEn:
     "To unlock these projected earnings, your account must satisfy the strategy criteria:",
   h5RoiTierUnlockIntroAr:
@@ -232,19 +258,45 @@ export const h5Ar = {
   h5ActiveStrategyTier: "المستوى النشط",
   h5UsdtLiquid: "USDT · سائل",
   h5UsdtEscrow: "USDT · في الضمان",
-  h5RoiSimulatorTitle: "محاكي الأرباح التفاعلي",
-  h5RoiSimulatorTitleAlt: "Investment Profit Simulator",
+  h5RoiSimulatorTitle: "محاكي الأرباح الموجّه بالأهداف",
+  h5RoiSimulatorTitleAlt: "Goal-Oriented ROI Simulator",
   h5RoiAmountLabel: "مبلغ الاستثمار (USDT)",
   h5RoiAmountPlaceholder: "100 – 50,000",
+  h5RoiTargetGoalLabel: "ما هو هدفك؟",
+  h5RoiSelectStrategyLabel: "اختر مستوى استراتيجية الاستثمار",
+  h5RoiSelectBrokerLabel: "اختر رتبة الوسيط المستهدفة",
+  h5RoiBrokerNone: "بدون رتبة وسيط (0.00 USDT راتب)",
   h5RoiDailyProfit: "الربح اليومي",
+  h5RoiSalary15Day: "راتب 15 يوم",
+  h5RoiTotalMonthlyProfit: "إجمالي الدخل الشهري",
   h5RoiMonthlyIncome: "الدخل الشهري",
   h5RoiAnnualRevenue: "العائد السنوي المذهل",
+  h5RoiSelectedGoalsBadge:
+    "Target: Strategy {strategyId} ({yield}% daily) · {broker}",
+  h5RoiSelectedGoalsBadgeAr:
+    "الهدف: الاستراتيجية {strategyId} (عائد {yield}% يومياً) · {broker}",
+  h5RoiPotentialSalaryHint:
+    "Select a broker rank above to include recurring 15-day salary in your monthly projection.",
+  h5RoiPotentialSalaryHintAr:
+    "اختر رتبة وسيط أعلاه لإضافة راتب 15 يوم المتكرر إلى توقعاتك الشهرية.",
   h5RoiRecommendedTier:
     "Recommended Tier: Strategy {id} ({yield}% Daily Yield)",
   h5RoiRecommendedTierAr:
     "الخيار الأفضل: الاستراتيجية {id} (عائد {yield}% يومياً)",
   h5RoiInvestCta: "ابدأ الاستثمار وتفعيل الاستراتيجية فوراً",
   h5RoiTierLockTitle: "متطلبات تفعيل المستوى",
+  h5RoiUnlockGoalsHeading:
+    "To unlock {broker} & Strategy {strategyId}, you require:",
+  h5RoiUnlockGoalsHeadingAr:
+    "لفتح {broker} والاستراتيجية {strategyId}، تحتاج إلى:",
+  h5RoiReqMinCapital: "Minimum {amount} USDT locked trading capital",
+  h5RoiReqMinCapitalAr: "حد أدنى {amount} USDT رأس مال تداول مقفل",
+  h5RoiReqTeamMembers: "Minimum {count} active team members",
+  h5RoiReqTeamMembersAr: "حد أدنى {count} عضواً نشطاً في الفريق",
+  h5RoiReqBrokerBonus: "{amount} USDT one-time broker achievement bonus",
+  h5RoiReqBrokerBonusAr: "مكافأة إنجاز وسيط لمرة واحدة بقيمة {amount} USDT",
+  h5RoiCapitalShortfall: "Increase your investment by {amount} USDT to meet this strategy tier.",
+  h5RoiCapitalShortfallAr: "زِد استثمارك بمقدار {amount} USDT للوصول إلى هذا المستوى.",
   h5RoiTierUnlockIntroEn:
     "To unlock these projected earnings, your account must satisfy the strategy criteria:",
   h5RoiTierUnlockIntroAr:

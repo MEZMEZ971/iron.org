@@ -1,10 +1,27 @@
-import { useCallback, useMemo, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  BROKER_RANK_NONE,
+  BROKER_TIERS,
+  getTierLabel,
+  type BrokerRank,
+} from "../../config/brokerProgram";
 import {
   ROI_MAX_AMOUNT,
   ROI_MIN_AMOUNT,
-  computeRoiProjections,
+  ROI_TIERS,
+  computeGoalOrientedProjections,
+  formatYieldPercent,
+  resolveRoiTier,
+  type RoiStrategyId,
 } from "../../lib/roiCalculator";
+import { getStrategyTierName } from "../../lib/strategyTiers";
 import { useLocale } from "../../i18n/LocaleContext";
 import type { TranslationKey } from "../../i18n/translations";
 
@@ -15,12 +32,22 @@ function fmtUsd(n: number) {
   });
 }
 
+const SELECT_CLASS =
+  "w-full appearance-none rounded-xl border border-amber-500/25 bg-black/40 px-3 py-2.5 text-xs font-semibold text-white outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20";
+
 export function RoiProfitSimulator() {
-  const { t, dir } = useLocale();
+  const { t, dir, locale } = useLocale();
   const navigate = useNavigate();
   const [amount, setAmount] = useState(1_000);
+  const [strategyId, setStrategyId] = useState<RoiStrategyId>(() =>
+    resolveRoiTier(1_000).strategyId
+  );
+  const [brokerRank, setBrokerRank] = useState<BrokerRank>(BROKER_RANK_NONE);
 
-  const projections = useMemo(() => computeRoiProjections(amount), [amount]);
+  const projections = useMemo(
+    () => computeGoalOrientedProjections({ amount, strategyId, brokerRank }),
+    [amount, strategyId, brokerRank]
+  );
 
   const sliderFillPct = useMemo(() => {
     const span = ROI_MAX_AMOUNT - ROI_MIN_AMOUNT;
@@ -42,13 +69,22 @@ export function RoiProfitSimulator() {
     setClampedAmount(Number(cleaned));
   };
 
-  const badgeEn = t("h5RoiRecommendedTier", {
-    id: projections.strategyId,
+  const brokerLabel =
+    brokerRank === BROKER_RANK_NONE
+      ? t("h5RoiBrokerNone")
+      : projections.brokerTier
+        ? `${projections.brokerTier.badge} · ${getTierLabel(projections.brokerTier, locale)}`
+        : t("h5RoiBrokerNone");
+
+  const badgePrimary = t("h5RoiSelectedGoalsBadge", {
+    strategyId,
     yield: projections.yieldPercentLabel,
+    broker: brokerLabel,
   });
-  const badgeAr = t("h5RoiRecommendedTierAr", {
-    id: projections.strategyId,
+  const badgeSecondary = t("h5RoiSelectedGoalsBadgeAr", {
+    strategyId,
     yield: projections.yieldPercentLabel,
+    broker: brokerLabel,
   });
 
   return (
@@ -132,6 +168,44 @@ export function RoiProfitSimulator() {
         </div>
       </div>
 
+      <div className="mt-4 space-y-3">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-300">
+          {t("h5RoiTargetGoalLabel")}
+        </p>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <GoalSelectField
+            label={t("h5RoiSelectStrategyLabel")}
+            value={String(strategyId)}
+            onChange={(value) => setStrategyId(Number(value) as RoiStrategyId)}
+            dir={dir}
+          >
+            {ROI_TIERS.map((tier) => (
+              <option key={tier.strategyId} value={tier.strategyId}>
+                {getStrategyTierName(tier.strategyId, locale)} ·{" "}
+                {formatYieldPercent(tier.dailyYield)}% · ${tier.min.toLocaleString()}–$
+                {tier.max.toLocaleString()}
+              </option>
+            ))}
+          </GoalSelectField>
+
+          <GoalSelectField
+            label={t("h5RoiSelectBrokerLabel")}
+            value={brokerRank}
+            onChange={(value) => setBrokerRank(value as BrokerRank)}
+            dir={dir}
+          >
+            <option value={BROKER_RANK_NONE}>{t("h5RoiBrokerNone")}</option>
+            {BROKER_TIERS.map((tier) => (
+              <option key={tier.rank} value={tier.rank}>
+                {tier.badge} · {getTierLabel(tier, locale)} ·{" "}
+                {fmtUsd(tier.salary15Day)} USDT / 15d
+              </option>
+            ))}
+          </GoalSelectField>
+        </div>
+      </div>
+
       <div
         className={`mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 ${
           dir === "rtl" ? "sm:[direction:rtl]" : ""
@@ -143,27 +217,36 @@ export function RoiProfitSimulator() {
           accent="teal"
         />
         <YieldBoard
-          label={t("h5RoiMonthlyIncome")}
-          value={fmtUsd(projections.monthlyIncome)}
+          label={t("h5RoiSalary15Day")}
+          value={fmtUsd(projections.salary15Day)}
           accent="amber"
+          hint={
+            brokerRank === BROKER_RANK_NONE
+              ? locale === "ar"
+                ? t("h5RoiPotentialSalaryHintAr")
+                : t("h5RoiPotentialSalaryHint")
+              : undefined
+          }
         />
         <YieldBoard
-          label={t("h5RoiAnnualRevenue")}
-          value={fmtUsd(projections.annualRevenue)}
+          label={t("h5RoiTotalMonthlyProfit")}
+          value={fmtUsd(projections.totalMonthlyProfit)}
           accent="gold"
         />
       </div>
 
       <div className="roi-tier-badge mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-center text-[10px] font-bold leading-relaxed shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-        <p className="text-amber-500">{badgeEn}</p>
+        <p className="text-amber-500">{badgePrimary}</p>
         <p className="mt-1 font-arabic text-teal-400" dir="rtl">
-          {badgeAr}
+          {badgeSecondary}
         </p>
       </div>
 
-      <TierActivationLockCard
+      <GoalRequirementsCard
         projections={projections}
+        brokerLabel={brokerLabel}
         dir={dir}
+        locale={locale}
         t={t}
         onInvite={() => navigate("/invite")}
       />
@@ -180,29 +263,83 @@ export function RoiProfitSimulator() {
   );
 }
 
-type Projections = ReturnType<typeof computeRoiProjections>;
+type Projections = ReturnType<typeof computeGoalOrientedProjections>;
 
-function TierActivationLockCard({
-  projections,
+function GoalSelectField({
+  label,
+  value,
+  onChange,
   dir,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  dir: "ltr" | "rtl";
+  children: ReactNode;
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="block text-[10px] font-semibold text-slate-400">{label}</span>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${SELECT_CLASS} ${dir === "rtl" ? "pl-8 text-end" : "pr-8"}`}
+          dir={dir}
+        >
+          {children}
+        </select>
+        <i
+          className={`fa-solid fa-chevron-down pointer-events-none absolute top-1/2 -translate-y-1/2 text-[10px] text-amber-500/80 ${
+            dir === "rtl" ? "left-3" : "right-3"
+          }`}
+          aria-hidden
+        />
+      </div>
+    </label>
+  );
+}
+
+function GoalRequirementsCard({
+  projections,
+  brokerLabel,
+  dir,
+  locale,
   t,
   onInvite,
 }: {
   projections: Projections;
+  brokerLabel: string;
   dir: "ltr" | "rtl";
+  locale: string;
   t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
   onInvite: () => void;
 }) {
-  const hasTeamLock = projections.teamMembersRequired > 0;
+  const hasTeamLock = projections.teamRequired > 0;
+  const hasCapitalGap = projections.capitalShortfall > 0;
+  const hasBrokerBonus = projections.brokerOneTimeBonus > 0;
+  const showLock = hasTeamLock || hasCapitalGap || hasBrokerBonus;
 
-  const containerClass = hasTeamLock
+  const heading =
+    locale === "ar"
+      ? t("h5RoiUnlockGoalsHeadingAr", {
+          broker: brokerLabel,
+          strategyId: projections.strategyId,
+        })
+      : t("h5RoiUnlockGoalsHeading", {
+          broker: brokerLabel,
+          strategyId: projections.strategyId,
+        });
+
+  const containerClass = showLock
     ? "my-2 rounded-xl border border-amber-500/20 bg-slate-800/40 bg-amber-500/10 p-3 text-center backdrop-blur-md"
     : "my-2 rounded-xl border border-slate-500/25 bg-slate-800/40 p-3 text-center backdrop-blur-md";
 
   return (
     <div className={containerClass}>
       <p className="mb-2 flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-300">
-        {hasTeamLock && (
+        {showLock && (
           <i
             className={`fa-solid fa-lock text-amber-500 ${dir === "rtl" ? "ms-2" : "me-2"}`}
             aria-hidden
@@ -211,19 +348,58 @@ function TierActivationLockCard({
         <span>{t("h5RoiTierLockTitle")}</span>
       </p>
 
-      <p className="text-[10px] leading-relaxed text-slate-400">
-        {t("h5RoiTierUnlockIntroEn")}
-      </p>
-      <p className="mt-1 font-arabic text-[10px] leading-relaxed text-slate-400" dir="rtl">
-        {t("h5RoiTierUnlockIntroAr")}
-      </p>
+      <p className="text-[10px] leading-relaxed text-slate-300">{heading}</p>
 
-      <p className="mt-2 text-sm font-bold text-[#fcd535]">
-        {projections.teamRequirementEn}
-      </p>
-      <p className="mt-0.5 font-arabic text-xs font-bold text-amber-400" dir="rtl">
-        {projections.teamRequirementAr}
-      </p>
+      <ul className="mt-3 space-y-1.5 text-start text-[10px] leading-relaxed text-slate-400">
+        <li className="flex items-start gap-2">
+          <i className="fa-solid fa-circle-check mt-0.5 shrink-0 text-teal-500/80" aria-hidden />
+          <span>
+            {locale === "ar"
+              ? t("h5RoiReqMinCapitalAr", {
+                  amount: fmtUsd(projections.strategyMinCapital),
+                })
+              : t("h5RoiReqMinCapital", {
+                  amount: fmtUsd(projections.strategyMinCapital),
+                })}
+          </span>
+        </li>
+        {projections.teamRequired > 0 && (
+          <li className="flex items-start gap-2">
+            <i className="fa-solid fa-users mt-0.5 shrink-0 text-amber-500/80" aria-hidden />
+            <span>
+              {locale === "ar"
+                ? t("h5RoiReqTeamMembersAr", { count: projections.teamRequired })
+                : t("h5RoiReqTeamMembers", { count: projections.teamRequired })}
+            </span>
+          </li>
+        )}
+        {hasBrokerBonus && (
+          <li className="flex items-start gap-2">
+            <i className="fa-solid fa-gift mt-0.5 shrink-0 text-[#fcd535]/80" aria-hidden />
+            <span>
+              {locale === "ar"
+                ? t("h5RoiReqBrokerBonusAr", {
+                    amount: fmtUsd(projections.brokerOneTimeBonus),
+                  })
+                : t("h5RoiReqBrokerBonus", {
+                    amount: fmtUsd(projections.brokerOneTimeBonus),
+                  })}
+            </span>
+          </li>
+        )}
+      </ul>
+
+      {hasCapitalGap && (
+        <p className="mt-2 text-xs font-semibold text-amber-400">
+          {locale === "ar"
+            ? t("h5RoiCapitalShortfallAr", {
+                amount: fmtUsd(projections.capitalShortfall),
+              })
+            : t("h5RoiCapitalShortfall", {
+                amount: fmtUsd(projections.capitalShortfall),
+              })}
+        </p>
+      )}
 
       {hasTeamLock && (
         <button
@@ -245,10 +421,12 @@ function YieldBoard({
   label,
   value,
   accent,
+  hint,
 }: {
   label: string;
   value: string;
   accent: "teal" | "amber" | "gold";
+  hint?: string;
 }) {
   const border =
     accent === "teal"
@@ -275,6 +453,9 @@ function YieldBoard({
       >
         ${value}
       </p>
+      {hint ? (
+        <p className="mt-1.5 text-[9px] leading-snug text-slate-500">{hint}</p>
+      ) : null}
     </div>
   );
 }

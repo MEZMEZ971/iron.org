@@ -1,9 +1,16 @@
 /** ROI simulator tiers — capital brackets and daily yield (Feature #3). */
+import {
+  getTierByRank,
+  type BrokerRank,
+} from "../config/brokerProgram";
+
 export const ROI_MIN_AMOUNT = 100;
 export const ROI_MAX_AMOUNT = 50_000;
 
+export type RoiStrategyId = 1 | 2 | 3 | 4 | 5 | 6;
+
 export type RoiTier = {
-  strategyId: 1 | 2 | 3 | 4 | 5 | 6;
+  strategyId: RoiStrategyId;
   min: number;
   max: number;
   /** Decimal daily rate, e.g. 0.015 = 1.5% */
@@ -91,6 +98,11 @@ export function resolveRoiTier(amount: number): RoiTier & { amount: number } {
   return { ...tier, amount: clamped };
 }
 
+export function getRoiTierByStrategyId(strategyId: number): RoiTier {
+  const tier = ROI_TIERS.find((t) => t.strategyId === strategyId);
+  return tier ?? ROI_TIERS[0];
+}
+
 export function formatYieldPercent(dailyYield: number): string {
   const pct = dailyYield * 100;
   return Number.isInteger(pct) ? String(pct) : pct.toFixed(1).replace(/\.0$/, "");
@@ -106,5 +118,48 @@ export function computeRoiProjections(amount: number) {
     monthlyIncome: dailyProfit * 30,
     annualRevenue: dailyProfit * 365,
     yieldPercentLabel: formatYieldPercent(dailyYield),
+  };
+}
+
+export type GoalOrientedBrokerRank = BrokerRank;
+
+export function computeGoalOrientedProjections(params: {
+  amount: number;
+  strategyId: RoiStrategyId;
+  brokerRank: GoalOrientedBrokerRank;
+}) {
+  const strategyTier = getRoiTierByStrategyId(params.strategyId);
+  const amount = clampRoiAmount(params.amount);
+  const dailyProfit = amount * strategyTier.dailyYield;
+
+  const brokerTier =
+    params.brokerRank === "NONE" ? null : getTierByRank(params.brokerRank);
+
+  const salary15Day = brokerTier?.salary15Day ?? 0;
+  const totalMonthlyProfit = dailyProfit * 30 + salary15Day * 2;
+  const strategyTeamRequired = strategyTier.teamMembersRequired;
+  const brokerTeamRequired = brokerTier?.minTeamSize ?? 0;
+  const teamRequired = Math.max(strategyTeamRequired, brokerTeamRequired);
+  const capitalShortfall = Math.max(0, strategyTier.min - amount);
+
+  return {
+    amount,
+    strategyId: strategyTier.strategyId,
+    strategyTier,
+    brokerRank: params.brokerRank,
+    brokerTier,
+    dailyYield: strategyTier.dailyYield,
+    dailyProfit,
+    salary15Day,
+    totalMonthlyProfit,
+    yieldPercentLabel: formatYieldPercent(strategyTier.dailyYield),
+    strategyMinCapital: strategyTier.min,
+    strategyMaxCapital: strategyTier.max,
+    strategyTeamRequired,
+    brokerTeamRequired,
+    teamRequired,
+    capitalShortfall,
+    meetsCapitalRequirement: capitalShortfall <= 0,
+    brokerOneTimeBonus: brokerTier?.oneTimeBonus ?? 0,
   };
 }
