@@ -1,5 +1,5 @@
 import type { BrokerProfileSnapshot } from "../../config/brokerProgram";
-import { getTierBadge, getTierLabel } from "../../config/brokerProgram";
+import { getTierBadge, getTierByRank, getTierLabel } from "../../config/brokerProgram";
 import { useLocale } from "../../i18n/LocaleContext";
 import { formatAmount, safeNumber } from "../../lib/formatNumbers";
 
@@ -47,8 +47,13 @@ export function BrokerProgramSection({ broker }: Props) {
               <p className="mt-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
                 {t("brokerNextTierProgress", {
                   count: String(nextTier.membersToNext),
-                  tier:
-                    locale === "ar" ? nextTier.labelAr : nextTier.labelEn,
+                  tier: (() => {
+                    const tierRow = getTierByRank(nextTier.rank);
+                    if (tierRow) return getTierLabel(tierRow, locale);
+                    return locale === "ar"
+                      ? nextTier.labelAr
+                      : nextTier.labelEn;
+                  })(),
                 })}
               </p>
             </>

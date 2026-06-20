@@ -155,6 +155,7 @@ export const h5It = {
   h5SpinLimitEn:
     "Hai già usato il giro gratuito di oggi. Torna domani!",
   h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+  h5SpinFailed: "Rotazione non riuscita. Riprova.",
   h5VipNetworkTitle:
     "Guadagna dalla tua rete — commissioni giornaliere sui guadagni dei nodi",
   h5VipNetworkDesc:

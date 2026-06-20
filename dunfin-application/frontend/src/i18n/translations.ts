@@ -141,6 +141,10 @@ const en = {
       "🎁 Free trial bonus active: ${amount} ({remaining} remaining)",
     trialBannerSubtext:
       "The bonus disappears automatically after 3 days or as soon as you make your first real deposit.",
+    trialRemainingDefault: "3 days",
+    trialRemainingLessThanHour: "less than 1 hour",
+    trialRemainingDays: "{days} days",
+    trialRemainingHours: "{hours} hours",
     brokerProgramTitle: "Leader Broker Program",
     brokerProgramSubtitle:
       "Grow your GEN 1–3 network to unlock one-time USDT bonuses and recurring 15-day broker salaries.",
@@ -466,6 +470,10 @@ const ar = {
       "🎁 مكافأة الفترة التجريبية نشطة: {amount}$ (متبقي {remaining})",
     trialBannerSubtext:
       "ستختفي المكافأة تلقائياً بعد 3 أيام أو فور قيامك بأول عملية إيداع حقيقية.",
+    trialRemainingDefault: "3 أيام",
+    trialRemainingLessThanHour: "أقل من ساعة",
+    trialRemainingDays: "{days} أيام",
+    trialRemainingHours: "{hours} ساعة",
     brokerProgramTitle: "برنامج الوكلاء والمكافآت القيادية",
     brokerProgramSubtitle:
       "وسّع شبكتك (الجيل 1–3) لفتح مكافآت USDT لمرة واحدة وراتب وكيل متكرر كل 15 يوماً.",

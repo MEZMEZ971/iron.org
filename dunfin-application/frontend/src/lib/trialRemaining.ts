@@ -1,17 +1,24 @@
+import type { TranslationKey } from "../i18n/translations";
+
+type TranslateFn = (
+  key: TranslationKey,
+  vars?: Record<string, string | number>
+) => string;
+
 /** Format remaining trial time for banner display. */
 export function formatTrialRemaining(
   expiresAt: string | null | undefined,
-  locale: string
+  t: TranslateFn
 ): string {
-  if (!expiresAt) return locale === "ar" ? "3 أيام" : "3 days";
+  if (!expiresAt) return t("trialRemainingDefault");
 
   const ms = new Date(expiresAt).getTime() - Date.now();
-  if (ms <= 0) return locale === "ar" ? "أقل من ساعة" : "less than 1 hour";
+  if (ms <= 0) return t("trialRemainingLessThanHour");
 
   const hours = Math.ceil(ms / (60 * 60 * 1000));
   if (hours >= 48) {
     const days = Math.ceil(hours / 24);
-    return locale === "ar" ? `${days} أيام` : `${days} days`;
+    return t("trialRemainingDays", { days });
   }
-  return locale === "ar" ? `${hours} ساعة` : `${hours} hours`;
+  return t("trialRemainingHours", { hours });
 }

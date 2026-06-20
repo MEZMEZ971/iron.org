@@ -52,7 +52,7 @@ function txAmountClass(tx: TransactionRow) {
 }
 
 export default function Personal() {
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const { userId, displayName } = useUser();
   const { profile, loading, error } = useUserProfile(userId);
 
@@ -63,7 +63,7 @@ export default function Personal() {
 
   const todayPnl = safeNumber(profile?.todayPnl);
   const totalPnl = safeNumber(profile?.totalPnl);
-  const trialRemaining = formatTrialRemaining(profile?.trialExpiresAt, locale);
+  const trialRemaining = formatTrialRemaining(profile?.trialExpiresAt, t);
 
   return (
     <div className="space-y-4 pb-4">

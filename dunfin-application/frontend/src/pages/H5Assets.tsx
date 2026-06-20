@@ -14,7 +14,7 @@ function fmt(n: number) {
 }
 
 export default function H5Assets() {
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const navigate = useNavigate();
   const {
     availableBalance,
@@ -27,7 +27,7 @@ export default function H5Assets() {
     loading,
   } = useH5Portfolio();
 
-  const trialRemaining = formatTrialRemaining(trialExpiresAt, locale);
+  const trialRemaining = formatTrialRemaining(trialExpiresAt, t);
 
   const [lockboxInfoOpen, setLockboxInfoOpen] = useState(false);
   const [lockboxHover, setLockboxHover] = useState(false);

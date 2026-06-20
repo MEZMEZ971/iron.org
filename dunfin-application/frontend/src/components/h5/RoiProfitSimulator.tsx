@@ -226,9 +226,7 @@ export function RoiProfitSimulator() {
           accent="amber"
           hint={
             brokerRank === BROKER_RANK_NONE
-              ? locale === "ar"
-                ? t("h5RoiPotentialSalaryHintAr")
-                : t("h5RoiPotentialSalaryHint")
+              ? t("h5RoiPotentialSalaryHint")
               : undefined
           }
         />
@@ -327,16 +325,10 @@ function GoalRequirementsCard({
   const hasBrokerBonus = projections.brokerOneTimeBonus > 0;
   const showLock = hasTeamLock || hasCapitalGap || hasBrokerBonus;
 
-  const heading =
-    locale === "ar"
-      ? t("h5RoiUnlockGoalsHeadingAr", {
-          broker: brokerLabel,
-          strategyId: projections.strategyId,
-        })
-      : t("h5RoiUnlockGoalsHeading", {
-          broker: brokerLabel,
-          strategyId: projections.strategyId,
-        });
+  const heading = t("h5RoiUnlockGoalsHeading", {
+    broker: brokerLabel,
+    strategyId: projections.strategyId,
+  });
 
   const containerClass = showLock
     ? "my-2 rounded-xl border border-amber-500/20 bg-slate-800/40 bg-amber-500/10 p-3 text-center backdrop-blur-md"
@@ -360,22 +352,16 @@ function GoalRequirementsCard({
         <li className="flex items-start gap-2">
           <i className="fa-solid fa-circle-check mt-0.5 shrink-0 text-teal-500/80" aria-hidden />
           <span>
-            {locale === "ar"
-              ? t("h5RoiReqMinCapitalAr", {
-                  amount: fmtUsd(projections.strategyMinCapital),
-                })
-              : t("h5RoiReqMinCapital", {
-                  amount: fmtUsd(projections.strategyMinCapital),
-                })}
+            {t("h5RoiReqMinCapital", {
+              amount: fmtUsd(projections.strategyMinCapital),
+            })}
           </span>
         </li>
         {projections.teamRequired > 0 && (
           <li className="flex items-start gap-2">
             <i className="fa-solid fa-users mt-0.5 shrink-0 text-amber-500/80" aria-hidden />
             <span>
-              {locale === "ar"
-                ? t("h5RoiReqTeamMembersAr", { count: projections.teamRequired })
-                : t("h5RoiReqTeamMembers", { count: projections.teamRequired })}
+              {t("h5RoiReqTeamMembers", { count: projections.teamRequired })}
             </span>
           </li>
         )}
@@ -383,13 +369,9 @@ function GoalRequirementsCard({
           <li className="flex items-start gap-2">
             <i className="fa-solid fa-gift mt-0.5 shrink-0 text-[#fcd535]/80" aria-hidden />
             <span>
-              {locale === "ar"
-                ? t("h5RoiReqBrokerBonusAr", {
-                    amount: fmtUsd(projections.brokerOneTimeBonus),
-                  })
-                : t("h5RoiReqBrokerBonus", {
-                    amount: fmtUsd(projections.brokerOneTimeBonus),
-                  })}
+              {t("h5RoiReqBrokerBonus", {
+                amount: fmtUsd(projections.brokerOneTimeBonus),
+              })}
             </span>
           </li>
         )}
@@ -397,13 +379,9 @@ function GoalRequirementsCard({
 
       {hasCapitalGap && (
         <p className="mt-2 text-xs font-semibold text-amber-400">
-          {locale === "ar"
-            ? t("h5RoiCapitalShortfallAr", {
-                amount: fmtUsd(projections.capitalShortfall),
-              })
-            : t("h5RoiCapitalShortfall", {
-                amount: fmtUsd(projections.capitalShortfall),
-              })}
+          {t("h5RoiCapitalShortfall", {
+            amount: fmtUsd(projections.capitalShortfall),
+          })}
         </p>
       )}
 

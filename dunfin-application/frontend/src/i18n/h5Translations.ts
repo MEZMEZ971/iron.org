@@ -154,6 +154,7 @@ export const h5En = {
   h5SpinLimitEn:
     "You have already used your free spin today. Come back tomorrow!",
   h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+  h5SpinFailed: "Spin failed. Please try again.",
   h5VipNetworkTitle:
     "Earn from your network — daily commissions on node member earnings",
   h5VipNetworkDesc:
@@ -345,6 +346,7 @@ export const h5Ar = {
   h5SpinLimitEn:
     "You have already used your free spin today. Come back tomorrow!",
   h5SpinLimitAr: "لقد استهلكت دورتك المجانية اليوم. عد غداً!",
+  h5SpinFailed: "فشلت عملية الدوران. يرجى المحاولة مرة أخرى.",
   h5VipNetworkTitle: "اربح من شبكتك — عمولات يومية على أرباح أعضاء العقد",
   h5VipNetworkDesc:
     "احصل على عمولة 6% من الأرباح اليومية لأعضاء عقد الشبكة عبر شجرة الإحالة من الجيل 1 إلى 3.",

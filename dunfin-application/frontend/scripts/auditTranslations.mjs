@@ -1,6 +1,6 @@
 /**
- * Audit en/ar/it translation alignment and English fallbacks.
- * Run: node scripts/auditTranslations.mjs
+ * Full-locale translation audit — all CORE_LOCALES vs English master.
+ * Run: npx tsx scripts/auditTranslations.mjs
  */
 import { writeFileSync } from "fs";
 import { join, dirname } from "path";
@@ -9,62 +9,106 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const { translations } = await import("../src/i18n/translations.ts");
-const { itTable } = await import("../src/i18n/italian/itTable.ts");
+const { CORE_LOCALES } = await import("../src/i18n/locales.ts");
 
 const en = translations.en;
-const ar = translations.ar;
-const it = itTable;
-
 const enKeys = Object.keys(en).sort();
-const arKeys = Object.keys(ar).sort();
-const itKeys = Object.keys(it).sort();
-
-const missingInAr = enKeys.filter((k) => !(k in ar));
-const missingInIt = enKeys.filter((k) => !(k in it));
-const extraInAr = arKeys.filter((k) => !(k in en));
-const extraInIt = itKeys.filter((k) => !(k in en));
-
-const arSameAsEn = enKeys.filter((k) => ar[k] === en[k]);
-const itSameAsEn = enKeys.filter((k) => it[k] === en[k]);
-
-console.log("=== KEY COUNTS ===");
-console.log(`en: ${enKeys.length}, ar: ${arKeys.length}, it: ${itKeys.length}`);
-console.log(`missing in ar: ${missingInAr.length}`);
-console.log(`missing in it: ${missingInIt.length}`);
-console.log(`extra in ar: ${extraInAr.length}`);
-console.log(`extra in it: ${extraInIt.length}`);
-console.log(`ar identical to en: ${arSameAsEn.length}`);
-console.log(`it identical to en: ${itSameAsEn.length}`);
-
-if (missingInAr.length) console.log("\nMissing in AR:", missingInAr.slice(0, 30));
-if (missingInIt.length) console.log("\nMissing in IT:", missingInIt.slice(0, 30));
-
-// Interpolation token check: keys with {var} in en must have same tokens in ar/it
 const tokenRe = /\{(\w+)\}/g;
-const tokenMismatches = [];
-for (const key of enKeys) {
-  const enTokens = [...en[key].matchAll(tokenRe)].map((m) => m[1]).sort().join(",");
-  for (const [loc, table] of [["ar", ar], ["it", it]]) {
+
+function tokens(str) {
+  return [...String(str).matchAll(tokenRe)].map((m) => m[1]).sort().join(",");
+}
+
+function isEmpty(val) {
+  return typeof val !== "string" || val.trim().length === 0;
+}
+
+const localeCodes = CORE_LOCALES.map((l) => l.code);
+const report = {
+  masterKeyCount: enKeys.length,
+  locales: {},
+  summary: {
+    missingKeysTotal: 0,
+    emptyStringsTotal: 0,
+    tokenMismatchesTotal: 0,
+    extraKeysTotal: 0,
+  },
+};
+
+let exitCode = 0;
+
+console.log(`=== MASTER: ${enKeys.length} keys ===\n`);
+
+for (const code of localeCodes) {
+  const table = translations[code];
+  if (!table) {
+    console.error(`FATAL: translations.${code} is undefined`);
+    exitCode = 1;
+    continue;
+  }
+
+  const locKeys = Object.keys(table);
+  const missing = enKeys.filter((k) => !(k in table));
+  const extra = locKeys.filter((k) => !(k in en));
+  const empty = enKeys.filter((k) => isEmpty(table[k]));
+  const tokenMismatches = [];
+
+  for (const key of enKeys) {
     const val = table[key];
     if (!val) continue;
-    const locTokens = [...val.matchAll(tokenRe)].map((m) => m[1]).sort().join(",");
-    if (enTokens !== locTokens) {
-      tokenMismatches.push({ key, locale: loc, en: enTokens, got: locTokens });
+    const enTok = tokens(en[key]);
+    const locTok = tokens(val);
+    if (enTok !== locTok) {
+      tokenMismatches.push({ key, en: enTok, got: locTok });
     }
   }
-}
-console.log(`\n=== INTERPOLATION MISMATCHES: ${tokenMismatches.length} ===`);
-tokenMismatches.slice(0, 20).forEach((m) =>
-  console.log(`  ${m.key} [${m.locale}] en:{${m.en}} got:{${m.got}}`)
-);
 
-const report = {
-  counts: { en: enKeys.length, ar: arKeys.length, it: itKeys.length },
-  missingInAr,
-  missingInIt,
-  arSameAsEn,
-  itSameAsEn,
-  tokenMismatches,
-};
+  const identicalToEn =
+    code === "en"
+      ? 0
+      : enKeys.filter((k) => table[k] === en[k]).length;
+
+  report.locales[code] = {
+    keyCount: locKeys.length,
+    missing,
+    extra,
+    empty,
+    tokenMismatches,
+    identicalToEn,
+  };
+
+  report.summary.missingKeysTotal += missing.length;
+  report.summary.emptyStringsTotal += empty.length;
+  report.summary.tokenMismatchesTotal += tokenMismatches.length;
+  report.summary.extraKeysTotal += extra.length;
+
+  const status =
+    missing.length || empty.length || tokenMismatches.length || extra.length
+      ? "FAIL"
+      : "OK";
+
+  if (status === "FAIL") exitCode = 1;
+
+  console.log(
+    `[${status}] ${code}: ${locKeys.length} keys | missing=${missing.length} empty=${empty.length} tokens=${tokenMismatches.length} extra=${extra.length} sameAsEn=${identicalToEn}`
+  );
+
+  if (missing.length) console.log(`  missing: ${missing.slice(0, 15).join(", ")}${missing.length > 15 ? "…" : ""}`);
+  if (empty.length) console.log(`  empty: ${empty.slice(0, 10).join(", ")}`);
+  if (tokenMismatches.length) {
+    tokenMismatches.slice(0, 5).forEach((m) =>
+      console.log(`  token ${m.key}: en={${m.en}} got={${m.got}}`)
+    );
+  }
+}
+
+console.log("\n=== TOTALS ===");
+console.log(`missing keys: ${report.summary.missingKeysTotal}`);
+console.log(`empty strings: ${report.summary.emptyStringsTotal}`);
+console.log(`token mismatches: ${report.summary.tokenMismatchesTotal}`);
+console.log(`extra keys: ${report.summary.extraKeysTotal}`);
+
 writeFileSync(join(__dirname, "audit-report.json"), JSON.stringify(report, null, 2));
 console.log("\nWrote scripts/audit-report.json");
+
+process.exit(exitCode);

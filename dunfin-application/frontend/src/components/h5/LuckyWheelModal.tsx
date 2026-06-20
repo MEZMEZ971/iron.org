@@ -15,6 +15,7 @@ import {
 } from "../../config/luckyWheel";
 import { useH5Portfolio } from "../../context/H5PortfolioContext";
 import { useLocale } from "../../i18n/LocaleContext";
+import { isRtlLocale } from "../../i18n/locales";
 import { emitWalletRefresh } from "../../lib/walletSync";
 import { useUser } from "../../context/UserContext";
 
@@ -201,7 +202,9 @@ export function LuckyWheelModal({ open, onClose }: Props) {
       pendingWinRef.current = null;
       if (e instanceof ApiError) {
         if (e.code === "SPIN_ALREADY_USED") {
-          setError(locale === "ar" ? t("h5SpinLimitAr") : t("h5SpinLimitEn"));
+          setError(
+            t(isRtlLocale(locale) ? "h5SpinLimitAr" : "h5SpinLimitEn")
+          );
           setWheelStatus((prev) =>
             prev ? { ...prev, spinsRemaining: 0, canSpin: false } : prev
           );
@@ -211,7 +214,7 @@ export function LuckyWheelModal({ open, onClose }: Props) {
           setError(e.message);
         }
       } else {
-        setError(e instanceof Error ? e.message : "Spin failed");
+        setError(e instanceof Error ? e.message : t("h5SpinFailed"));
       }
     }
   }
