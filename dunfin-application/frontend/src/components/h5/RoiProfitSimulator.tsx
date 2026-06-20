@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import {
   BROKER_RANK_NONE,
   BROKER_TIERS,
+  getTierBadge,
   getTierLabel,
   type BrokerRank,
 } from "../../config/brokerProgram";
@@ -73,7 +74,7 @@ export function RoiProfitSimulator() {
     brokerRank === BROKER_RANK_NONE
       ? t("h5RoiBrokerNone")
       : projections.brokerTier
-        ? `${projections.brokerTier.badge} · ${getTierLabel(projections.brokerTier, locale)}`
+        ? `${getTierBadge(projections.brokerTier, locale)} · ${getTierLabel(projections.brokerTier, locale)}`
         : t("h5RoiBrokerNone");
 
   const badgePrimary = t("h5RoiSelectedGoalsBadge", {
@@ -81,11 +82,14 @@ export function RoiProfitSimulator() {
     yield: projections.yieldPercentLabel,
     broker: brokerLabel,
   });
-  const badgeSecondary = t("h5RoiSelectedGoalsBadgeAr", {
-    strategyId,
-    yield: projections.yieldPercentLabel,
-    broker: brokerLabel,
-  });
+  const showArabicBadge = locale === "en" || locale === "it";
+  const badgeSecondary = showArabicBadge
+    ? t("h5RoiSelectedGoalsBadgeAr", {
+        strategyId,
+        yield: projections.yieldPercentLabel,
+        broker: brokerLabel,
+      })
+    : null;
 
   return (
     <section
@@ -198,8 +202,8 @@ export function RoiProfitSimulator() {
             <option value={BROKER_RANK_NONE}>{t("h5RoiBrokerNone")}</option>
             {BROKER_TIERS.map((tier) => (
               <option key={tier.rank} value={tier.rank}>
-                {tier.badge} · {getTierLabel(tier, locale)} ·{" "}
-                {fmtUsd(tier.salary15Day)} USDT / 15d
+                {getTierBadge(tier, locale)} · {getTierLabel(tier, locale)} ·{" "}
+                {fmtUsd(tier.salary15Day)} {t("h5RoiSalaryPeriod")}
               </option>
             ))}
           </GoalSelectField>
@@ -237,9 +241,11 @@ export function RoiProfitSimulator() {
 
       <div className="roi-tier-badge mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-center text-[10px] font-bold leading-relaxed shadow-[0_0_15px_rgba(245,158,11,0.15)]">
         <p className="text-amber-500">{badgePrimary}</p>
-        <p className="mt-1 font-arabic text-teal-400" dir="rtl">
-          {badgeSecondary}
-        </p>
+        {badgeSecondary ? (
+          <p className="mt-1 font-arabic text-teal-400" dir="rtl">
+            {badgeSecondary}
+          </p>
+        ) : null}
       </div>
 
       <GoalRequirementsCard
@@ -408,9 +414,11 @@ function GoalRequirementsCard({
           className="mt-3 w-full text-[10px] font-semibold text-teal-400 underline decoration-teal-400/50 underline-offset-2 transition hover:text-teal-300"
         >
           <span className="block">{t("h5RoiInviteTeamLink")}</span>
-          <span className="mt-1 block font-arabic" dir="rtl">
-            {t("h5RoiInviteTeamLinkAr")}
-          </span>
+          {(locale === "en" || locale === "it") && (
+            <span className="mt-1 block font-arabic" dir="rtl">
+              {t("h5RoiInviteTeamLinkAr")}
+            </span>
+          )}
         </button>
       )}
     </div>

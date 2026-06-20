@@ -39,21 +39,23 @@ type CustomerManagerContactsProps = {
 };
 
 export function CustomerManagerContacts({
-  title = "Customer Support",
-  subtitle = "Reach our dedicated managers on Telegram for account assistance.",
+  title,
+  subtitle,
   className = "",
 }: CustomerManagerContactsProps) {
   const { t } = useLocale();
+  const resolvedTitle = title ?? t("supportManagersTitle");
+  const resolvedSubtitle = subtitle ?? t("supportManagersSubtitle");
 
   return (
     <section
       className={`rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition-all duration-300 dark:border-white/[0.08] dark:bg-[rgba(26,31,46,0.85)] ${className}`}
     >
       <div className="mb-4 text-center sm:text-start">
-        <h2 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h2>
-        {subtitle ? (
+        <h2 className="text-sm font-bold text-slate-900 dark:text-white">{resolvedTitle}</h2>
+        {resolvedSubtitle ? (
           <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-df-muted">
-            {subtitle}
+            {resolvedSubtitle}
           </p>
         ) : null}
       </div>

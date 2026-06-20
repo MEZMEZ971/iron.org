@@ -117,6 +117,9 @@ export const h5En = {
     "Don't have enough members? Invite new people to your team now!",
   h5RoiInviteTeamLinkAr:
     "لا تمتلك أعضاء كافيين؟ قم بدعوة أشخاص جدد لفريقك الآن لتفعيل الخطة!",
+  h5RoiSalaryPeriod: "USDT / 15d",
+  h5LockboxSectionPrimary: "English",
+  h5LockboxSectionArabic: "العربية",
   h5PaymentVerifyTitle: "Security Verification",
   h5PaymentVerifyTitleAr: "التحقق من الأمان",
   h5PaymentVerifySubtitle:
@@ -259,7 +262,7 @@ export const h5Ar = {
   h5UsdtLiquid: "USDT · سائل",
   h5UsdtEscrow: "USDT · في الضمان",
   h5RoiSimulatorTitle: "محاكي الأرباح الموجّه بالأهداف",
-  h5RoiSimulatorTitleAlt: "Goal-Oriented ROI Simulator",
+  h5RoiSimulatorTitleAlt: "محاكي الأرباح التفاعلي الموجّه بالأهداف",
   h5RoiAmountLabel: "مبلغ الاستثمار (USDT)",
   h5RoiAmountPlaceholder: "100 – 50,000",
   h5RoiTargetGoalLabel: "ما هو هدفك؟",
@@ -272,55 +275,58 @@ export const h5Ar = {
   h5RoiMonthlyIncome: "الدخل الشهري",
   h5RoiAnnualRevenue: "العائد السنوي المذهل",
   h5RoiSelectedGoalsBadge:
-    "Target: Strategy {strategyId} ({yield}% daily) · {broker}",
+    "الهدف: الاستراتيجية {strategyId} (عائد {yield}% يومياً) · {broker}",
   h5RoiSelectedGoalsBadgeAr:
     "الهدف: الاستراتيجية {strategyId} (عائد {yield}% يومياً) · {broker}",
   h5RoiPotentialSalaryHint:
-    "Select a broker rank above to include recurring 15-day salary in your monthly projection.",
+    "اختر رتبة وسيط أعلاه لإضافة راتب 15 يوم المتكرر إلى توقعاتك الشهرية.",
   h5RoiPotentialSalaryHintAr:
     "اختر رتبة وسيط أعلاه لإضافة راتب 15 يوم المتكرر إلى توقعاتك الشهرية.",
   h5RoiRecommendedTier:
-    "Recommended Tier: Strategy {id} ({yield}% Daily Yield)",
+    "الخيار الأفضل: الاستراتيجية {id} (عائد {yield}% يومياً)",
   h5RoiRecommendedTierAr:
     "الخيار الأفضل: الاستراتيجية {id} (عائد {yield}% يومياً)",
   h5RoiInvestCta: "ابدأ الاستثمار وتفعيل الاستراتيجية فوراً",
   h5RoiTierLockTitle: "متطلبات تفعيل المستوى",
   h5RoiUnlockGoalsHeading:
-    "To unlock {broker} & Strategy {strategyId}, you require:",
+    "لفتح {broker} والاستراتيجية {strategyId}، تحتاج إلى:",
   h5RoiUnlockGoalsHeadingAr:
     "لفتح {broker} والاستراتيجية {strategyId}، تحتاج إلى:",
-  h5RoiReqMinCapital: "Minimum {amount} USDT locked trading capital",
+  h5RoiReqMinCapital: "حد أدنى {amount} USDT رأس مال تداول مقفل",
   h5RoiReqMinCapitalAr: "حد أدنى {amount} USDT رأس مال تداول مقفل",
-  h5RoiReqTeamMembers: "Minimum {count} active team members",
+  h5RoiReqTeamMembers: "حد أدنى {count} عضواً نشطاً في الفريق",
   h5RoiReqTeamMembersAr: "حد أدنى {count} عضواً نشطاً في الفريق",
-  h5RoiReqBrokerBonus: "{amount} USDT one-time broker achievement bonus",
+  h5RoiReqBrokerBonus: "مكافأة إنجاز وسيط لمرة واحدة بقيمة {amount} USDT",
   h5RoiReqBrokerBonusAr: "مكافأة إنجاز وسيط لمرة واحدة بقيمة {amount} USDT",
-  h5RoiCapitalShortfall: "Increase your investment by {amount} USDT to meet this strategy tier.",
+  h5RoiCapitalShortfall: "زِد استثمارك بمقدار {amount} USDT للوصول إلى هذا المستوى.",
   h5RoiCapitalShortfallAr: "زِد استثمارك بمقدار {amount} USDT للوصول إلى هذا المستوى.",
   h5RoiTierUnlockIntroEn:
     "To unlock these projected earnings, your account must satisfy the strategy criteria:",
   h5RoiTierUnlockIntroAr:
     "لتسييل وتفعيل هذه الأرباح المتوقعة، يجب أن يستوفي حسابك شروط الاستراتيجية التالية:",
   h5RoiInviteTeamLink:
-    "Don't have enough members? Invite new people to your team now!",
+    "لا تمتلك أعضاء كافيين؟ قم بدعوة أشخاص جدد لفريقك الآن لتفعيل الخطة!",
   h5RoiInviteTeamLinkAr:
     "لا تمتلك أعضاء كافيين؟ قم بدعوة أشخاص جدد لفريقك الآن لتفعيل الخطة!",
-  h5PaymentVerifyTitle: "Security Verification",
+  h5RoiSalaryPeriod: "USDT / 15 يوم",
+  h5LockboxSectionPrimary: "العربية",
+  h5LockboxSectionArabic: "العربية",
+  h5PaymentVerifyTitle: "التحقق من الأمان",
   h5PaymentVerifyTitleAr: "التحقق من الأمان",
   h5PaymentVerifySubtitle:
-    "Please enter your 6-digit transaction password to authorize this withdrawal",
+    "يرجى إدخال كلمة مرور المعاملات (6 أرقام) لتأكيد عملية السحب",
   h5PaymentVerifySubtitleAr:
     "يرجى إدخال كلمة مرور المعاملات لتأكيد عملية السحب",
   h5PaymentPasswordPlaceholder: "••••••",
   h5PaymentCancel: "إلغاء",
   h5PaymentVerifyPayout: "تأكيد السحب",
   h5PaymentPinNotSetup:
-    "Set up your 6-digit transaction password in Settings before withdrawing.",
+    "يرجى إعداد كلمة مرور المعاملات (6 أرقام) من الإعدادات قبل السحب.",
   h5PaymentPinNotSetupAr:
     "يرجى إعداد كلمة مرور المعاملات (6 أرقام) من الإعدادات قبل السحب.",
   h5PaymentGoSettings: "فتح الإعدادات",
   h5PaymentWrongPin:
-    "Incorrect transaction password! Account locked for your protection.",
+    "كلمة مرور المعاملات غير صحيحة! تم حماية حسابك من محاولة السحب.",
   h5PaymentWrongPinAr:
     "كلمة مرور المعاملات غير صحيحة! تم حماية حسابك من محاولة السحب.",
   h5WheelPrize0: "USDT 0.10",

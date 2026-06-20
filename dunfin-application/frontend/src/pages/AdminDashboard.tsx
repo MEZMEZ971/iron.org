@@ -45,6 +45,24 @@ const GOLD_BTN =
 
 const GHOST_BTN = `${ADMIN_GHOST_BTN} px-3 py-1.5 ease-in-out`;
 
+function resolveKycStatusLabel(
+  status: string,
+  t: (key: TranslationKey) => string
+): string {
+  switch (status) {
+    case "PENDING_REVIEW":
+      return t("adminKycStatusPending");
+    case "APPROVED":
+      return t("adminKycStatusApproved");
+    case "REJECTED":
+      return t("adminKycStatusRejected");
+    case "NONE":
+      return t("adminKycStatusNone");
+    default:
+      return status;
+  }
+}
+
 function KycDocThumb({
   label,
   fileName,
@@ -392,7 +410,7 @@ export default function AdminDashboard() {
                       {row.uid || row.email} · {new Date(row.submittedAt).toLocaleString()}
                     </p>
                   </div>
-                  <span className={GOLD_BADGE}>{row.status}</span>
+                  <span className={GOLD_BADGE}>{resolveKycStatusLabel(row.status, t)}</span>
                 </div>
                 <div className="mt-4 flex gap-3">
                   <KycDocThumb

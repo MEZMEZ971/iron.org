@@ -70,7 +70,7 @@ export const h5It = {
   h5UsdtLiquid: "USDT · Liquido",
   h5UsdtEscrow: "USDT · In escrow",
   h5RoiSimulatorTitle: "Simulatore ROI orientato agli obiettivi",
-  h5RoiSimulatorTitleAlt: "Goal-Oriented ROI Simulator",
+  h5RoiSimulatorTitleAlt: "Simulatore ROI orientato agli obiettivi",
   h5RoiAmountLabel: "Importo investimento (USDT)",
   h5RoiAmountPlaceholder: "100 – 50.000",
   h5RoiTargetGoalLabel: "Qual è il tuo obiettivo?",
@@ -118,6 +118,9 @@ export const h5It = {
     "Non hai abbastanza membri? Invita nuove persone nel tuo team ora!",
   h5RoiInviteTeamLinkAr:
     "لا تمتلك أعضاء كافيين؟ قم بدعوة أشخاص جدد لفريقك الآن لتفعيل الخطة!",
+  h5RoiSalaryPeriod: "USDT / 15 giorni",
+  h5LockboxSectionPrimary: "Italiano",
+  h5LockboxSectionArabic: "العربية",
   h5PaymentVerifyTitle: "Verifica di sicurezza",
   h5PaymentVerifyTitleAr: "التحقق من الأمان",
   h5PaymentVerifySubtitle:

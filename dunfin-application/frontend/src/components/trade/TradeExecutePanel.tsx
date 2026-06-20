@@ -73,7 +73,10 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
     try {
       const result = await executeTrade(userId);
       showTradeSuccess(
-        `${result.trade.strategy.name} · $${result.trade.capitalAmount.toLocaleString()} USDT`
+        t("tradeSuccessDetail", {
+          strategy: result.trade.strategy.name,
+          amount: result.trade.capitalAmount.toLocaleString(),
+        })
       );
       await refresh();
       await onTradeSettled?.();

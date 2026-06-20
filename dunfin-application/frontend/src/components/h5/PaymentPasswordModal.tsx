@@ -18,7 +18,7 @@ export function PaymentPasswordModal({
   onVerify,
   onOpenSettings,
 }: Props) {
-  const { t, dir } = useLocale();
+  const { t, dir, locale } = useLocale();
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
 
@@ -44,6 +44,8 @@ export function PaymentPasswordModal({
     if (!canSubmit) return;
     onVerify(password);
   }
+
+  const showBilingualArabic = locale === "en";
 
   return (
     <div
@@ -77,17 +79,21 @@ export function PaymentPasswordModal({
           >
             {t("h5PaymentVerifyTitle")}
           </h3>
-          <p className="mt-0.5 font-arabic text-sm font-bold text-teal-400" dir="rtl">
-            {t("h5PaymentVerifyTitleAr")}
-          </p>
+          {showBilingualArabic ? (
+            <p className="mt-0.5 font-arabic text-sm font-bold text-teal-400" dir="rtl">
+              {t("h5PaymentVerifyTitleAr")}
+            </p>
+          ) : null}
         </div>
 
         {!requiresPaymentPin ? (
           <div className="mt-4 space-y-3 text-center">
             <p className="text-xs text-slate-300">{t("h5PaymentPinNotSetup")}</p>
-            <p className="font-arabic text-xs text-amber-400/90" dir="rtl">
-              {t("h5PaymentPinNotSetupAr")}
-            </p>
+            {showBilingualArabic ? (
+              <p className="font-arabic text-xs text-amber-400/90" dir="rtl">
+                {t("h5PaymentPinNotSetupAr")}
+              </p>
+            ) : null}
             <button
               type="button"
               onClick={onOpenSettings}
@@ -108,12 +114,14 @@ export function PaymentPasswordModal({
             <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-400">
               {t("h5PaymentVerifySubtitle")}
             </p>
-            <p
-              className="mt-1 text-center font-arabic text-[11px] leading-relaxed text-slate-500"
-              dir="rtl"
-            >
-              {t("h5PaymentVerifySubtitleAr")}
-            </p>
+            {showBilingualArabic ? (
+              <p
+                className="mt-1 text-center font-arabic text-[11px] leading-relaxed text-slate-500"
+                dir="rtl"
+              >
+                {t("h5PaymentVerifySubtitleAr")}
+              </p>
+            ) : null}
 
             <div className="relative mt-4">
               <input
@@ -138,7 +146,7 @@ export function PaymentPasswordModal({
                 className={`absolute top-1/2 -translate-y-1/2 text-amber-500/80 hover:text-amber-400 ${
                   dir === "rtl" ? "left-3" : "right-3"
                 }`}
-                aria-label={visible ? "Hide password" : "Show password"}
+                aria-label={visible ? t("settingsHidePassword") : t("settingsShowPassword")}
               >
                 <i
                   className={`fa-solid ${visible ? "fa-eye-slash" : "fa-eye"}`}

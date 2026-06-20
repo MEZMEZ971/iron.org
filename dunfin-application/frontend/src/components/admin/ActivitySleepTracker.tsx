@@ -153,7 +153,7 @@ export function ActivitySleepTracker({ onNotice }: Props) {
         <table className="w-full min-w-[720px] text-start text-sm">
           <thead>
             <tr className={`border-b border-white/[0.06] ${ADMIN_LABEL}`}>
-              <th className="px-4 py-3">UID</th>
+              <th className="px-4 py-3">{t("adminColUid")}</th>
               <th className="px-4 py-3">{t("adminColUser")}</th>
               <th className="px-4 py-3">{t("adminFieldBalance")}</th>
               <th className="px-4 py-3">{t("adminColLastActivity")}</th>

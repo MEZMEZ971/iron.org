@@ -42,13 +42,13 @@ export function LockboxInfoModal({ open, onClose }: Props) {
         <div className="mt-4 space-y-4 text-sm leading-relaxed">
           <div className="rounded-xl border border-white/10 bg-white/5 p-3">
             <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-teal-400">
-              English
+              {t("h5LockboxSectionPrimary")}
             </p>
             <p className="text-slate-200">{t("h5LockboxInfoEn")}</p>
           </div>
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-end" dir="rtl">
             <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-amber-500">
-              العربية
+              {t("h5LockboxSectionArabic")}
             </p>
             <p className="font-arabic text-slate-200">{t("h5LockboxInfoAr")}</p>
           </div>

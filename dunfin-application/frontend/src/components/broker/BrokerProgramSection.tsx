@@ -1,5 +1,5 @@
 import type { BrokerProfileSnapshot } from "../../config/brokerProgram";
-import { getTierLabel } from "../../config/brokerProgram";
+import { getTierBadge, getTierLabel } from "../../config/brokerProgram";
 import { useLocale } from "../../i18n/LocaleContext";
 import { formatAmount, safeNumber } from "../../lib/formatNumbers";
 
@@ -105,7 +105,7 @@ export function BrokerProgramSection({ broker }: Props) {
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-slate-700 dark:text-slate-200">
-                    {tier.badge}
+                    {getTierBadge(tier, locale)}
                   </td>
                   <td className="px-3 py-2.5 text-center font-mono text-slate-600 dark:text-slate-300">
                     {tier.minTeamSize}+
