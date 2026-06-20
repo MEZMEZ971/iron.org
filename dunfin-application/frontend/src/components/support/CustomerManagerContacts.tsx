@@ -1,13 +1,21 @@
+import { useLocale } from "../../i18n/LocaleContext";
+import type { TranslationKey } from "../../i18n/translations";
+
 const MANAGERS = [
   {
     name: "Naomi",
-    label: "Contact Naomi (Manager)",
+    labelKey: "supportContactNaomi" as TranslationKey,
     href: "https://t.me/+447988962109",
   },
   {
     name: "Sabrina",
-    label: "Contact Sabrina (Manager)",
+    labelKey: "supportContactSabrina" as TranslationKey,
     href: "https://t.me/+447846747809",
+  },
+  {
+    name: "Sophia",
+    labelKey: "supportContactSophia" as TranslationKey,
+    href: "https://t.me/+447988971025",
   },
 ] as const;
 
@@ -35,6 +43,8 @@ export function CustomerManagerContacts({
   subtitle = "Reach our dedicated managers on Telegram for account assistance.",
   className = "",
 }: CustomerManagerContactsProps) {
+  const { t } = useLocale();
+
   return (
     <section
       className={`rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition-all duration-300 dark:border-white/[0.08] dark:bg-[rgba(26,31,46,0.85)] ${className}`}
@@ -48,17 +58,17 @@ export function CustomerManagerContacts({
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-4">
         {MANAGERS.map((manager) => (
           <a
             key={manager.name}
             href={manager.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex flex-1 items-center justify-center gap-2.5 rounded-xl bg-[#26A5E4] px-4 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#26A5E4]/25 transition-all duration-200 hover:bg-[#1e8ec5] hover:shadow-lg hover:shadow-[#26A5E4]/30 active:scale-[0.98]"
+            className="group flex items-center justify-center gap-2.5 rounded-xl bg-[#26A5E4] px-4 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#26A5E4]/25 transition-all duration-200 hover:bg-[#1e8ec5] hover:shadow-lg hover:shadow-[#26A5E4]/30 active:scale-[0.98]"
           >
             <TelegramIcon className="h-5 w-5 shrink-0 opacity-95 group-hover:opacity-100" />
-            <span className="text-center leading-snug">{manager.label}</span>
+            <span className="text-center leading-snug">{t(manager.labelKey)}</span>
           </a>
         ))}
       </div>

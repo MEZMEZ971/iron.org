@@ -166,6 +166,9 @@ const en = {
     supportManagersTitle: "Customer Support",
     supportManagersSubtitle:
       "Reach our dedicated managers on Telegram for account assistance.",
+    supportContactNaomi: "Contact Naomi (Manager)",
+    supportContactSabrina: "Contact Sabrina (Manager)",
+    supportContactSophia: "Contact Sophia (Manager)",
     profileSetting: "Setting",
     settingsHubTitle: "Settings",
     settingsEmail: "e-mail",
@@ -486,6 +489,9 @@ const ar = {
     supportManagersTitle: "دعم العملاء",
     supportManagersSubtitle:
       "تواصل مع مديري الحسابات المخصصين عبر تيليجرام للمساعدة.",
+    supportContactNaomi: "تواصل مع ناعومي (مديرة الحساب)",
+    supportContactSabrina: "تواصل مع سابرينا (مديرة الحساب)",
+    supportContactSophia: "تواصل مع صوفيا (مديرة الحساب)",
     profileSetting: "الإعدادات",
     settingsHubTitle: "الإعدادات",
     settingsEmail: "البريد الإلكتروني",
