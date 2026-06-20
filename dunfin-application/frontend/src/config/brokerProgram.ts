@@ -16,6 +16,7 @@ export type BrokerTierRow = {
   rank: Exclude<BrokerRank, "NONE">;
   labelEn: string;
   labelAr: string;
+  labelIt: string;
   minTeamSize: number;
   maxTeamSize: number;
   badge: string;
@@ -29,6 +30,7 @@ export const BROKER_TIERS: readonly BrokerTierRow[] = [
     rank: "SILVER_1",
     labelEn: "Silver Broker",
     labelAr: "وسيط فضي",
+    labelIt: "Stella d'argento",
     minTeamSize: 10,
     maxTeamSize: 29,
     badge: "🌟 Silver Star",
@@ -40,6 +42,7 @@ export const BROKER_TIERS: readonly BrokerTierRow[] = [
     rank: "GOLD_1",
     labelEn: "Golden Broker 1",
     labelAr: "وسيط ذهبي 1",
+    labelIt: "1 Stella d'oro",
     minTeamSize: 30,
     maxTeamSize: 99,
     badge: "👑 1 Golden Star",
@@ -51,6 +54,7 @@ export const BROKER_TIERS: readonly BrokerTierRow[] = [
     rank: "GOLD_2",
     labelEn: "Golden Broker 2",
     labelAr: "وسيط ذهبي 2",
+    labelIt: "2 Stelle d'oro",
     minTeamSize: 100,
     maxTeamSize: 199,
     badge: "👑👑 2 Golden Stars",
@@ -62,6 +66,7 @@ export const BROKER_TIERS: readonly BrokerTierRow[] = [
     rank: "GOLD_3",
     labelEn: "Golden Broker 3",
     labelAr: "وسيط ذهبي 3",
+    labelIt: "3 Stelle d'oro",
     minTeamSize: 200,
     maxTeamSize: 399,
     badge: "👑👑👑 3 Golden Stars",
@@ -73,6 +78,7 @@ export const BROKER_TIERS: readonly BrokerTierRow[] = [
     rank: "PLATINUM_1",
     labelEn: "Platinum Broker 1",
     labelAr: "وسيط بلاتيني 1",
+    labelIt: "1 Stella di platino",
     minTeamSize: 400,
     maxTeamSize: 599,
     badge: "💎 1 Platinum Star",
@@ -84,6 +90,7 @@ export const BROKER_TIERS: readonly BrokerTierRow[] = [
     rank: "PLATINUM_2",
     labelEn: "Platinum Broker 2",
     labelAr: "وسيط بلاتيني 2",
+    labelIt: "2 Stelle di platino",
     minTeamSize: 600,
     maxTeamSize: 999,
     badge: "💎💎 2 Platinum Stars",
@@ -95,6 +102,7 @@ export const BROKER_TIERS: readonly BrokerTierRow[] = [
     rank: "PLATINUM_3",
     labelEn: "Platinum Broker 3",
     labelAr: "وسيط بلاتيني 3",
+    labelIt: "3 Stelle di platino",
     minTeamSize: 1000,
     maxTeamSize: Number.MAX_SAFE_INTEGER,
     badge: "💎💎💎 3 Platinum Stars",
@@ -143,8 +151,10 @@ export function getTierByRank(rank: BrokerRank) {
 }
 
 export function getTierLabel(
-  tier: Pick<BrokerTierRow, "labelEn" | "labelAr">,
+  tier: Pick<BrokerTierRow, "labelEn" | "labelAr" | "labelIt">,
   locale: string
 ) {
-  return locale === "ar" ? tier.labelAr : tier.labelEn;
+  if (locale === "ar") return tier.labelAr;
+  if (locale === "it") return tier.labelIt;
+  return tier.labelEn;
 }

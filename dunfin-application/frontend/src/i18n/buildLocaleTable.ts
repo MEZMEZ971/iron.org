@@ -8,8 +8,9 @@ import { H5_OVERRIDES } from "./localeCatalog/h5Overrides";
 import { H5_DEPOSIT_OVERRIDES } from "./localeCatalog/h5DepositOverrides";
 import { H5_NEW_KEY_OVERRIDES } from "./localeCatalog/h5OverridesNewKeys";
 import { FOMO_BANNER_OVERRIDES } from "./localeCatalog/fomoBannerOverrides";
+import { itTable } from "./italian/itTable";
 
-type NonBaseLocale = Exclude<Locale, "en" | "ar">;
+type NonBaseLocale = Exclude<Locale, "en" | "ar" | "it">;
 
 export function buildLocaleTable(
   code: Locale,
@@ -21,6 +22,9 @@ export function buildLocaleTable(
   }
   if (code === "ar") {
     return { ...ar };
+  }
+  if (code === "it") {
+    return { ...itTable } as Record<TranslationKey, string>;
   }
   const locale = code as NonBaseLocale;
   const h5 = {

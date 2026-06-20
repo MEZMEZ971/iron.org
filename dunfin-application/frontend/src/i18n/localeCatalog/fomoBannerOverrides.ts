@@ -1,6 +1,6 @@
 import type { Locale } from "../locales";
 
-type NonBaseLocale = Exclude<Locale, "en" | "ar">;
+type NonBaseLocale = Exclude<Locale, "en" | "ar" | "it">;
 
 /** Localized FOMO banner copy for non EN/AR locales. */
 export const FOMO_BANNER_OVERRIDES: Record<

@@ -1,6 +1,6 @@
 import type { Locale } from "../locales";
 
-type NonBaseLocale = Exclude<Locale, "en" | "ar">;
+type NonBaseLocale = Exclude<Locale, "en" | "ar" | "it">;
 
 export const ADMIN_FINANCE_OVERRIDES: Record<
   NonBaseLocale,

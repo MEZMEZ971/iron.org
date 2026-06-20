@@ -20,6 +20,16 @@ export const STRATEGY_TIER_NAMES_AR: Record<number, string> = {
   6: "المستوى VI القمة العالمية",
 };
 
+export const STRATEGY_TIER_NAMES_IT: Record<number, string> = {
+  0: "Livello 0 base",
+  1: "Livello 1",
+  2: "Livello II potenziato",
+  3: "Livello III premium",
+  4: "Livello IV elite",
+  5: "Livello V executive",
+  6: "Livello VI apice globale",
+};
+
 export type StrategyTierId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export function clampStrategyTierId(id: number | null | undefined): StrategyTierId {
@@ -33,7 +43,12 @@ export function getStrategyTierName(
   locale: Locale = "en"
 ): string {
   const id = clampStrategyTierId(tierId);
-  const map = locale === "ar" ? STRATEGY_TIER_NAMES_AR : STRATEGY_TIER_NAMES_EN;
+  const map =
+    locale === "ar"
+      ? STRATEGY_TIER_NAMES_AR
+      : locale === "it"
+        ? STRATEGY_TIER_NAMES_IT
+        : STRATEGY_TIER_NAMES_EN;
   return map[id] ?? STRATEGY_TIER_NAMES_EN[id];
 }
 

@@ -6,6 +6,7 @@ export const CORE_LOCALES = [
   { code: "pt", label: "Português", dir: "ltr" as const, lang: "pt" },
   { code: "es", label: "Español", dir: "ltr" as const, lang: "es" },
   { code: "fr", label: "Français", dir: "ltr" as const, lang: "fr" },
+  { code: "it", label: "Italiano 🇮🇹", dir: "ltr" as const, lang: "it" },
   { code: "en", label: "English", dir: "ltr" as const, lang: "en" },
   { code: "ja", label: "日本語", dir: "ltr" as const, lang: "ja" },
   { code: "ko", label: "한국어", dir: "ltr" as const, lang: "ko" },

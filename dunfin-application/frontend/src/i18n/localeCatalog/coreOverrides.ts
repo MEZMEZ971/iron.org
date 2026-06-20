@@ -3,6 +3,7 @@
 export const CORE_OVERRIDES: Record<Locale, Partial<Record<string, string>>> = {
   en: {},
   ar: {},
+  it: {},
   ru: {
     brand: "IRON",
     tagline: "Торговая платформа на базе ИИ",

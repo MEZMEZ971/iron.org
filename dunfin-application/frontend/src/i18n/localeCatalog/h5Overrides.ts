@@ -2,7 +2,7 @@ import type { Locale } from "../locales";
 import { h5En } from "../h5Translations";
 
 export type H5Key = keyof typeof h5En;
-type NonBaseLocale = Exclude<Locale, "en" | "ar">;
+type NonBaseLocale = Exclude<Locale, "en" | "ar" | "it">;
 
 export const H5_OVERRIDES: Record<NonBaseLocale, Partial<Record<H5Key, string>>> = {
   ru: {

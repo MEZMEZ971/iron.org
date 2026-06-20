@@ -17,7 +17,7 @@ import { HELP_RU } from "./helpLocales/ru";
 import { HELP_VI } from "./helpLocales/vi";
 
 export type HelpKey = keyof typeof helpEn;
-type NonBaseLocale = Exclude<Locale, "en" | "ar">;
+type NonBaseLocale = Exclude<Locale, "en" | "ar" | "it">;
 
 export const HELP_OVERRIDES: Record<
   NonBaseLocale,

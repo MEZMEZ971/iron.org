@@ -1,7 +1,7 @@
 import type { Locale } from "../locales";
 import type { H5Key } from "./h5Overrides";
 
-type NonBaseLocale = Exclude<Locale, "en" | "ar">;
+type NonBaseLocale = Exclude<Locale, "en" | "ar" | "it">;
 
 /** Supplemental H5 strings merged after H5_OVERRIDES in buildLocaleTable. */
 export const H5_NEW_KEY_OVERRIDES: Record<
