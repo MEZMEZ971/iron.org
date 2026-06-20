@@ -30,6 +30,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import { resetBodyScrollLock } from "./lib/scrollLock";
+import { MobileLanguageSwitcher } from "./components/layout/MobileLanguageSwitcher";
 
 function ScrollLockRouteReset() {
   const location = useLocation();
@@ -51,6 +52,7 @@ export default function App() {
                   <SuccessFeedbackProvider>
                     <BrowserRouter>
                       <ScrollLockRouteReset />
+                      <MobileLanguageSwitcher />
                       <Routes>
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />

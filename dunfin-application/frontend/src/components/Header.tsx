@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProfileMenu } from "../context/ProfileMenuContext";
 import { useUser } from "../context/UserContext";
-import { LanguageSwitcherOverlay } from "../i18n/LanguageSwitcherOverlay";
 import { useLocale } from "../i18n/LocaleContext";
 
 interface HeaderProps {
@@ -14,7 +12,6 @@ export function Header({ compact }: HeaderProps) {
   const { open } = useProfileMenu();
   const { displayName } = useUser();
   const navigate = useNavigate();
-  const [languageOpen, setLanguageOpen] = useState(false);
 
   const initials = displayName.slice(0, 1).toUpperCase();
 
@@ -48,20 +45,6 @@ export function Header({ compact }: HeaderProps) {
           <span className="truncate text-sm font-bold text-df">{t("brand")}</span>
         )}
       </div>
-
-      <button
-        type="button"
-        onClick={() => setLanguageOpen(true)}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-df-strong bg-df-inset text-[#f0b90b] transition hover:border-[#f0b90b]/30 hover:bg-[#f0b90b]/10"
-        aria-label={t("profileSwitchLanguage")}
-      >
-        <i className="fa-solid fa-globe text-sm" aria-hidden />
-      </button>
-
-      <LanguageSwitcherOverlay
-        open={languageOpen}
-        onClose={() => setLanguageOpen(false)}
-      />
     </header>
   );
 }
