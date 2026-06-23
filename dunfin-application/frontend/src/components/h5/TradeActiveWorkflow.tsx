@@ -3,11 +3,10 @@ import { useLocale } from "../../i18n/LocaleContext";
 import { useH5Portfolio } from "../../context/H5PortfolioContext";
 import { useCountdownTo } from "../../hooks/useCountdown";
 
-const WORKFLOW_KEYS = [
-  "h5WorkflowStep1",
-  "h5WorkflowStep2",
-  "h5WorkflowStep3",
-  "h5WorkflowStep4",
+const STATUS_KEYS = [
+  "h5AiStatusLive",
+  "h5AiStatusOptimized",
+  "h5AiStatusProtected",
 ] as const;
 
 export function TradeActiveWorkflow() {
@@ -91,29 +90,34 @@ export function TradeActiveWorkflow() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-        <p className="mb-3 text-xs font-bold text-[#f0b90b]">{t("h5WorkflowTitle")}</p>
-        <ul className="space-y-2">
-          {WORKFLOW_KEYS.map((key, i) => (
-            <li
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white shadow-sm dark:border-white/10 dark:from-[#111728] dark:to-[#0d1220]">
+        <div className="flex items-start gap-3 p-4">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f0b90b]/10">
+            <i className="fa-solid fa-robot text-lg text-[#f0b90b]" aria-hidden />
+            <span className="bot-pulse-dot absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-[#111728]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              {t("h5AiExecutionTitle")}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              {t("h5AiExecutionDesc")}
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 border-t border-slate-100 dark:border-white/5">
+          {STATUS_KEYS.map((key) => (
+            <div
               key={key}
-              className={`flex items-center gap-2 text-xs ${
-                i === WORKFLOW_KEYS.length - 1
-                  ? "font-semibold text-[#f0b90b]"
-                  : "text-slate-500 dark:text-slate-400"
-              }`}
+              className="flex flex-col items-center gap-1.5 px-2 py-3 text-center"
             >
-              <span
-                className={`h-2 w-2 shrink-0 rounded-full ${
-                  i === WORKFLOW_KEYS.length - 1
-                    ? "bot-pulse-dot bg-[#f0b90b]"
-                    : "bg-slate-600"
-                }`}
-              />
-              {t(key)}
-            </li>
+              <i className="fa-solid fa-circle-check text-[10px] text-emerald-500" aria-hidden />
+              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                {t(key)}
+              </span>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </section>
   );

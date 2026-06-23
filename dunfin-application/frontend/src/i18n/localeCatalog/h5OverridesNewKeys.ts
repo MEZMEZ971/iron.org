@@ -45,6 +45,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Отказ в исполнении! Вы не соответствуете матрице квалификации. Нужен минимальный баланс {capital} USDT и {team} активных участников команды.",
     h5TradeAutoTierPreview:
       "Автовыбор: {strategy} · с кошелька будет заблокировано {amount} USDT.",
+    h5AiExecutionTitle: "Стратегия ИИ активна",
+    h5AiExecutionDesc:
+      "Выделенный капитал автоматически управляется на квалифицированных инструментах. Доход зачисляется по завершении сессии.",
+    h5AiStatusLive: "В сети",
+    h5AiStatusOptimized: "Оптимизировано",
+    h5AiStatusProtected: "Контроль рисков",
   },
   de: {
     h5WheelPrize0: "USDT 0.10",
@@ -83,6 +89,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Ausführung verweigert! Sie erfüllen die Qualifikationsmatrix nicht. Mindestens {capital} USDT Guthaben und {team} aktive Teammitglieder erforderlich.",
     h5TradeAutoTierPreview:
       "Automatisch: {strategy} · {amount} USDT werden aus Ihrer Wallet gesperrt.",
+    h5AiExecutionTitle: "KI-Strategie aktiv",
+    h5AiExecutionDesc:
+      "Ihr zugewiesenes Kapital wird automatisch über qualifizierte Instrumente verwaltet. Erträge werden nach Sitzungsende gutgeschrieben.",
+    h5AiStatusLive: "Live",
+    h5AiStatusOptimized: "Optimiert",
+    h5AiStatusProtected: "Risikogesteuert",
   },
   pt: {
     h5WheelPrize0: "USDT 0.10",
@@ -121,6 +133,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Execução negada! Você não atende à matriz de qualificação. São necessários no mínimo {capital} USDT de saldo e {team} membros ativos na equipe.",
     h5TradeAutoTierPreview:
       "Seleção automática: {strategy} · {amount} USDT serão bloqueados da sua carteira.",
+    h5AiExecutionTitle: "Estratégia de IA ativa",
+    h5AiExecutionDesc:
+      "Seu capital alocado está sendo gerenciado automaticamente em instrumentos qualificados. Os ganhos são creditados ao final da sessão.",
+    h5AiStatusLive: "Ao vivo",
+    h5AiStatusOptimized: "Otimizado",
+    h5AiStatusProtected: "Risco controlado",
   },
   es: {
     h5WheelPrize0: "USDT 0.10",
@@ -159,6 +177,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "¡Ejecución denegada! No cumple la matriz de calificación. Necesita un saldo mínimo de {capital} USDT y {team} miembros activos en el equipo.",
     h5TradeAutoTierPreview:
       "Selección automática: {strategy} · se bloquearán {amount} USDT de su billetera.",
+    h5AiExecutionTitle: "Estrategia de IA activa",
+    h5AiExecutionDesc:
+      "Su capital asignado se gestiona automáticamente en instrumentos calificados. Las ganancias se acreditan al finalizar la sesión.",
+    h5AiStatusLive: "En vivo",
+    h5AiStatusOptimized: "Optimizado",
+    h5AiStatusProtected: "Riesgo gestionado",
   },
   fr: {
     h5WheelPrize0: "USDT 0.10",
@@ -197,6 +221,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Exécution refusée ! Vous ne remplissez pas la matrice de qualification. Il faut un solde minimum de {capital} USDT et {team} membres actifs dans l'équipe.",
     h5TradeAutoTierPreview:
       "Sélection automatique : {strategy} · {amount} USDT seront bloqués depuis votre portefeuille.",
+    h5AiExecutionTitle: "Stratégie IA active",
+    h5AiExecutionDesc:
+      "Votre capital alloué est géré automatiquement sur des instruments qualifiés. Les gains sont crédités à la fin de la session.",
+    h5AiStatusLive: "En direct",
+    h5AiStatusOptimized: "Optimisé",
+    h5AiStatusProtected: "Risque maîtrisé",
   },
   ja: {
     h5WheelPrize0: "USDT 0.10",
@@ -233,6 +263,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "実行が拒否されました。資格マトリックスを満たしていません。最低 {capital} USDT の残高と {team} 人のアクティブチームメンバーが必要です。",
     h5TradeAutoTierPreview:
       "自動選択: {strategy} · ウォレットから {amount} USDT がロックされます。",
+    h5AiExecutionTitle: "AI戦略稼働中",
+    h5AiExecutionDesc:
+      "割り当てられた資金は適格な銘柄で自動運用されています。収益はセッション終了時に反映されます。",
+    h5AiStatusLive: "稼働中",
+    h5AiStatusOptimized: "最適化",
+    h5AiStatusProtected: "リスク管理",
   },
   ko: {
     h5WheelPrize0: "USDT 0.10",
@@ -269,6 +305,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "실행 거부! 자격 매트릭스를 충족하지 않습니다. 최소 {capital} USDT 잔액과 {team}명의 활성 팀 멤버가 필요합니다.",
     h5TradeAutoTierPreview:
       "자동 선택: {strategy} · 지갑에서 {amount} USDT가 잠깁니다.",
+    h5AiExecutionTitle: "AI 전략 활성",
+    h5AiExecutionDesc:
+      "할당된 자본이 적격 상품에서 자동으로 운용됩니다. 수익은 세션 완료 시 적립됩니다.",
+    h5AiStatusLive: "실시간",
+    h5AiStatusOptimized: "최적화",
+    h5AiStatusProtected: "리스크 관리",
   },
   vi: {
     h5WheelPrize0: "USDT 0.10",
@@ -307,6 +349,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Từ chối thực thi! Bạn không đáp ứng ma trận đủ điều kiện. Cần tối thiểu {capital} USDT số dư và {team} thành viên nhóm đang hoạt động.",
     h5TradeAutoTierPreview:
       "Tự chọn: {strategy} · {amount} USDT sẽ bị khóa từ ví của bạn.",
+    h5AiExecutionTitle: "Chiến lược AI đang hoạt động",
+    h5AiExecutionDesc:
+      "Vốn được phân bổ đang được quản lý tự động trên các công cụ đủ điều kiện. Lợi nhuận được ghi có khi phiên kết thúc.",
+    h5AiStatusLive: "Trực tiếp",
+    h5AiStatusOptimized: "Tối ưu",
+    h5AiStatusProtected: "Quản lý rủi ro",
   },
   fa: {
     h5WheelPrize0: "USDT 0.10",
@@ -345,6 +393,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "اجرا رد شد! معیارهای ماتریس را برآورده نمی‌کنید. حداقل {capital} USDT موجودی و {team} عضو فعال تیم لازم است.",
     h5TradeAutoTierPreview:
       "انتخاب خودکار: {strategy} · {amount} USDT از کیف پول شما قفل می‌شود.",
+    h5AiExecutionTitle: "استراتژی هوش مصنوعی فعال",
+    h5AiExecutionDesc:
+      "سرمایه تخصیص‌یافته شما به‌صورت خودکار در ابزارهای واجد شرایط مدیریت می‌شود. سود پس از پایان جلسه واریز می‌شود.",
+    h5AiStatusLive: "زنده",
+    h5AiStatusOptimized: "بهینه‌شده",
+    h5AiStatusProtected: "مدیریت ریسک",
   },
   id: {
     h5WheelPrize0: "USDT 0.10",
@@ -383,6 +437,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Eksekusi ditolak! Anda tidak memenuhi matriks kualifikasi. Diperlukan saldo minimum {capital} USDT dan {team} anggota tim aktif.",
     h5TradeAutoTierPreview:
       "Pilihan otomatis: {strategy} · {amount} USDT akan dikunci dari dompet Anda.",
+    h5AiExecutionTitle: "Strategi AI aktif",
+    h5AiExecutionDesc:
+      "Modal yang dialokasikan dikelola secara otomatis pada instrumen yang memenuhi syarat. Penghasilan dikreditkan saat sesi selesai.",
+    h5AiStatusLive: "Langsung",
+    h5AiStatusOptimized: "Dioptimalkan",
+    h5AiStatusProtected: "Risiko terkelola",
   },
   bn: {
     h5WheelPrize0: "USDT 0.10",
@@ -421,6 +481,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "নিষ্পাদন প্রত্যাখ্যাত! আপনি যোগ্যতা ম্যাট্রিক্স পূরণ করেননি। সক্রিয় ট্রেডিংয়ের জন্য ন্যূনতম {capital} USDT ব্যালেন্স এবং {team} জন সক্রিয় দল সদস্য প্রয়োজন।",
     h5TradeAutoTierPreview:
       "স্বয়ংক্রিয় নির্বাচন: {strategy} · আপনার ওয়ালেট থেকে {amount} USDT লক হবে।",
+    h5AiExecutionTitle: "AI কৌশল সক্রিয়",
+    h5AiExecutionDesc:
+      "আপনার বরাদ্দকৃত মূলধন যোগ্য ইনস্ট্রুমেন্টে স্বয়ংক্রিয়ভাবে পরিচালিত হচ্ছে। সেশন শেষে আয় জমা হবে।",
+    h5AiStatusLive: "লাইভ",
+    h5AiStatusOptimized: "অপ্টিমাইজড",
+    h5AiStatusProtected: "ঝুঁকি নিয়ন্ত্রিত",
   },
   gn: {
     h5WheelPrize0: "USDT 0.10",
@@ -459,6 +525,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Ejecución denegada! Nde ndahechái matriz calificación. Tekotevẽ {capital} USDT saldo ha {team} miembro activo equipo.",
     h5TradeAutoTierPreview:
       "Auto: {strategy} · {amount} USDT oñemboguejáta ne billetera-gui.",
+    h5AiExecutionTitle: "Estrategia IA activa",
+    h5AiExecutionDesc:
+      "Ne capital asignado oñemboguatáma automáticamente instrumento calificado-pe. Ganancia ojeacredita sesión paha.",
+    h5AiStatusLive: "En vivo",
+    h5AiStatusOptimized: "Optimizado",
+    h5AiStatusProtected: "Riesgo gestionado",
   },
   ay: {
     h5WheelPrize0: "USDT 0.10",
@@ -497,6 +569,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Ejecución janiw! Matriz ukanx jani churañkiti. {capital} USDT balance ha {team} miembro activo team ukax wakisi.",
     h5TradeAutoTierPreview:
       "Auto: {strategy} · {amount} USDT billetera-manta jist'antatawa.",
+    h5AiExecutionTitle: "IA estrategia activa",
+    h5AiExecutionDesc:
+      "Asignado capital automáticamente instrumentos calificados ukhupi apnaqaskispa. Ganancias sesión tukusqanmanta churaskispa.",
+    h5AiStatusLive: "En vivo",
+    h5AiStatusOptimized: "Optimizado",
+    h5AiStatusProtected: "Riesgo gestionado",
   },
   mi: {
     h5WheelPrize0: "USDT 0.10",
@@ -535,6 +613,12 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "I whakakore te whakahaere! Kāore i tutuki te mātātoka whakaaetanga. Me {capital} USDT pūtea me {team} mema kapa hohe.",
     h5TradeAutoTierPreview:
       "Kōwhiri aunoa: {strategy} · ka maukati {amount} USDT mai i tō pūkoro.",
+    h5AiExecutionTitle: "Rautaki AI e hohe ana",
+    h5AiExecutionDesc:
+      "Kei te whakahaere aunoatia tō pūtea whakawhiwhia ki ngā taputapu whai mana. Ka whakaurua ngā hua i te mutunga o te wāhanga.",
+    h5AiStatusLive: "Ora",
+    h5AiStatusOptimized: "Kua arotau",
+    h5AiStatusProtected: "Whakahaere tūraru",
   },
   mn: {
     h5WheelPrize0: "USDT 0.10",
@@ -573,5 +657,11 @@ export const H5_NEW_KEY_OVERRIDES: Record<
       "Гүйцэтгэл татгалзлаа! Та нөхцөлийн матрицыг хангаагүй байна. Хамгийн багадаа {capital} USDT үлдэгдэл ба {team} идэвхтэй багийн гишүүн шаардлагатай.",
     h5TradeAutoTierPreview:
       "Автомат сонголт: {strategy} · таны түрийвчнээс {amount} USDT түгжигдэнэ.",
+    h5AiExecutionTitle: "AI стратеги идэвхтэй",
+    h5AiExecutionDesc:
+      "Таны хуваарилсан хөрөнгийг тохирох хэрэгслүүд дээр автоматаар удирдаж байна. Ашиг нь сесс дуусахад орох болно.",
+    h5AiStatusLive: "Шууд",
+    h5AiStatusOptimized: "Сайжруулсан",
+    h5AiStatusProtected: "Эрсдэл удирдлага",
   },
 };

@@ -14,6 +14,12 @@ export const h5It = {
   h5WorkflowStep2: "Ricerca strumenti di trading adatti",
   h5WorkflowStep3: "Validazione condizioni del contratto",
   h5WorkflowStep4: "Esecuzione transazione",
+  h5AiExecutionTitle: "Strategia IA attiva",
+  h5AiExecutionDesc:
+    "Il capitale allocato viene gestito automaticamente su strumenti qualificati. I guadagni vengono accreditati al termine della sessione.",
+  h5AiStatusLive: "Live",
+  h5AiStatusOptimized: "Ottimizzato",
+  h5AiStatusProtected: "Rischio gestito",
   h5JournalTitle: "Registro transazioni",
   h5RequiredLevel: "Livello richiesto",
   h5TradingFunds: "Fondi di trading",
