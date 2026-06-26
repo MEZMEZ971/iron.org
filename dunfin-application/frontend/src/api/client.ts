@@ -311,8 +311,17 @@ export interface AssetRow {
   freeze: number;
 }
 
+export type TransactionCategory =
+  | "DEPOSIT"
+  | "WITHDRAWAL"
+  | "TRADE_LOCK"
+  | "TRADE_PROFIT"
+  | "COMMISSION"
+  | "REWARD";
+
 export interface TransactionRow {
   id: string;
+  category?: TransactionCategory;
   type: string;
   amount: number;
   currency: string;
@@ -320,6 +329,22 @@ export interface TransactionRow {
   timestamp: string;
   commission: number | null;
   strategyId?: number;
+  generation?: number;
+}
+
+export interface LedgerSummary {
+  availableBalance: number;
+  lockedCapital: number;
+  totalBalance: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  pendingWithdrawals: number;
+  totalTradingPnl: number;
+  totalCommissions: number;
+  totalRewards: number;
+  todayPnl: number;
+  recentTransactions: TransactionRow[];
+  assets: AssetRow[];
 }
 
 export interface UserProfile {
@@ -345,6 +370,7 @@ export interface UserProfile {
   tradeHistory: unknown[];
   deposits: unknown[];
   transactions: TransactionRow[];
+  ledger?: LedgerSummary;
   assets: AssetRow[];
   pendingWithdrawals?: number;
   broker?: BrokerProfileSnapshot;
@@ -354,6 +380,11 @@ export interface UserProfile {
 /** Authenticated profile for the current JWT subject */
 export function fetchMyProfile() {
   return request<UserProfile>("/api/users/profile");
+}
+
+/** Live ledger totals and recent transactional activity */
+export function fetchLedgerSummary() {
+  return request<LedgerSummary>("/api/transactions/ledger");
 }
 
 export function fetchUserProfile(userId: string) {

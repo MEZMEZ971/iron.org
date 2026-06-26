@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatedSafeBox } from "../components/h5/AnimatedSafeBox";
 import { LockboxInfoModal } from "../components/h5/LockboxInfoModal";
+import { TransactionLedgerList } from "../components/ledger/TransactionLedgerList";
 import { useH5Portfolio } from "../context/H5PortfolioContext";
 import { useLocale } from "../i18n/LocaleContext";
 import { formatTrialRemaining } from "../lib/trialRemaining";
@@ -17,6 +18,7 @@ export default function H5Assets() {
   const { t } = useLocale();
   const navigate = useNavigate();
   const {
+    profile,
     availableBalance,
     lockedBalance,
     trialBalance,
@@ -25,14 +27,27 @@ export default function H5Assets() {
     activeStrategyLabel,
     isTrading,
     loading,
+    syncing,
+    refresh,
   } = useH5Portfolio();
+
+  const ledger = profile?.ledger;
+  const usdtAsset = ledger?.assets?.[0] ?? profile?.assets?.find((a) => a.symbol === "USDT");
+  const total = usdtAsset?.total ?? availableBalance + lockedBalance;
+  const available = usdtAsset?.available ?? availableBalance;
+  const freeze = usdtAsset?.freeze ?? lockedBalance;
+  const transactions = ledger?.recentTransactions ?? profile?.transactions ?? [];
+
+  useEffect(() => {
+    void refresh({ background: Boolean(profile), skipChainSync: false });
+  }, [refresh]); // eslint-disable-line react-hooks/exhaustive-deps -- mount + tab focus via context
 
   const trialRemaining = formatTrialRemaining(trialExpiresAt, t);
 
   const [lockboxInfoOpen, setLockboxInfoOpen] = useState(false);
   const [lockboxHover, setLockboxHover] = useState(false);
 
-  const total = availableBalance + lockedBalance;
+  const showSkeleton = loading && !profile;
 
   const actions = [
     { labelKey: "deposit" as const, icon: "fa-download", path: "/deposit" },
@@ -63,11 +78,15 @@ export default function H5Assets() {
           {t("h5AssetsOverview")}
         </p>
         <p className="mt-1 text-center font-mono text-3xl font-bold text-amber-950 dark:text-[#fcd535]">
-          {loading ? "—" : fmt(total)}
+          {showSkeleton ? "—" : fmt(total)}
         </p>
+        {syncing && profile && (
+          <p className="mt-1 text-center text-[10px] text-amber-800/60 dark:text-slate-400">
+            {t("loading")}…
+          </p>
+        )}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {/* Available — liquid USDT */}
           <div className="flex flex-col rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-br from-emerald-50 to-teal-50/80 p-3.5 shadow-sm dark:border-emerald-400/40 dark:from-emerald-950/40 dark:to-[#0a1a14]">
             <div className="flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-700 dark:text-emerald-400">
@@ -83,14 +102,13 @@ export default function H5Assets() {
               </div>
             </div>
             <p className="mt-3 font-mono text-xl font-bold text-emerald-950 dark:text-emerald-300">
-              {loading ? "—" : fmt(availableBalance)}
+              {showSkeleton ? "—" : fmt(available)}
             </p>
             <p className="mt-0.5 text-[10px] font-semibold text-teal-700 dark:text-teal-400">
               {t("h5UsdtLiquid")}
             </p>
           </div>
 
-          {/* Locked — strategy escrow lockbox */}
           <div
             className="relative flex flex-col overflow-hidden rounded-2xl border-2 border-amber-500/60 bg-gradient-to-br from-amber-950/90 via-slate-900 to-[#0a0e1a] p-3.5 text-white shadow-[0_0_15px_rgba(245,158,11,0.12)] transition-shadow duration-300 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]"
             onMouseEnter={() => setLockboxHover(true)}
@@ -128,12 +146,12 @@ export default function H5Assets() {
             </div>
 
             <p className="mt-2 font-mono text-xl font-bold text-[#fcd535]">
-              {loading ? "—" : fmt(lockedBalance)}
+              {showSkeleton ? "—" : fmt(freeze)}
             </p>
             <p className="mt-0.5 text-[10px] font-semibold text-amber-500/90">
               {t("h5UsdtEscrow")}
             </p>
-            {activeStrategyLabel && lockedBalance > 0 && (
+            {activeStrategyLabel && freeze > 0 && (
               <p className="mt-2 truncate text-[10px] text-teal-400/90">
                 {t("h5ActiveStrategyTier")}: {activeStrategyLabel}
                 {isTrading ? " · ●" : ""}
@@ -166,9 +184,18 @@ export default function H5Assets() {
         <div className="space-y-2">
           <AssetRow
             label="USDT"
+            sublabel={t("total")}
+            amount={total}
+            loading={showSkeleton}
+            accent="amber"
+            icon="₮"
+            iconBg="#26a17b"
+          />
+          <AssetRow
+            label="USDT"
             sublabel={t("h5UsdtLiquid")}
-            amount={availableBalance}
-            loading={loading}
+            amount={available}
+            loading={showSkeleton}
             accent="emerald"
             icon="₮"
             iconBg="#26a17b"
@@ -176,13 +203,13 @@ export default function H5Assets() {
           <AssetRow
             label="USDT"
             sublabel={t("h5UsdtEscrow")}
-            amount={lockedBalance}
-            loading={loading}
+            amount={freeze}
+            loading={showSkeleton}
             accent="amber"
             icon="🔒"
             iconBg="#b45309"
             trailing={
-              lockedBalance > 0 ? (
+              freeze > 0 ? (
                 <i
                   className="fa-solid fa-vault text-amber-500/80 text-xs"
                   aria-hidden
@@ -191,6 +218,17 @@ export default function H5Assets() {
             }
           />
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <h2 className="mb-3 text-sm font-bold text-white">{t("recentTransactions")}</h2>
+        <TransactionLedgerList
+          transactions={transactions}
+          loading={showSkeleton}
+          emptyLabel={t("noTransactions")}
+          t={t}
+          variant="h5"
+        />
       </section>
 
       <LockboxInfoModal

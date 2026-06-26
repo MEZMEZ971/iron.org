@@ -271,11 +271,13 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
   const isTrialActive = Boolean(profile?.isTrialActive && trialBalance > 0);
   const trialExpiresAt = profile?.trialExpiresAt ?? null;
   const lockedBalance =
+    profile?.ledger?.lockedCapital ??
     tradeStatus?.lockedCapital ??
     profile?.lockedCapital ??
     earnings?.lockedCapital ??
     0;
   const availableBalance =
+    profile?.ledger?.availableBalance ??
     profile?.fundAccount ??
     tradeStatus?.availableBalance ??
     walletBalance + (isTrialActive ? trialBalance : 0);
@@ -345,17 +347,22 @@ export function useH5Portfolio() {
   return ctx;
 }
 
-/** Mount inside BrowserRouter — refreshes wallet on Home / Profile / Trade tab navigation. */
+/** Mount inside BrowserRouter — refreshes wallet on tab navigation. */
 export function PortfolioBalanceRefresh() {
   const location = useLocation();
-  const { requestRefresh } = useH5Portfolio();
+  const { requestRefresh, refresh } = useH5Portfolio();
 
   useEffect(() => {
-    const walletPaths = new Set(["/", "/my", "/trade", "/assets", "/deposit"]);
+    const liveLedgerPaths = new Set(["/assets", "/personal", "/deposit"]);
+    if (liveLedgerPaths.has(location.pathname)) {
+      void refresh({ background: true, skipChainSync: false });
+      return;
+    }
+    const walletPaths = new Set(["/", "/my", "/trade"]);
     if (walletPaths.has(location.pathname)) {
       requestRefresh();
     }
-  }, [location.pathname, requestRefresh]);
+  }, [location.pathname, requestRefresh, refresh]);
 
   return null;
 }

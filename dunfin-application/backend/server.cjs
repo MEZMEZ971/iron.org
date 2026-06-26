@@ -72,12 +72,12 @@ const {
   updateUserProfile,
 } = require("./profileUpdate.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
-const { computeDailyProfit } = require("./lib/strategyRoi.cjs");
 const { mapUserToLegacy } = require("./lib/userMapper.cjs");
 const { buildBrokerProfileSnapshot } = require("./lib/brokerProgram.cjs");
 const {
   reconcileAndHealUserWalletBalance,
 } = require("./lib/walletBalanceReconciliation.cjs");
+const { buildUserLedgerBundle } = require("./lib/userLedgerSummary.cjs");
 const {
   sendApiError,
   sendClientError,
@@ -689,6 +689,7 @@ async function loadProfileUserSnapshot(userId) {
       tradingCapital: true,
       activeStrategy: true,
       lastTradeTime: true,
+      tradeSessionEndsAt: true,
       hasDeposited: true,
       savedWithdrawalAddressErc20: true,
       savedWithdrawalAddressBep20: true,
@@ -748,9 +749,8 @@ async function buildUserProfileResponse(userId) {
     throw err;
   }
 
-  const [trade, pendingWithdrawals, brokerRow] = await Promise.all([
+  const [trade, brokerRow, ledger] = await Promise.all([
     getTradeStatus(userId),
-    sumPendingWithdrawals(userId),
     prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -759,20 +759,20 @@ async function buildUserProfileResponse(userId) {
         cachedFundedDownlineCount: true,
       },
     }),
+    buildUserLedgerBundle(userId, user),
   ]);
 
-  const locked = Number(user.lockedCapital) || 0;
+  const locked = ledger.lockedCapital;
   const walletOnly = Number(user.walletBalance) || 0;
   const trialBalance = isTrialCurrentlyActive(user)
     ? Number(user.trialBalance) || 0
     : 0;
-  const available = getEffectiveTradingBalance(user);
+  const available = ledger.availableBalance;
   const withdrawable = getWithdrawableBalance(user);
   const onChain = Number(user.onChainBalance) || walletOnly + locked;
 
-  const transactions = await buildTransactionFeed(user.id, user);
-  const todayPnl = estimateTodayPnl(user, locked);
-  const totalPnl = estimateTotalPnl(user);
+  const todayPnl = ledger.todayPnl;
+  const totalPnl = ledger.totalTradingPnl;
   const broker = buildBrokerProfileSnapshot(
     brokerRow?.cachedFundedDownlineCount ?? 0,
     brokerRow?.brokerRank ?? "NONE",
@@ -794,16 +794,17 @@ async function buildUserProfileResponse(userId) {
     onChainBalance: trunc6(onChain),
     tradingCapital: trunc6(user.tradingCapital),
     activeStrategy: user.activeStrategy ?? null,
-    fundAccount: trunc6(available),
+    fundAccount: trunc6(getEffectiveTradingBalance(user)),
     tradingAccount: trunc6(locked),
     todayPnl: trunc6(todayPnl),
     totalPnl: trunc6(totalPnl),
     affiliate: trade.affiliate,
     tradeHistory: user.tradeHistory || [],
     deposits: user.deposits || [],
-    transactions,
-    assets: buildAssetLedger(available, locked, pendingWithdrawals),
-    pendingWithdrawals: trunc6(pendingWithdrawals),
+    transactions: ledger.recentTransactions,
+    ledger,
+    assets: ledger.assets,
+    pendingWithdrawals: ledger.pendingWithdrawals,
     savedWithdrawalAddresses: buildSavedWithdrawalAddresses(user),
     broker,
   };
@@ -813,6 +814,25 @@ async function buildUserProfileResponse(userId) {
 app.get("/api/users/profile", requireAuth, async (req, res) => {
   try {
     res.json(await buildUserProfileResponse(req.auth.userId));
+  } catch (error) {
+    sendApiError(res, error);
+  }
+});
+
+/** Unified ledger summary — deposits, withdrawals, PnL, rewards, recent activity */
+app.get("/api/transactions/ledger", requireAuth, async (req, res) => {
+  try {
+    const userId = req.auth.userId;
+    let user = await loadProfileUserSnapshot(userId);
+    if (!user) {
+      await db.getOrCreateUser(userId);
+      user = await loadProfileUserSnapshot(userId);
+    }
+    if (!user) {
+      return sendClientError(res, "NOT_FOUND", "User not found", 404);
+    }
+    scheduleProfileBackgroundSync(userId);
+    res.json(await buildUserLedgerBundle(userId, user));
   } catch (error) {
     sendApiError(res, error);
   }
@@ -857,162 +877,6 @@ app.get("/api/users/:userId/profile", async (req, res) => {
     sendApiError(res, error);
   }
 });
-
-const PENDING_WITHDRAWAL_STATUSES = ["PROCESSING", "PENDING_REVIEW"];
-
-async function sumPendingWithdrawals(userId) {
-  const agg = await prisma.withdrawalRecord.aggregate({
-    where: {
-      userId,
-      status: { in: PENDING_WITHDRAWAL_STATUSES },
-    },
-    _sum: { amount: true },
-  });
-  return trunc6(agg._sum.amount);
-}
-
-function mapWithdrawalFeedStatus(status) {
-  if (status === "COMPLETED") return "COMPLETED";
-  if (status === "REJECTED") return "REJECTED";
-  return "PENDING";
-}
-
-function buildAssetLedger(available, locked, pendingWithdrawals) {
-  const pendingFreeze = Number(pendingWithdrawals) || 0;
-  const usdtTotal = trunc6(available + locked + pendingFreeze);
-  return [
-    {
-      symbol: "USDT",
-      total: usdtTotal,
-      available: trunc6(available),
-      freeze: pendingFreeze,
-    },
-    {
-      symbol: "BTC",
-      total: 0,
-      available: 0,
-      freeze: 0,
-    },
-    {
-      symbol: "USDC",
-      total: 0,
-      available: 0,
-      freeze: 0,
-    },
-  ];
-}
-
-async function buildTransactionFeed(userId, user) {
-  const rows = [];
-  const [txnRecords, withdrawalRecords] = await Promise.all([
-    prisma.transactionRecord.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 40,
-    }),
-    prisma.withdrawalRecord.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 40,
-    }),
-  ]);
-
-  for (const e of txnRecords) {
-    const isLucky = e.type === "LUCKY_WHEEL_REWARD";
-    const isTrialWelcome = e.type === "TRIAL_WELCOME_BONUS";
-    const isBrokerBonus = e.type === "BROKER_RANK_UPGRADE_BONUS";
-    const isBrokerSalary = e.type === "BROKER_SALARY";
-    const isReward =
-      e.type === "ADMIN_REWARD" ||
-      isLucky ||
-      isTrialWelcome ||
-      isBrokerBonus ||
-      isBrokerSalary;
-    rows.push({
-      id: e.id,
-      type: isLucky
-        ? "Lucky Wheel"
-        : isTrialWelcome
-          ? "Welcome Trial"
-          : isBrokerBonus
-          ? "Broker Rank Bonus"
-          : isBrokerSalary
-            ? "Broker Salary"
-            : isReward
-              ? "Admin Reward"
-              : "Admin Deduction",
-      amount: trunc6(e.amount),
-      currency:
-        isLucky && String(e.description || "").includes("DADB")
-          ? "DADB"
-          : "USDT",
-      status: e.status === "SUCCESS" ? "COMPLETED" : e.status,
-      timestamp: e.createdAt.toISOString(),
-      commission: null,
-    });
-  }
-  for (const w of withdrawalRecords) {
-    rows.push({
-      id: `wd-${w.id}`,
-      type: "Withdrawal",
-      amount: -trunc6(w.amount),
-      currency: w.currency,
-      status: mapWithdrawalFeedStatus(w.status),
-      timestamp: w.createdAt.toISOString(),
-      commission: null,
-    });
-  }
-  for (const d of user.deposits || []) {
-    rows.push({
-      id: `dep-${d.at}`,
-      type: "Deposit",
-      amount: d.amount,
-      currency: "USDT",
-      status: "COMPLETED",
-      timestamp: d.at,
-      commission: null,
-    });
-  }
-  for (const t of user.tradeHistory || []) {
-    rows.push({
-      id: `trade-${t.executedAt}`,
-      type: "AI Trade",
-      amount: t.capitalAmount,
-      currency: "USDT",
-      status: "LOCKED",
-      timestamp: t.executedAt,
-      commission: null,
-      strategyId: t.strategyId,
-    });
-  }
-  rows.sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
-  return rows.slice(0, 40);
-}
-
-function estimateTodayPnl(user, locked) {
-  if (!user.last_trade_time || locked <= 0) return 0;
-  const last = new Date(user.last_trade_time).getTime();
-  const dayStart = new Date();
-  dayStart.setHours(0, 0, 0, 0);
-  if (last < dayStart.getTime()) return 0;
-  return computeDailyProfit(locked, user.activeStrategy);
-}
-
-function estimateTotalPnl(user) {
-  const history = user.tradeHistory || [];
-  if (!history.length) return 0;
-  return Number(
-    history
-      .reduce(
-        (sum, t) =>
-          sum + computeDailyProfit(t.capitalAmount || 0, t.strategyId),
-        0
-      )
-      .toFixed(2)
-  );
-}
 
 app.get("/api/users/:userId/kyc", async (req, res) => {
   try {
