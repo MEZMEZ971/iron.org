@@ -1,4 +1,5 @@
 const { executeTrade, getTradeStatus } = require("../trading.cjs");
+const { TRADING_LEVELS } = require("../lib/tradingLevels.cjs");
 const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
 
 /**
@@ -7,9 +8,6 @@ const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
  */
 async function getTradeStatusHandler(req, res) {
   try {
-    if (typeof req.syncWalletBalance === "function") {
-      await req.syncWalletBalance(req.params.userId).catch(() => null);
-    }
     const status = await getTradeStatus(req.params.userId);
     res.json(status);
   } catch (error) {
@@ -21,6 +19,11 @@ async function getTradeStatusHandler(req, res) {
  * POST /api/trade/execute
  * Body: { userId } — capital is auto-selected from wallet + team matrix.
  */
+async function getTradeLevelsHandler(_req, res) {
+  res.set("Cache-Control", "public, max-age=3600");
+  res.json({ levels: TRADING_LEVELS });
+}
+
 async function postTradeExecuteHandler(req, res) {
   try {
     const userId = req.body?.userId;
@@ -63,4 +66,5 @@ async function postTradeExecuteHandler(req, res) {
 module.exports = {
   getTradeStatusHandler,
   postTradeExecuteHandler,
+  getTradeLevelsHandler,
 };

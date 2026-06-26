@@ -19,7 +19,9 @@ async function getTradeEarnings(userId) {
     console.warn("[payouts] auto-run failed:", err.message);
   });
 
-  await reconcileAndHealUserWalletBalance(userId, { heal: true });
+  setImmediate(() => {
+    reconcileAndHealUserWalletBalance(userId, { heal: true }).catch(() => {});
+  });
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

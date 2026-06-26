@@ -5,6 +5,7 @@ import { GlassSkeleton, GlassSkeletonLine } from "./ui/GlassSkeleton";
 interface Props {
   markets: MarketTicker[];
   loading?: boolean;
+  syncing?: boolean;
 }
 
 export function MiniWatchlist({ markets, loading }: Props) {

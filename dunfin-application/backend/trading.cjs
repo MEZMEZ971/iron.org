@@ -6,7 +6,7 @@ const {
   computeEstimatedProceeds,
   formatYieldDisplay,
 } = require("./lib/tradingLevels.cjs");
-const { getAffiliateNetwork } = require("./affiliate.cjs");
+const { getAffiliateNetworkFromDb, propagateAffiliateCacheRefresh } = require("./lib/affiliateStats.cjs");
 const {
   autoResolveStrategy,
   getStrategyEligibility,
@@ -94,8 +94,7 @@ async function executeTrade(userId) {
     ? Number(user.trialBalance) || 0
     : 0;
   const tradingBalance = getEffectiveTradingBalance(user);
-  const allUsers = await db.getAllUsers();
-  const network = getAffiliateNetwork(allUsers, userId);
+  const network = await getAffiliateNetworkFromDb(userId);
   const activeTeamCount = network.totalActiveMembers;
 
   const resolved = autoResolveStrategy(tradingBalance, activeTeamCount);
@@ -153,6 +152,10 @@ async function executeTrade(userId) {
   });
   touchUserActivity(userId);
 
+  propagateAffiliateCacheRefresh(userId).catch((err) => {
+    console.warn("[affiliate-stats] propagate after trade:", err.message);
+  });
+
   return {
     ok: true,
     trade: {
@@ -182,8 +185,7 @@ async function getTradeStatus(userId) {
   await releaseExpiredLock(userId);
   const user = await db.getOrCreateUser(userId);
 
-  const allUsers = await db.getAllUsers();
-  const network = getAffiliateNetwork(allUsers, userId);
+  const network = await getAffiliateNetworkFromDb(userId);
   const walletBalance = Number(user.walletBalance) || 0;
   const trialBalance = isTrialCurrentlyActive(user)
     ? Number(user.trialBalance) || 0

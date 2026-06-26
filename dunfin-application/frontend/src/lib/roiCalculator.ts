@@ -5,7 +5,6 @@ import {
 } from "../config/brokerProgram";
 import {
   TRADING_LEVELS,
-  getDailyYield,
   resolveTradingLevelByCapital,
   formatYieldDisplay,
 } from "./tradingLevels";

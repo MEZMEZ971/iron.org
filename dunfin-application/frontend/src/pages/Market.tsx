@@ -6,7 +6,7 @@ import { useLocale } from "../i18n/LocaleContext";
 
 export default function Market() {
   const { t } = useLocale();
-  const { markets, loading } = useMarketStream(1800);
+  const { markets, loading } = useMarketStream();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -36,7 +36,7 @@ export default function Market() {
         />
       </div>
 
-      {loading ? (
+      {loading && markets.length === 0 ? (
         <MarketListSkeleton />
       ) : (
         <div className="df-content-enter">

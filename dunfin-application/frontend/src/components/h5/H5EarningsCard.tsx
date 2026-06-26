@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useH5Portfolio } from "../../context/H5PortfolioContext";
 import { useLocale } from "../../i18n/LocaleContext";
+import { GlassSkeletonLine } from "../ui/GlassSkeleton";
 
 function fmt(n: number) {
   return Number(n).toLocaleString(undefined, {
@@ -13,8 +14,9 @@ const METRIC_CARD = "trade-metric-cell rounded-xl px-2 py-2";
 
 export function H5EarningsCard() {
   const { t } = useLocale();
-  const { earningsView, loading } = useH5Portfolio();
+  const { earningsView, loading, syncing } = useH5Portfolio();
   const cur = earningsView.currency;
+  const showBalanceSkeleton = loading && earningsView.accountBalance <= 0;
 
   return (
     <section className="trade-card overflow-hidden rounded-2xl">
@@ -31,10 +33,20 @@ export function H5EarningsCard() {
 
       <div className="px-4 pb-3 text-center">
         <p className="text-xs text-df-muted">{t("earningsAccountBalance")}</p>
-        <p className="trade-balance-value mt-1 font-mono text-3xl font-extrabold">
-          {loading ? "—" : fmt(earningsView.accountBalance)}{" "}
-          <span className="text-lg text-df-muted">{cur}</span>
-        </p>
+        {showBalanceSkeleton ? (
+          <div className="mt-2 flex justify-center" aria-busy="true">
+            <GlassSkeletonLine className="h-9 w-40" />
+          </div>
+        ) : (
+          <p
+            className={`trade-balance-value mt-1 font-mono text-3xl font-extrabold transition-opacity duration-300 ${
+              syncing ? "opacity-90" : "opacity-100"
+            }`}
+          >
+            {fmt(earningsView.accountBalance)}{" "}
+            <span className="text-lg text-df-muted">{cur}</span>
+          </p>
+        )}
       </div>
 
       <div className="trade-metrics-panel mx-4 mb-3 rounded-2xl p-3">

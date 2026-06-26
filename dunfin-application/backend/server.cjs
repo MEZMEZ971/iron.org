@@ -17,6 +17,7 @@ const { prisma } = require("./lib/prisma.cjs");
 const {
   getTradeStatusHandler,
   postTradeExecuteHandler,
+  getTradeLevelsHandler,
 } = require("./routes/trade.cjs");
 const { getTradeStatus } = require("./trading.cjs");
 const { getTradeEarnings } = require("./earnings.cjs");
@@ -72,6 +73,8 @@ const {
 } = require("./profileUpdate.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
 const { computeDailyProfit } = require("./lib/strategyRoi.cjs");
+const { mapUserToLegacy } = require("./lib/userMapper.cjs");
+const { buildBrokerProfileSnapshot } = require("./lib/brokerProgram.cjs");
 const {
   reconcileAndHealUserWalletBalance,
 } = require("./lib/walletBalanceReconciliation.cjs");
@@ -668,12 +671,95 @@ app.post("/api/users/profile/update", requireAuth, async (req, res) => {
   }
 });
 
+async function loadProfileUserSnapshot(userId) {
+  const row = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      uid: true,
+      email: true,
+      username: true,
+      displayName: true,
+      walletBalance: true,
+      trialBalance: true,
+      isTrialActive: true,
+      trialExpiresAt: true,
+      lockedCapital: true,
+      onChainBalance: true,
+      tradingCapital: true,
+      activeStrategy: true,
+      lastTradeTime: true,
+      hasDeposited: true,
+      savedWithdrawalAddressErc20: true,
+      savedWithdrawalAddressBep20: true,
+      savedWithdrawalAddressTrc20: true,
+      brokerRank: true,
+      lastSalaryPayoutAt: true,
+      cachedFundedDownlineCount: true,
+    },
+  });
+  if (!row) return null;
+
+  const [deposits, trades] = await Promise.all([
+    prisma.deposit.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    }),
+    prisma.trade.findMany({
+      where: { userId },
+      orderBy: { executedAt: "desc" },
+      take: 40,
+    }),
+  ]);
+
+  return mapUserToLegacy({
+    ...row,
+    referredById: null,
+    referralCode: "",
+    hasDeposited: row.hasDeposited,
+    deposits,
+    trades,
+    networkAddresses: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+}
+
+function scheduleProfileBackgroundSync(userId) {
+  setImmediate(() => {
+    reconcileAndHealUserWalletBalance(userId, { heal: true }).catch(() => {});
+    syncWalletBalanceFromChain(userId).catch(() => {});
+    checkAndUpgradeBrokerRank(userId).catch(() => {});
+  });
+}
+
 async function buildUserProfileResponse(userId) {
-  await reconcileAndHealUserWalletBalance(userId, { heal: true });
-  await syncWalletBalanceFromChain(userId).catch(() => null);
-  const rankResult = await checkAndUpgradeBrokerRank(userId);
-  const user = await db.getOrCreateUser(userId);
-  const trade = await getTradeStatus(userId);
+  scheduleProfileBackgroundSync(userId);
+
+  let user = await loadProfileUserSnapshot(userId);
+  if (!user) {
+    await db.getOrCreateUser(userId);
+    user = await loadProfileUserSnapshot(userId);
+  }
+  if (!user) {
+    const err = new Error("User not found");
+    err.code = "USER_NOT_FOUND";
+    throw err;
+  }
+
+  const [trade, pendingWithdrawals, brokerRow] = await Promise.all([
+    getTradeStatus(userId),
+    sumPendingWithdrawals(userId),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        brokerRank: true,
+        lastSalaryPayoutAt: true,
+        cachedFundedDownlineCount: true,
+      },
+    }),
+  ]);
 
   const locked = Number(user.lockedCapital) || 0;
   const walletOnly = Number(user.walletBalance) || 0;
@@ -683,11 +769,15 @@ async function buildUserProfileResponse(userId) {
   const available = getEffectiveTradingBalance(user);
   const withdrawable = getWithdrawableBalance(user);
   const onChain = Number(user.onChainBalance) || walletOnly + locked;
-  const pendingWithdrawals = await sumPendingWithdrawals(user.id);
 
   const transactions = await buildTransactionFeed(user.id, user);
   const todayPnl = estimateTodayPnl(user, locked);
   const totalPnl = estimateTotalPnl(user);
+  const broker = buildBrokerProfileSnapshot(
+    brokerRow?.cachedFundedDownlineCount ?? 0,
+    brokerRow?.brokerRank ?? "NONE",
+    brokerRow?.lastSalaryPayoutAt ?? null
+  );
 
   return {
     userId,
@@ -715,7 +805,7 @@ async function buildUserProfileResponse(userId) {
     assets: buildAssetLedger(available, locked, pendingWithdrawals),
     pendingWithdrawals: trunc6(pendingWithdrawals),
     savedWithdrawalAddresses: buildSavedWithdrawalAddresses(user),
-    broker: rankResult.broker,
+    broker,
   };
 }
 
@@ -969,8 +1059,11 @@ app.get("/api/team/analytics/:userId", async (req, res) => {
 });
 
 app.get("/api/trade/strategies", (_req, res) => {
+  res.set("Cache-Control", "public, max-age=3600");
   res.json({ strategies: STRATEGIES });
 });
+
+app.get("/api/trade/levels", getTradeLevelsHandler);
 
 app.get("/api/trade/earnings/:userId", async (req, res) => {
   try {

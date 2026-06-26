@@ -8,6 +8,9 @@ const { allocateUniqueUid } = require("./lib/uidGenerator.cjs");
 const { allocateUniqueReferralCode } = require("./lib/referralCodeGenerator.cjs");
 const { evictTrialBalance, registrationTrialFields, recordTrialWelcomeBonus } = require("./lib/trialBalance.cjs");
 const {
+  propagateAffiliateCacheRefresh,
+} = require("./lib/affiliateStats.cjs");
+const {
   propagateBrokerRankCheckFromReferral,
 } = require("./lib/brokerProgram.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
@@ -278,6 +281,10 @@ async function recordDeposit(userId, { amount, txHash, network } = {}) {
       console.warn("[broker] rank check after deposit:", err.message);
     });
   }
+
+  propagateAffiliateCacheRefresh(userId).catch((err) => {
+    console.warn("[affiliate-stats] propagate after deposit:", err.message);
+  });
 
   return mapUserToLegacy(row);
 }

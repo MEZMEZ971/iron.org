@@ -1,3 +1,5 @@
+import { clearPortfolioCache } from "../lib/portfolioCache";
+
 export const TOKEN_KEY = "dunfin_token";
 export const USER_ID_KEY = "dunfin_user_id";
 export const DISPLAY_NAME_KEY = "dunfin_display_name";
@@ -47,6 +49,8 @@ export function patchStoredAuthUser(patch: Partial<StoredAuthUser>) {
 }
 
 export function clearAuthSession() {
+  const userId = localStorage.getItem(USER_ID_KEY);
+  if (userId) clearPortfolioCache(userId);
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(DISPLAY_NAME_KEY);

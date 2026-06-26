@@ -124,6 +124,11 @@ model User {
   brokerSalaryBalance Decimal   @default(0) @db.Decimal(18, 6)
   lastSalaryPayoutAt  DateTime?
 
+  /// Cached 3-gen affiliate metrics (refreshed on deposits / trades)
+  cachedActiveTeamCount     Int       @default(0)
+  cachedFundedDownlineCount Int       @default(0)
+  affiliateStatsUpdatedAt   DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -220,6 +225,7 @@ model Deposit {
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([userId, createdAt])
 }
 
 model NetworkDepositAddress {
@@ -286,6 +292,7 @@ model WithdrawalRecord {
 
   @@index([userId])
   @@index([userId, createdAt])
+  @@index([userId, status])
   @@index([status])
 }
 

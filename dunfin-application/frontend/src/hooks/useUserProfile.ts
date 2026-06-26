@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ApiNetworkError,
   fetchUserProfile,
@@ -7,6 +7,10 @@ import {
   type UserProfile,
 } from "../api/client";
 import { getStoredToken } from "../lib/authStorage";
+import {
+  loadPortfolioCache,
+  savePortfolioCache,
+} from "../lib/portfolioCache";
 import { subscribeWalletRefresh } from "../lib/walletSync";
 import { useUser } from "../context/UserContext";
 import { useLocale } from "../i18n/LocaleContext";
@@ -14,28 +18,45 @@ import { useLocale } from "../i18n/LocaleContext";
 export function useUserProfile(userId: string) {
   const { uid } = useUser();
   const { t } = useLocale();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(Boolean(userId));
+  const cached = userId ? loadPortfolioCache(userId)?.profile ?? null : null;
+  const [profile, setProfile] = useState<UserProfile | null>(cached);
+  const [loading, setLoading] = useState(Boolean(userId) && !cached);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
+  const hasProfileRef = useRef(Boolean(cached));
+  hasProfileRef.current = Boolean(profile);
 
-  const refresh = useCallback(
-    async (options?: { skipChainSync?: boolean }) => {
-    if (!userId) {
+  const refresh = useCallback(async (options?: { skipChainSync?: boolean; background?: boolean }) => {
+    const activeUserId = userIdRef.current;
+    if (!activeUserId) {
       setLoading(false);
+      setSyncing(false);
       return;
     }
+
+    const background = options?.background ?? hasProfileRef.current;
+    if (background) setSyncing(true);
+    else setLoading(true);
 
     setError(null);
     try {
       const hasJwt = Boolean(getStoredToken());
       if (!hasJwt) {
-        await registerUser(userId).catch(() => undefined);
+        await registerUser(activeUserId).catch(() => undefined);
       }
+
+      const profilePromise = fetchUserProfile(activeUserId);
       if (!options?.skipChainSync) {
-        await syncBalance(userId).catch(() => undefined);
+        void syncBalance(activeUserId).catch(() => undefined);
       }
-      const data = await fetchUserProfile(userId);
+
+      const data = await profilePromise;
+      if (userIdRef.current !== activeUserId) return;
+
       setProfile(data);
+      savePortfolioCache(activeUserId, { profile: data });
     } catch (e) {
       if (e instanceof ApiNetworkError) {
         setError(e.message);
@@ -43,28 +64,34 @@ export function useUserProfile(userId: string) {
         setError(e instanceof Error ? e.message : t("errorLoadProfile"));
       }
     } finally {
-      setLoading(false);
+      if (userIdRef.current === activeUserId) {
+        setLoading(false);
+        setSyncing(false);
+      }
     }
-  },
-    [userId, t]
-  );
+  }, [t]);
 
   useEffect(() => {
     if (!userId) {
       setProfile(null);
       setLoading(false);
+      setSyncing(false);
       return;
     }
-    setLoading(true);
-    refresh();
-    const id = setInterval(() => refresh(), 20_000);
+
+    const snapshot = loadPortfolioCache(userId)?.profile ?? null;
+    setProfile(snapshot);
+    setLoading(!snapshot);
+    void refresh({ background: Boolean(snapshot) });
+
+    const id = setInterval(() => refresh({ background: true, skipChainSync: true }), 30_000);
     return () => clearInterval(id);
   }, [userId, refresh]);
 
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === "visible") {
-        void refresh();
+      if (document.visibilityState === "visible" && userIdRef.current) {
+        void refresh({ background: true });
       }
     };
     document.addEventListener("visibilitychange", onVisible);
@@ -87,18 +114,20 @@ export function useUserProfile(userId: string) {
           const fundAccount =
             payload.fundAccount ??
             payload.walletBalance! + (prev.isTrialActive ? trial : 0);
-          return {
+          const next = {
             ...prev,
             walletBalance: payload.walletBalance!,
             trialBalance: payload.trialBalance ?? prev.trialBalance,
             isTrialActive: payload.isTrialActive ?? prev.isTrialActive,
             fundAccount,
           };
+          savePortfolioCache(userId, { profile: next });
+          return next;
         });
       }
-      void refresh({ skipChainSync: true });
+      void refresh({ skipChainSync: true, background: true });
     });
   }, [refresh, uid, userId]);
 
-  return { profile, loading, error, refresh };
+  return { profile, loading, syncing, error, refresh };
 }
