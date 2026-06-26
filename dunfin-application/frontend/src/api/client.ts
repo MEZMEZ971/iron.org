@@ -10,6 +10,9 @@ export interface StrategyCard {
   teamMet: boolean;
   affiliationMet: boolean;
   teamShortfall: number;
+  dailyYield?: number;
+  dailyYieldPercent?: number;
+  dailyYieldLabel?: string;
 }
 
 import type { BrokerProfileSnapshot } from "../config/brokerProgram";
@@ -21,6 +24,8 @@ export interface TradeStatus {
   lockedCapital: number;
   tradingCapital: number;
   activeStrategy: number | null;
+  estimatedProceeds?: number | null;
+  dailyYieldLabel?: string | null;
   last_trade_time: string | null;
   cooldown: {
     onCooldown: boolean;

@@ -150,3 +150,17 @@ assert.strictEqual(
 );
 
 console.log("All trading unit checks passed.");
+
+const {
+  formatYieldDisplay,
+  computeEstimatedProceeds,
+  getDailyYield,
+} = require("./lib/tradingLevels.cjs");
+const { computeDailyProfit } = require("./lib/strategyRoi.cjs");
+
+assert.strictEqual(formatYieldDisplay(0), "1.0%");
+assert.strictEqual(computeEstimatedProceeds(299, 0), 2.99);
+assert.strictEqual(
+  computeDailyProfit(299, 0),
+  Number((299 * getDailyYield(0)).toFixed(6))
+);

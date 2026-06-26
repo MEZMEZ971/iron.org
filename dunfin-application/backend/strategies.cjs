@@ -23,7 +23,7 @@ const TRADE_SESSION_MAX_MS = 10 * 60 * 1000;
 const STRATEGIES = Object.freeze([
   {
     id: 0,
-    name: "Level 0",
+    name: "Level 0 Baseline",
     minCapital: 100,
     maxCapital: 299,
     minTeam: 0,

@@ -1,7 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useLocale } from "../../i18n/LocaleContext";
 import { useH5Portfolio } from "../../context/H5PortfolioContext";
 import { useCountdownTo } from "../../hooks/useCountdown";
+import {
+  computeEstimatedProceeds,
+  formatYieldDisplay,
+} from "../../lib/tradingLevels";
 
 const STATUS_KEYS = [
   "h5AiStatusLive",
@@ -38,6 +42,23 @@ export function TradeActiveWorkflow() {
   const activeId = tradeStatus?.activeStrategy;
   const tier = tradeStatus?.strategies.find((s) => s.id === activeId);
 
+  const dailyYieldLabel = useMemo(() => {
+    if (tradeStatus?.dailyYieldLabel) return tradeStatus.dailyYieldLabel;
+    if (tier?.dailyYieldLabel) return tier.dailyYieldLabel;
+    if (activeId != null) return formatYieldDisplay(activeId);
+    return "—";
+  }, [tradeStatus?.dailyYieldLabel, tier?.dailyYieldLabel, activeId]);
+
+  const estimatedProceeds = useMemo(() => {
+    if (tradeStatus?.estimatedProceeds != null) {
+      return tradeStatus.estimatedProceeds;
+    }
+    if (activeId != null && capital > 0) {
+      return computeEstimatedProceeds(capital, activeId);
+    }
+    return null;
+  }, [tradeStatus?.estimatedProceeds, activeId, capital]);
+
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-2">
@@ -56,7 +77,11 @@ export function TradeActiveWorkflow() {
           </div>
           <div>
             <p className="text-sm font-bold text-df">
-              {tier ? `${tier.minCapital}–${tier.maxCapital}` : "—"}
+              {tier
+                ? tier.id === 6 || tier.maxCapital >= 999_999
+                  ? `${tier.minCapital}+`
+                  : `${tier.minCapital}–${tier.maxCapital}`
+                : "—"}
             </p>
             <p className="text-xs text-df-faint">{t("h5TradingFunds")}</p>
           </div>
@@ -65,7 +90,7 @@ export function TradeActiveWorkflow() {
             <p className="text-xs text-df-faint">{t("h5StatusLabel")}</p>
           </div>
           <div>
-            <p className="trade-highlight text-sm">1.98–2.02 %</p>
+            <p className="trade-highlight text-sm">{dailyYieldLabel}</p>
             <p className="text-xs text-df-faint">{t("h5DailyYield")}</p>
           </div>
           <div>
@@ -73,7 +98,11 @@ export function TradeActiveWorkflow() {
             <p className="text-xs text-df-faint">{t("h5TradableToday")}</p>
           </div>
           <div>
-            <p className="text-sm font-bold text-df">—</p>
+            <p className="trade-highlight text-sm font-bold">
+              {estimatedProceeds != null
+                ? `≈ ${estimatedProceeds.toFixed(2)} USDT`
+                : "—"}
+            </p>
             <p className="text-xs text-df-faint">{t("h5EstimatedProceeds")}</p>
           </div>
         </div>

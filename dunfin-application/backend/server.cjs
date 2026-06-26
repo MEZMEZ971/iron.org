@@ -71,6 +71,7 @@ const {
   updateUserProfile,
 } = require("./profileUpdate.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
+const { computeDailyProfit } = require("./lib/strategyRoi.cjs");
 const {
   reconcileAndHealUserWalletBalance,
 } = require("./lib/walletBalanceReconciliation.cjs");
@@ -906,14 +907,20 @@ function estimateTodayPnl(user, locked) {
   const dayStart = new Date();
   dayStart.setHours(0, 0, 0, 0);
   if (last < dayStart.getTime()) return 0;
-  return Number((locked * 0.024).toFixed(2));
+  return computeDailyProfit(locked, user.activeStrategy);
 }
 
 function estimateTotalPnl(user) {
   const history = user.tradeHistory || [];
   if (!history.length) return 0;
   return Number(
-    history.reduce((sum, t) => sum + (t.capitalAmount || 0) * 0.018, 0).toFixed(2)
+    history
+      .reduce(
+        (sum, t) =>
+          sum + computeDailyProfit(t.capitalAmount || 0, t.strategyId),
+        0
+      )
+      .toFixed(2)
   );
 }
 

@@ -1,6 +1,11 @@
 const db = require("./db.cjs");
 const { prisma } = require("./lib/prisma.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
+const {
+  enrichStrategyWithYields,
+  computeEstimatedProceeds,
+  formatYieldDisplay,
+} = require("./lib/tradingLevels.cjs");
 const { getAffiliateNetwork } = require("./affiliate.cjs");
 const {
   autoResolveStrategy,
@@ -193,8 +198,17 @@ async function getTradeStatus(userId) {
     tradeSessionEndsAt: user.tradeSessionEndsAt,
     lockedCapital,
   });
-  const strategies = getStrategyEligibility(tradingBalance, activeTeamCount);
+  const strategies = getStrategyEligibility(tradingBalance, activeTeamCount).map(
+    enrichStrategyWithYields
+  );
   const resolved = autoResolveStrategy(tradingBalance, activeTeamCount);
+  const activeStrategy = user.activeStrategy ?? null;
+  const estimatedProceeds =
+    lockedCapital > 0 && activeStrategy != null
+      ? computeEstimatedProceeds(lockedCapital, activeStrategy)
+      : null;
+  const dailyYieldLabel =
+    activeStrategy != null ? formatYieldDisplay(activeStrategy) : null;
 
   return {
     userId,
@@ -203,7 +217,9 @@ async function getTradeStatus(userId) {
     availableBalance: trunc6(tradingBalance),
     lockedCapital: trunc6(lockedCapital),
     tradingCapital: trunc6(user.tradingCapital),
-    activeStrategy: user.activeStrategy ?? null,
+    activeStrategy,
+    estimatedProceeds,
+    dailyYieldLabel,
     last_trade_time: user.last_trade_time ?? null,
     cooldown,
     affiliate: {

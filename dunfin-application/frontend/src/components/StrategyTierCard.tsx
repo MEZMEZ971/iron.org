@@ -17,7 +17,7 @@ export function StrategyTierCard({ strategy, isActive, onSelect }: Props) {
   const { t } = useLocale();
   const locked = !strategy.unlocked;
   const def = getStrategyDefinition(strategy.id);
-  const dailyRoi = formatStrategyDailyRoi(strategy.id);
+  const dailyRoi = formatStrategyDailyRoi(strategy.id, strategy);
   const capitalLabel = formatStrategyCapitalRange(
     strategy.minCapital,
     strategy.maxCapital,

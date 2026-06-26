@@ -1,82 +1,54 @@
-/** ROI simulator tiers — capital brackets and daily yield (Feature #3). */
+/** ROI simulator — derives tiers from the canonical trading level matrix. */
 import {
   getTierByRank,
   type BrokerRank,
 } from "../config/brokerProgram";
+import {
+  TRADING_LEVELS,
+  getDailyYield,
+  resolveTradingLevelByCapital,
+  formatYieldDisplay,
+} from "./tradingLevels";
 
 export const ROI_MIN_AMOUNT = 100;
 export const ROI_MAX_AMOUNT = 50_000;
 
-export type RoiStrategyId = 1 | 2 | 3 | 4 | 5 | 6;
+export type RoiStrategyId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export type RoiTier = {
   strategyId: RoiStrategyId;
   min: number;
   max: number;
-  /** Decimal daily rate, e.g. 0.015 = 1.5% */
   dailyYield: number;
-  /** Active downline members required to activate this strategy tier */
   teamMembersRequired: number;
   teamRequirementEn: string;
   teamRequirementAr: string;
 };
 
-export const ROI_TIERS: readonly RoiTier[] = [
-  {
-    strategyId: 1,
-    min: 100,
-    max: 300,
-    dailyYield: 0.015,
-    teamMembersRequired: 0,
-    teamRequirementEn: "No requirements",
-    teamRequirementAr: "لا يوجد متطلبات",
-  },
-  {
-    strategyId: 2,
-    min: 301,
-    max: 1_000,
-    dailyYield: 0.02,
-    teamMembersRequired: 5,
-    teamRequirementEn: "Minimum 5 Active Members",
-    teamRequirementAr: "الحد الأدنى 5 أعضاء نشطين",
-  },
-  {
-    strategyId: 3,
-    min: 1_001,
-    max: 2_000,
-    dailyYield: 0.025,
-    teamMembersRequired: 30,
-    teamRequirementEn: "Minimum 30 Active Members",
-    teamRequirementAr: "الحد الأدنى 30 عضواً نشطاً",
-  },
-  {
-    strategyId: 4,
-    min: 2_001,
-    max: 3_500,
-    dailyYield: 0.03,
-    teamMembersRequired: 100,
-    teamRequirementEn: "Minimum 100 Active Members",
-    teamRequirementAr: "الحد الأدنى 100 عضو نشط",
-  },
-  {
-    strategyId: 5,
-    min: 3_501,
-    max: 10_000,
-    dailyYield: 0.045,
-    teamMembersRequired: 200,
-    teamRequirementEn: "Minimum 200 Active Members",
-    teamRequirementAr: "الحد الأدنى 200 عضو نشط",
-  },
-  {
-    strategyId: 6,
-    min: 10_001,
-    max: 50_000,
-    dailyYield: 0.05,
-    teamMembersRequired: 400,
-    teamRequirementEn: "Minimum 400 Active Members",
-    teamRequirementAr: "الحد الأدنى 400 عضو نشط",
-  },
-] as const;
+function teamRequirementLabels(minTeam: number) {
+  if (minTeam <= 0) {
+    return {
+      teamRequirementEn: "No requirements",
+      teamRequirementAr: "لا يوجد متطلبات",
+    };
+  }
+  return {
+    teamRequirementEn: `Minimum ${minTeam} Active Members`,
+    teamRequirementAr: `الحد الأدنى ${minTeam} عضواً نشطاً`,
+  };
+}
+
+export const ROI_TIERS: readonly RoiTier[] = TRADING_LEVELS.map((level) => {
+  const teamLabels = teamRequirementLabels(level.minTeam);
+  return {
+    strategyId: level.id as RoiStrategyId,
+    min: level.minCapital,
+    max: level.maxCapital >= 999_999 ? ROI_MAX_AMOUNT : level.maxCapital,
+    dailyYield: level.dailyYield,
+    teamMembersRequired: level.minTeam,
+    ...teamLabels,
+  };
+});
 
 export function getTeamRequirementLabel(
   tier: Pick<RoiTier, "teamRequirementEn" | "teamRequirementAr">,
@@ -92,14 +64,14 @@ export function clampRoiAmount(raw: number): number {
 
 export function resolveRoiTier(amount: number): RoiTier & { amount: number } {
   const clamped = clampRoiAmount(amount);
+  const level = resolveTradingLevelByCapital(clamped);
   const tier =
-    ROI_TIERS.find((t) => clamped >= t.min && clamped <= t.max) ??
-    ROI_TIERS[ROI_TIERS.length - 1];
+    ROI_TIERS.find((row) => row.strategyId === level.id) ?? ROI_TIERS[0];
   return { ...tier, amount: clamped };
 }
 
 export function getRoiTierByStrategyId(strategyId: number): RoiTier {
-  const tier = ROI_TIERS.find((t) => t.strategyId === strategyId);
+  const tier = ROI_TIERS.find((row) => row.strategyId === strategyId);
   return tier ?? ROI_TIERS[0];
 }
 
@@ -117,7 +89,7 @@ export function computeRoiProjections(amount: number) {
     dailyProfit,
     monthlyIncome: dailyProfit * 30,
     annualRevenue: dailyProfit * 365,
-    yieldPercentLabel: formatYieldPercent(dailyYield),
+    yieldPercentLabel: formatYieldDisplay(tier.strategyId),
   };
 }
 
@@ -152,7 +124,7 @@ export function computeGoalOrientedProjections(params: {
     dailyProfit,
     salary15Day,
     totalMonthlyProfit,
-    yieldPercentLabel: formatYieldPercent(strategyTier.dailyYield),
+    yieldPercentLabel: formatYieldDisplay(strategyTier.strategyId),
     strategyMinCapital: strategyTier.min,
     strategyMaxCapital: strategyTier.max,
     strategyTeamRequired,
