@@ -113,16 +113,13 @@ async function findUserByLoginIdentifier(identifier) {
 }
 
 async function ensureForwardersForUser(userId, depositClients) {
-  const networks = ["ERC20", "BEP20", "TRC20"];
+  const networks = ["ERC20", "BEP20"];
   const results = [];
   for (const network of networks) {
     try {
       const r = await getDepositAddress(userId, network, depositClients);
       results.push(r);
     } catch (err) {
-      if (network === "TRC20" && err.code === "TRON_MASTER_SECRET_MISSING") {
-        throw err;
-      }
       console.warn(`[auth] forwarder ${network} for ${userId}:`, err.message);
     }
   }

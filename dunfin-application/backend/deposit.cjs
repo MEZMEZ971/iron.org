@@ -21,6 +21,16 @@ const NETWORKS = Object.freeze({
   },
 });
 
+/** Incoming deposit networks exposed to users (TRC20 reserved for withdrawals). */
+const DEPOSIT_NETWORKS = Object.freeze({
+  ERC20: NETWORKS.ERC20,
+  BEP20: NETWORKS.BEP20,
+});
+
+function isDepositNetwork(network) {
+  return Boolean(DEPOSIT_NETWORKS[String(network || "").toUpperCase()]);
+}
+
 const ZERO = "0x0000000000000000000000000000000000000000";
 
 function bytes32ForUser(userId, network) {
@@ -156,13 +166,15 @@ async function resolveTrc20DepositAddress(userId, network) {
 }
 
 async function getDepositAddress(userId, network, clients, currency = "USDT") {
-  const requestedNetwork = String(network || "TRC20").toUpperCase();
-  const net = NETWORKS[requestedNetwork];
-  if (!net) {
-    const err = new Error(`Unsupported network: ${requestedNetwork}`);
-    err.code = "INVALID_NETWORK";
+  const requestedNetwork = String(network || "BEP20").toUpperCase();
+  if (!isDepositNetwork(requestedNetwork)) {
+    const err = new Error(
+      `Network ${requestedNetwork} is not available for deposits. Use ERC20 or BEP20.`
+    );
+    err.code = "DEPOSIT_NETWORK_DISABLED";
     throw err;
   }
+  const net = DEPOSIT_NETWORKS[requestedNetwork];
 
   const asset = normalizeCurrency(currency);
   await db.getOrCreateUser(userId);
@@ -204,6 +216,8 @@ async function getDepositAddress(userId, network, clients, currency = "USDT") {
 
 module.exports = {
   NETWORKS,
+  DEPOSIT_NETWORKS,
+  isDepositNetwork,
   getDepositAddress,
   bytes32ForUser,
   networkUserSalt,

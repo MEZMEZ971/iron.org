@@ -410,7 +410,7 @@ export function fetchDepositAddress(
 
 /** Authenticated permanent deposit address for the signed-in user. */
 export function fetchUserDepositAddress(
-  network: import("../types/deposit").DepositNetwork = "TRC20",
+  network: import("../types/deposit").DepositNetwork = "BEP20",
   currency: import("../types/deposit").DepositCurrency = "USDT"
 ) {
   const asset = currency === "USDC" ? "USDC" : "USDT";

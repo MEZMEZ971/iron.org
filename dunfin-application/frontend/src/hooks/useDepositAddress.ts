@@ -9,7 +9,7 @@ import { useLocale } from "../i18n/LocaleContext";
 
 export function useDepositAddress(
   currency: DepositCurrency = "USDT",
-  network: DepositNetwork = "TRC20"
+  network: DepositNetwork = "BEP20"
 ) {
   const { t } = useLocale();
   const [data, setData] = useState<DepositAddressResponse | null>(null);

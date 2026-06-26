@@ -42,7 +42,7 @@ const {
   adminPayoutBrokerSalaries,
 } = require("./lib/brokerProgram.cjs");
 const { STRATEGIES } = require("./strategies.cjs");
-const { getDepositAddress, NETWORKS } = require("./deposit.cjs");
+const { getDepositAddress, DEPOSIT_NETWORKS } = require("./deposit.cjs");
 const { getKycStatus, submitKyc } = require("./kyc.cjs");
 const { getInviteInfo } = require("./inviteService.cjs");
 const { getTeamAnalytics } = require("./teamAnalytics.cjs");
@@ -170,13 +170,13 @@ async function syncWalletBalanceFromChain(userId, forwarderAddressOverride) {
 app.get("/api/deposit/address", async (req, res) => {
   try {
     const userId = req.query.userId;
-    const network = (req.query.network || "ERC20").toUpperCase();
+    const network = (req.query.network || "BEP20").toUpperCase();
     if (!userId) return sendClientError(res, "INVALID_REQUEST", "userId required", 400);
-    if (!NETWORKS[network]) {
+    if (!DEPOSIT_NETWORKS[network]) {
       return sendClientError(
         res,
-        "INVALID_NETWORK",
-        "Invalid network. Use ERC20, BEP20, or TRC20.",
+        "DEPOSIT_NETWORK_DISABLED",
+        "Invalid network. Deposits accept ERC20 or BEP20 only.",
         400
       );
     }
@@ -191,16 +191,16 @@ app.get("/api/deposit/address", async (req, res) => {
   }
 });
 
-/** Authenticated permanent deposit address (default TRC20). */
+/** Authenticated permanent deposit address (default BEP20). */
 app.get("/api/user/deposit-address", requireAuth, async (req, res) => {
   try {
-    const network = (req.query.network || "TRC20").toUpperCase();
+    const network = (req.query.network || "BEP20").toUpperCase();
     const currency = String(req.query.currency || "USDT").toUpperCase();
-    if (!NETWORKS[network]) {
+    if (!DEPOSIT_NETWORKS[network]) {
       return sendClientError(
         res,
-        "INVALID_NETWORK",
-        "Invalid network. Use ERC20, BEP20, or TRC20.",
+        "DEPOSIT_NETWORK_DISABLED",
+        "Invalid network. Deposits accept ERC20 or BEP20 only.",
         400
       );
     }
@@ -323,11 +323,7 @@ app.post("/api/auth/register", async (req, res) => {
     try {
       await getDepositAddress(result.user.id, "ERC20", depositClients());
       await getDepositAddress(result.user.id, "BEP20", depositClients());
-      await getDepositAddress(result.user.id, "TRC20", depositClients());
     } catch (forwarderErr) {
-      if (forwarderErr.code === "TRON_MASTER_SECRET_MISSING") {
-        throw forwarderErr;
-      }
       console.warn("[auth] register forwarder setup:", forwarderErr.message);
     }
 

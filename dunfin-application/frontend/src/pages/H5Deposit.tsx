@@ -14,7 +14,7 @@ export default function H5Deposit() {
   const { earningsView, refresh } = useH5Portfolio();
 
   const [currency, setCurrency] = useState<DepositCurrency>("USDT");
-  const [network, setNetwork] = useState<DepositNetwork>("TRC20");
+  const [network, setNetwork] = useState<DepositNetwork>("BEP20");
 
   const { data: deposit, loading: addressLoading, error: addressError } =
     useDepositAddress(currency, network);

@@ -1,4 +1,5 @@
-export type DepositNetwork = "ERC20" | "BEP20" | "TRC20";
+/** Networks available for incoming deposits (TRC20 excluded — withdrawals only). */
+export type DepositNetwork = "ERC20" | "BEP20";
 
 export type DepositCurrency = "USDT" | "USDC" | "BTC";
 
@@ -14,27 +15,25 @@ export interface DepositAddressResponse {
   addressType: "evm" | "tron";
 }
 
-export const NETWORK_OPTIONS: {
+export const DEPOSIT_NETWORK_OPTIONS: {
   id: DepositNetwork;
-  titleKey: "networkErc20" | "networkBep20" | "networkTrc20";
-  subtitleKey: "networkErcSubErc20" | "networkErcSubBep20" | "networkErcSubTrc20";
+  titleKey: "networkErc20" | "networkBep20";
+  subtitleKey: "networkErcSubErc20" | "networkErcSubBep20";
 }[] = [
-  {
-    id: "ERC20",
-    titleKey: "networkErc20",
-    subtitleKey: "networkErcSubErc20",
-  },
   {
     id: "BEP20",
     titleKey: "networkBep20",
     subtitleKey: "networkErcSubBep20",
   },
   {
-    id: "TRC20",
-    titleKey: "networkTrc20",
-    subtitleKey: "networkErcSubTrc20",
+    id: "ERC20",
+    titleKey: "networkErc20",
+    subtitleKey: "networkErcSubErc20",
   },
 ];
+
+/** @deprecated Use DEPOSIT_NETWORK_OPTIONS */
+export const NETWORK_OPTIONS = DEPOSIT_NETWORK_OPTIONS;
 
 export const CURRENCY_OPTIONS: DepositCurrency[] = ["USDT", "USDC", "BTC"];
 

@@ -16,7 +16,7 @@ export default function Deposit() {
   const { profile, refresh: refreshProfile } = useUserProfile(userId);
 
   const [currency, setCurrency] = useState<DepositCurrency>("USDT");
-  const [network, setNetwork] = useState<DepositNetwork>("TRC20");
+  const [network, setNetwork] = useState<DepositNetwork>("BEP20");
 
   const { data: deposit, loading: addressLoading, error: addressError } =
     useDepositAddress(currency, network);

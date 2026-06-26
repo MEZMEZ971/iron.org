@@ -1,5 +1,5 @@
 import type { DepositCurrency, DepositNetwork } from "../../types/deposit";
-import { DEPOSIT_CURRENCY_OPTIONS, NETWORK_OPTIONS } from "../../types/deposit";
+import { DEPOSIT_CURRENCY_OPTIONS, DEPOSIT_NETWORK_OPTIONS } from "../../types/deposit";
 import { useLocale } from "../../i18n/LocaleContext";
 
 interface Props {
@@ -73,8 +73,8 @@ export function DepositSelectors({
         >
           {t("selectNetwork")}
         </p>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {NETWORK_OPTIONS.map((option) => {
+        <div className="grid gap-2 sm:grid-cols-2">
+          {DEPOSIT_NETWORK_OPTIONS.map((option) => {
             const active = network === option.id;
             return (
               <button

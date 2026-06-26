@@ -1,12 +1,11 @@
 import { useEffect } from "react";
-import type { DepositCurrency, DepositNetwork } from "../../types/deposit";
+import { DEPOSIT_NETWORK_OPTIONS, type DepositCurrency, type DepositNetwork } from "../../types/deposit";
 import { useLocale } from "../../i18n/LocaleContext";
 
 const NETWORK_META: Record<
   DepositNetwork,
   { arrivalMin: number; minTopUp: string; iconClass: string }
 > = {
-  TRC20: { arrivalMin: 1, minTopUp: "0", iconClass: "fa-bolt text-red-500" },
   BEP20: { arrivalMin: 0, minTopUp: "0", iconClass: "fa-cube text-[#f0b90b]" },
   ERC20: { arrivalMin: 3, minTopUp: "10", iconClass: "fa-ethereum text-indigo-400" },
 };
@@ -90,7 +89,8 @@ export function SelectMainnetSheet({
         </div>
 
         <div className="max-h-[50vh] space-y-3 overflow-y-auto">
-          {(["TRC20", "BEP20", "ERC20"] as DepositNetwork[]).map((n) => {
+          {DEPOSIT_NETWORK_OPTIONS.map((option) => {
+            const n = option.id;
             const meta = NETWORK_META[n];
             const selected = network === n;
             return (
@@ -112,15 +112,7 @@ export function SelectMainnetSheet({
                 <div className="flex items-center gap-3">
                   <i className={`fa-solid ${meta.iconClass} text-xl`} aria-hidden />
                   <div>
-                    <p className="font-bold">
-                      {t(
-                        n === "TRC20"
-                          ? "networkTrc20"
-                          : n === "BEP20"
-                            ? "networkBep20"
-                            : "networkErc20"
-                      )}
-                    </p>
+                    <p className="font-bold">{t(option.titleKey)}</p>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       {t("h5EstimatedArrival")} ≈ {meta.arrivalMin} {t("h5Minutes")}
                     </p>

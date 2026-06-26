@@ -1,13 +1,12 @@
 import type { TranslationKey } from "../i18n/translations";
-import type { DepositCurrency, DepositNetwork } from "../types/deposit";
-import { NETWORK_OPTIONS } from "../types/deposit";
+import { DEPOSIT_NETWORK_OPTIONS, type DepositCurrency, type DepositNetwork } from "../types/deposit";
 
 export function getNetworkSubtitleKey(
   network: DepositNetwork
 ): TranslationKey {
   return (
-    NETWORK_OPTIONS.find((option) => option.id === network)?.subtitleKey ??
-    "networkErcSubTrc20"
+    DEPOSIT_NETWORK_OPTIONS.find((option) => option.id === network)?.subtitleKey ??
+    "networkErcSubBep20"
   );
 }
 
