@@ -12,15 +12,14 @@ const {
   getStrategyEligibility,
   getCooldownState,
   getTradeSessionState,
-  pickTradeSessionDurationMs,
   ENTRY_STRATEGY,
 } = require("./strategies.cjs");
 const { processDuePayouts, settleUserTradePayout } = require("./cron/payouts.cjs");
+const { executeTradeAtomic } = require("./services/tradeService.cjs");
 const { touchUserActivity } = require("./lib/userActivity.cjs");
 const {
   getEffectiveTradingBalance,
   isTrialCurrentlyActive,
-  splitTradeCapitalDeduction,
 } = require("./lib/trialBalance.cjs");
 
 async function releaseExpiredLock(userId) {
@@ -28,15 +27,9 @@ async function releaseExpiredLock(userId) {
     where: { id: userId },
     select: {
       id: true,
-      walletBalance: true,
-      trialBalance: true,
-      lockedTrialCapital: true,
       lockedCapital: true,
-      activeStrategy: true,
       lastTradeTime: true,
       tradeSessionEndsAt: true,
-      monthlyTradingProceeds: true,
-      proceedsPeriodStart: true,
     },
   });
   if (!row) return null;
@@ -50,7 +43,7 @@ async function releaseExpiredLock(userId) {
     lockedCapital: locked,
   });
   if (locked > 0 && !session.active) {
-    await settleUserTradePayout(row);
+    await settleUserTradePayout(userId);
     return { settled: true };
   }
   return null;
@@ -75,9 +68,10 @@ async function executeTrade(userId) {
     };
   }
 
-  let user = await db.getOrCreateUser(userId);
+  await db.getOrCreateUser(userId);
   await releaseExpiredLock(userId);
-  user = await db.getOrCreateUser(userId);
+
+  const user = await db.getOrCreateUser(userId);
 
   const cooldown = getCooldownState(user.last_trade_time);
   if (cooldown.onCooldown) {
@@ -89,10 +83,6 @@ async function executeTrade(userId) {
     };
   }
 
-  const walletBalance = Number(user.walletBalance) || 0;
-  const trialBalance = isTrialCurrentlyActive(user)
-    ? Number(user.trialBalance) || 0
-    : 0;
   const tradingBalance = getEffectiveTradingBalance(user);
   const network = await getAffiliateNetworkFromDb(userId);
   const activeTeamCount = network.totalActiveMembers;
@@ -125,31 +115,16 @@ async function executeTrade(userId) {
     };
   }
 
-  const now = new Date().toISOString();
-  const sessionEndsAt = new Date(
-    Date.now() + pickTradeSessionDurationMs()
-  ).toISOString();
-  const { walletBalance: newWalletBalance, trialBalance: newTrialBalance, lockedTrialCapital } =
-    splitTradeCapitalDeduction(user, capital);
+  const txResult = await executeTradeAtomic(userId, activeTeamCount, resolved);
 
-  await db.updateUser(userId, {
-    last_trade_time: now,
-    tradeSessionEndsAt: sessionEndsAt,
-    walletBalance: newWalletBalance,
-    trialBalance: newTrialBalance,
-    lockedTrialCapital,
-    tradingCapital: capital,
-    lockedCapital: capital,
-    activeStrategy: resolved.strategy.id,
-    hasDeposited: true,
-    lastTrade: {
-      executedAt: now,
-      capitalAmount: capital,
-      strategyId: resolved.strategy.id,
-      teamActiveAtExecution: activeTeamCount,
-      walletBalanceAfter: newWalletBalance,
-    },
-  });
+  if (!txResult.ok) {
+    return txResult;
+  }
+
+  const now = txResult.tradeNow.toISOString();
+  const sessionEndsAt = txResult.sessionEnds.toISOString();
+  const newWalletBalance = txResult.walletBalanceAfter;
+
   touchUserActivity(userId);
 
   propagateAffiliateCacheRefresh(userId).catch((err) => {

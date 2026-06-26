@@ -52,7 +52,11 @@ const {
   isValidInviteCode,
   normalizeInviteCode,
 } = require("./lib/referralCodeGenerator.cjs");
-const { requireAuth, adminRequired } = require("./middleware/auth.cjs");
+const {
+  requireAuth,
+  requireMatchingUserId,
+  adminRequired,
+} = require("./middleware/auth.cjs");
 const {
   getAdminStats,
   listPendingWithdrawals,
@@ -408,32 +412,42 @@ app.post("/api/users/register", async (req, res) => {
   }
 });
 
-app.post("/api/users/:userId/sync-balance", async (req, res) => {
-  try {
-    const user = await syncWalletBalanceFromChain(req.params.userId);
-    if (!user?.depositAddress) {
-      return sendClientError(res, "NOT_FOUND", "User has no deposit address", 404);
+app.post(
+  "/api/users/:userId/sync-balance",
+  requireAuth,
+  requireMatchingUserId((req) => req.params.userId),
+  async (req, res) => {
+    try {
+      const user = await syncWalletBalanceFromChain(req.auth.userId);
+      if (!user?.depositAddress) {
+        return sendClientError(res, "NOT_FOUND", "User has no deposit address", 404);
+      }
+      res.json({
+        success: true,
+        walletBalance: user.walletBalance,
+        onChainBalance: user.onChainBalance,
+        lockedCapital: user.lockedCapital,
+      });
+    } catch (error) {
+      sendApiError(res, error);
     }
-    res.json({
-      success: true,
-      walletBalance: user.walletBalance,
-      onChainBalance: user.onChainBalance,
-      lockedCapital: user.lockedCapital,
-    });
-  } catch (error) {
-    sendApiError(res, error);
   }
-});
+);
 
-app.post("/api/users/:userId/deposit", async (req, res) => {
-  try {
-    const { amount, txHash } = req.body;
-    const user = await db.recordDeposit(req.params.userId, { amount, txHash });
-    res.json({ success: true, user });
-  } catch (error) {
-    sendApiError(res, error);
+app.post(
+  "/api/users/:userId/deposit",
+  requireAuth,
+  requireMatchingUserId((req) => req.params.userId),
+  async (req, res) => {
+    try {
+      const { amount, txHash } = req.body;
+      const user = await db.recordDeposit(req.auth.userId, { amount, txHash });
+      res.json({ success: true, user });
+    } catch (error) {
+      sendApiError(res, error);
+    }
   }
-});
+);
 
 app.get("/api/admin/me", adminRequired, async (req, res) => {
   try {
@@ -862,21 +876,26 @@ app.post("/api/users/profile/sync-balance", requireAuth, async (req, res) => {
   }
 });
 
-app.get("/api/users/:userId/profile", async (req, res) => {
-  try {
-    if (req.params.userId === "profile") {
-      return sendClientError(
-        res,
-        "NOT_FOUND",
-        "Use GET /api/users/profile with Authorization Bearer token",
-        404
-      );
+app.get(
+  "/api/users/:userId/profile",
+  requireAuth,
+  requireMatchingUserId((req) => req.params.userId),
+  async (req, res) => {
+    try {
+      if (req.params.userId === "profile") {
+        return sendClientError(
+          res,
+          "NOT_FOUND",
+          "Use GET /api/users/profile with Authorization Bearer token",
+          404
+        );
+      }
+      res.json(await buildUserProfileResponse(req.auth.userId));
+    } catch (error) {
+      sendApiError(res, error);
     }
-    res.json(await buildUserProfileResponse(req.params.userId));
-  } catch (error) {
-    sendApiError(res, error);
   }
-});
+);
 
 app.get("/api/users/:userId/kyc", async (req, res) => {
   try {
@@ -912,15 +931,20 @@ app.get("/api/users/:userId/invite", async (req, res) => {
   }
 });
 
-app.get("/api/team/analytics/:userId", async (req, res) => {
-  try {
-    await db.getOrCreateUser(req.params.userId);
-    const analytics = await getTeamAnalytics(req.params.userId);
-    res.json(analytics);
-  } catch (error) {
-    sendApiError(res, error);
+app.get(
+  "/api/team/analytics/:userId",
+  requireAuth,
+  requireMatchingUserId((req) => req.params.userId),
+  async (req, res) => {
+    try {
+      await db.getOrCreateUser(req.auth.userId);
+      const analytics = await getTeamAnalytics(req.auth.userId);
+      res.json(analytics);
+    } catch (error) {
+      sendApiError(res, error);
+    }
   }
-});
+);
 
 app.get("/api/trade/strategies", (_req, res) => {
   res.set("Cache-Control", "public, max-age=3600");
@@ -929,20 +953,25 @@ app.get("/api/trade/strategies", (_req, res) => {
 
 app.get("/api/trade/levels", getTradeLevelsHandler);
 
-app.get("/api/trade/earnings/:userId", async (req, res) => {
-  try {
-    await db.getOrCreateUser(req.params.userId);
-    const earnings = await getTradeEarnings(req.params.userId);
-    if (!earnings.ok) {
-      return res.status(earnings.status || 404).json({ error: earnings.error });
+app.get(
+  "/api/trade/earnings/:userId",
+  requireAuth,
+  requireMatchingUserId((req) => req.params.userId),
+  async (req, res) => {
+    try {
+      await db.getOrCreateUser(req.auth.userId);
+      const earnings = await getTradeEarnings(req.auth.userId);
+      if (!earnings.ok) {
+        return res.status(earnings.status || 404).json({ error: earnings.error });
+      }
+      res.json(earnings);
+    } catch (error) {
+      sendApiError(res, error);
     }
-    res.json(earnings);
-  } catch (error) {
-    sendApiError(res, error);
   }
-});
+);
 
-app.post("/api/cron/payouts/run", async (_req, res) => {
+app.post("/api/cron/payouts/run", adminRequired, async (_req, res) => {
   try {
     const result = await processDuePayouts();
     res.json({ ok: true, ...result });
@@ -956,8 +985,13 @@ app.use((req, _res, next) => {
   next();
 });
 
-app.get("/api/trade/status/:userId", getTradeStatusHandler);
-app.post("/api/trade/execute", postTradeExecuteHandler);
+app.get(
+  "/api/trade/status/:userId",
+  requireAuth,
+  requireMatchingUserId((req) => req.params.userId),
+  getTradeStatusHandler
+);
+app.post("/api/trade/execute", requireAuth, postTradeExecuteHandler);
 
 // API-only gateway — frontend is hosted separately on Vercel.
 app.use(notFoundApiHandler);

@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const { prisma } = require("./lib/prisma.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
+const { decimalToNumber } = require("./lib/userMapper.cjs");
 const { getWithdrawableBalance } = require("./lib/trialBalance.cjs");
 const {
   buildSavedAddressUpdate,
@@ -201,20 +202,33 @@ async function processWithdraw(userId, body) {
 
   const fee = calcFee(amount);
   const netAmount = calcNet(amount);
-  const newBalance = trunc6(balance - amount);
 
   const savedAddressData = buildSavedAddressUpdate(network, address);
 
-  const record = await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: userId },
+  const { record, walletBalance: newBalance } = await prisma.$transaction(async (tx) => {
+    const debited = await tx.user.updateMany({
+      where: {
+        id: userId,
+        walletBalance: { gte: amount },
+      },
       data: {
-        walletBalance: newBalance,
+        walletBalance: { decrement: amount },
         ...(savedAddressData || {}),
       },
     });
 
-    return tx.withdrawalRecord.create({
+    if (debited.count === 0) {
+      const err = new Error("Insufficient balance");
+      err.code = "INSUFFICIENT_BALANCE";
+      throw err;
+    }
+
+    const updatedUser = await tx.user.findUnique({
+      where: { id: userId },
+      select: { walletBalance: true },
+    });
+
+    const withdrawalRecord = await tx.withdrawalRecord.create({
       data: {
         userId,
         currency,
@@ -226,6 +240,11 @@ async function processWithdraw(userId, body) {
         status: "PROCESSING",
       },
     });
+
+    return {
+      record: withdrawalRecord,
+      walletBalance: trunc6(decimalToNumber(updatedUser.walletBalance)),
+    };
   });
 
   return {

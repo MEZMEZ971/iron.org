@@ -59,6 +59,28 @@ async function requireAuth(req, res, next) {
   }
 }
 
+/**
+ * After requireAuth — ensure the requested user id matches the JWT subject.
+ * @param {(req: import("express").Request) => string | undefined} resolveTarget
+ */
+function requireMatchingUserId(resolveTarget) {
+  return (req, res, next) => {
+    const target = resolveTarget(req);
+    if (!target) {
+      return sendClientError(res, "INVALID_REQUEST", "userId required", 400);
+    }
+    if (target !== req.auth?.userId) {
+      return sendClientError(
+        res,
+        "FORBIDDEN",
+        "You can only access your own account",
+        403
+      );
+    }
+    next();
+  };
+}
+
 async function adminRequired(req, res, next) {
   const token = extractBearer(req);
   if (!token) {
@@ -99,6 +121,7 @@ async function adminRequired(req, res, next) {
 module.exports = {
   optionalAuth,
   requireAuth,
+  requireMatchingUserId,
   adminRequired,
   extractBearer,
   ADMIN_ROLES,

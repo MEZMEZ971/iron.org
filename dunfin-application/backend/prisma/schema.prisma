@@ -221,7 +221,7 @@ model Deposit {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   amount    Decimal  @db.Decimal(18, 6)
-  txHash    String?
+  txHash    String?  @unique
   createdAt DateTime @default(now())
 
   @@index([userId])

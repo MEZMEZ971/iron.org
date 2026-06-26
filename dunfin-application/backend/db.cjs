@@ -230,7 +230,7 @@ async function recordDeposit(userId, { amount, txHash, network } = {}) {
   const normalizedTxHash = txHash ? String(txHash).trim() : null;
 
   if (normalizedTxHash) {
-    const existing = await prisma.deposit.findFirst({
+    const existing = await prisma.deposit.findUnique({
       where: { txHash: normalizedTxHash },
     });
     if (existing) {
@@ -241,7 +241,7 @@ async function recordDeposit(userId, { amount, txHash, network } = {}) {
 
   const row = await prisma.$transaction(async (tx) => {
     if (normalizedTxHash) {
-      const dupe = await tx.deposit.findFirst({
+      const dupe = await tx.deposit.findUnique({
         where: { txHash: normalizedTxHash },
       });
       if (dupe) {
@@ -252,13 +252,23 @@ async function recordDeposit(userId, { amount, txHash, network } = {}) {
       }
     }
 
-    await tx.deposit.create({
-      data: {
-        userId,
-        amount: depositAmount,
-        txHash: normalizedTxHash,
-      },
-    });
+    try {
+      await tx.deposit.create({
+        data: {
+          userId,
+          amount: depositAmount,
+          txHash: normalizedTxHash,
+        },
+      });
+    } catch (err) {
+      if (err?.code === "P2002" && normalizedTxHash) {
+        return tx.user.findUnique({
+          where: { id: userId },
+          include: userInclude,
+        });
+      }
+      throw err;
+    }
 
     return tx.user.update({
       where: { id: userId },

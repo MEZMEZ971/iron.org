@@ -15,7 +15,7 @@ function commissionFromYield(dailyYield, generation) {
 }
 
 /**
- * Credit Gen 1–3 referrers from trader's settled daily yield.
+ * Credit Gen 1–3 referrers from trader's settled daily yield (must run inside caller TX).
  */
 async function distributeReferralCommissions(traderUserId, dailyYield, tradeId, tx) {
   const db = tx || prisma;
@@ -31,11 +31,27 @@ async function distributeReferralCommissions(traderUserId, dailyYield, tradeId, 
   while (beneficiaryId && generation <= 3) {
     const amount = commissionFromYield(dailyYield, generation);
     if (amount > 0) {
-      const beneficiary = await db.user.findUnique({
-        where: { id: beneficiaryId },
-        select: { walletBalance: true },
-      });
-      const nextWallet = trunc6(decimalToNumber(beneficiary?.walletBalance) + amount);
+      if (tradeId) {
+        const existing = await db.teamCommissionPayout.findFirst({
+          where: {
+            beneficiaryUserId: beneficiaryId,
+            sourceUserId: traderUserId,
+            tradeId,
+            generation,
+          },
+          select: { id: true },
+        });
+        if (existing) {
+          beneficiaryId = (
+            await db.user.findUnique({
+              where: { id: beneficiaryId },
+              select: { referredById: true },
+            })
+          )?.referredById ?? null;
+          generation += 1;
+          continue;
+        }
+      }
 
       await db.teamCommissionPayout.create({
         data: {
@@ -49,7 +65,7 @@ async function distributeReferralCommissions(traderUserId, dailyYield, tradeId, 
 
       await db.user.update({
         where: { id: beneficiaryId },
-        data: { walletBalance: nextWallet },
+        data: { walletBalance: { increment: amount } },
       });
     }
 

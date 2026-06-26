@@ -8,7 +8,7 @@ const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
  */
 async function getTradeStatusHandler(req, res) {
   try {
-    const status = await getTradeStatus(req.params.userId);
+    const status = await getTradeStatus(req.auth.userId);
     res.json(status);
   } catch (error) {
     sendApiError(res, error);
@@ -26,9 +26,15 @@ async function getTradeLevelsHandler(_req, res) {
 
 async function postTradeExecuteHandler(req, res) {
   try {
-    const userId = req.body?.userId;
-    if (!userId) {
-      return sendClientError(res, "INVALID_REQUEST", "userId required", 400);
+    const userId = req.auth.userId;
+    const bodyUserId = req.body?.userId;
+    if (bodyUserId && bodyUserId !== userId) {
+      return sendClientError(
+        res,
+        "FORBIDDEN",
+        "You can only execute trades for your own account",
+        403
+      );
     }
 
     if (typeof req.syncWalletBalance === "function") {
