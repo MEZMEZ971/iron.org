@@ -1,6 +1,5 @@
 ﻿import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { FomoUsersBanner } from "../components/FomoUsersBanner";
 import { IronBrandLockup, IronLogo } from "../components/layout/IronLogo";
 import { useLocale } from "../i18n/LocaleContext";
 
@@ -25,7 +24,6 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       <div className="flex flex-1 items-center justify-center px-4 pb-10">
         <div className="relative z-10 w-full max-w-md">
           <IronBrandLockup layout="stack" className="mb-6" />
-          <FomoUsersBanner variant="auth" />
 
           <div className="glass-card mb-4 rounded-2xl p-4 shadow-lg transition-all duration-300 ease-in-out sm:mb-6 sm:p-6">
             <h1 className="text-center text-lg font-bold text-df sm:text-xl">{title}</h1>

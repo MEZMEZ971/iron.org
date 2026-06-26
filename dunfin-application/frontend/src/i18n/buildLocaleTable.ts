@@ -7,7 +7,6 @@ import { HELP_OVERRIDES } from "./localeCatalog/helpOverrides";
 import { H5_OVERRIDES } from "./localeCatalog/h5Overrides";
 import { H5_DEPOSIT_OVERRIDES } from "./localeCatalog/h5DepositOverrides";
 import { H5_NEW_KEY_OVERRIDES } from "./localeCatalog/h5OverridesNewKeys";
-import { FOMO_BANNER_OVERRIDES } from "./localeCatalog/fomoBannerOverrides";
 import { itTable } from "./italian/itTable";
 
 type NonBaseLocale = Exclude<Locale, "en" | "ar" | "it">;
@@ -36,7 +35,6 @@ export function buildLocaleTable(
   const help = HELP_OVERRIDES[locale] ?? {};
   const adminActivity = ADMIN_ACTIVITY_OVERRIDES[locale] ?? {};
   const adminFinance = ADMIN_FINANCE_OVERRIDES[locale] ?? {};
-  const fomoBanner = FOMO_BANNER_OVERRIDES[locale] ?? {};
   return {
     ...en,
     ...h5,
@@ -44,6 +42,5 @@ export function buildLocaleTable(
     ...help,
     ...adminActivity,
     ...adminFinance,
-    ...fomoBanner,
   } as Record<TranslationKey, string>;
 }

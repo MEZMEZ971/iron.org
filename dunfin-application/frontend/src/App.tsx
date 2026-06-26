@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminRoute } from "./components/auth/AdminRoute";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { FomoUserCountProvider } from "./context/FomoUserCountContext";
 import { AuthProvider } from "./context/AuthContext";
 import { SuccessFeedbackProvider } from "./context/SuccessFeedbackContext";
 import { ProfileMenuProvider } from "./context/ProfileMenuContext";
@@ -44,54 +43,52 @@ export default function App() {
   return (
     <ThemeProvider>
       <LocaleProvider>
-        <FomoUserCountProvider>
-          <AuthProvider>
-            <UserProvider>
-              <H5PortfolioProvider>
-                <ProfileMenuProvider>
-                  <SuccessFeedbackProvider>
-                    <BrowserRouter>
-                      <ScrollLockRouteReset />
-                      <PortfolioBalanceRefresh />
-                      <MobileLanguageSwitcher />
-                      <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
+        <AuthProvider>
+          <UserProvider>
+            <H5PortfolioProvider>
+              <ProfileMenuProvider>
+                <SuccessFeedbackProvider>
+                  <BrowserRouter>
+                    <ScrollLockRouteReset />
+                    <PortfolioBalanceRefresh />
+                    <MobileLanguageSwitcher />
+                    <Routes>
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
 
-                        <Route path="/" element={<ProtectedRoute />}>
-                          <Route element={<AppLayout />}>
-                            <Route index element={<Home />} />
-                            <Route path="market" element={<Market />} />
-                            <Route path="trade" element={<H5Trade />} />
-                            <Route path="assets" element={<H5Assets />} />
-                            <Route path="my" element={<H5MyProfile />} />
-                            <Route path="contract" element={<Navigate to="/assets" replace />} />
-                            <Route path="personal" element={<Personal />} />
-                            <Route path="deposit" element={<H5Deposit />} />
-                            <Route path="withdraw" element={<H5Withdrawal />} />
-                            <Route path="profile" element={<Navigate to="/my" replace />} />
-                            <Route path="profile-menu" element={<ProfileMenuPage />} />
-                            <Route path="certification" element={<Certification />} />
-                            <Route path="invite" element={<Invite />} />
-                            <Route path="team" element={<Team />} />
-                            <Route path="settings" element={<Settings />} />
-                            <Route path="help" element={<HelpCenter />} />
-                          </Route>
-
-                          <Route element={<AdminRoute />}>
-                            <Route path="admin-portal" element={<AdminDashboard />} />
-                          </Route>
+                      <Route path="/" element={<ProtectedRoute />}>
+                        <Route element={<AppLayout />}>
+                          <Route index element={<Home />} />
+                          <Route path="market" element={<Market />} />
+                          <Route path="trade" element={<H5Trade />} />
+                          <Route path="assets" element={<H5Assets />} />
+                          <Route path="my" element={<H5MyProfile />} />
+                          <Route path="contract" element={<Navigate to="/assets" replace />} />
+                          <Route path="personal" element={<Personal />} />
+                          <Route path="deposit" element={<H5Deposit />} />
+                          <Route path="withdraw" element={<H5Withdrawal />} />
+                          <Route path="profile" element={<Navigate to="/my" replace />} />
+                          <Route path="profile-menu" element={<ProfileMenuPage />} />
+                          <Route path="certification" element={<Certification />} />
+                          <Route path="invite" element={<Invite />} />
+                          <Route path="team" element={<Team />} />
+                          <Route path="settings" element={<Settings />} />
+                          <Route path="help" element={<HelpCenter />} />
                         </Route>
 
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                  </SuccessFeedbackProvider>
-                </ProfileMenuProvider>
-              </H5PortfolioProvider>
-            </UserProvider>
-          </AuthProvider>
-        </FomoUserCountProvider>
+                        <Route element={<AdminRoute />}>
+                          <Route path="admin-portal" element={<AdminDashboard />} />
+                        </Route>
+                      </Route>
+
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                </SuccessFeedbackProvider>
+              </ProfileMenuProvider>
+            </H5PortfolioProvider>
+          </UserProvider>
+        </AuthProvider>
       </LocaleProvider>
     </ThemeProvider>
   );

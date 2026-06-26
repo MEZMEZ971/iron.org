@@ -276,7 +276,6 @@ export const coreIt = {
   "countryCodeNoResults": "Nessun paese trovato",
   "authPhonePlaceholder": "Numero senza prefisso internazionale",
   "featureComingSoon": "Funzione in arrivo.",
-  "fomoBannerActiveUsers": "{count} UTENTI ATTIVI IN TRADING LIVE ORA",
   "tradeExecuteFailed": "Esecuzione trade non riuscita. Riprova.",
   "notFoundCode": "404",
   "notFoundTitle": "Asset fuori orbita",
