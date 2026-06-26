@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import {
   createContext,
   useCallback,
@@ -57,6 +58,7 @@ type H5PortfolioValue = {
   activeStrategyLabel: string;
   loading: boolean;
   refresh: (options?: RefreshOptions) => Promise<void>;
+  requestRefresh: () => void;
 };
 
 const H5PortfolioContext = createContext<H5PortfolioValue | null>(null);
@@ -80,6 +82,7 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
   const [earnings, setEarnings] = useState<TradeEarnings | null>(null);
   const [tradeStatus, setTradeStatus] = useState<TradeStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   const refresh = useCallback(
     async (options?: RefreshOptions) => {
@@ -114,6 +117,22 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
     const id = setInterval(() => refresh(), 12_000);
     return () => clearInterval(id);
   }, [refresh]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refresh]);
+
+  useEffect(() => {
+    if (refreshToken > 0) {
+      void refresh();
+    }
+  }, [refreshToken, refresh]);
 
   useEffect(() => {
     return subscribeWalletRefresh((payload) => {
@@ -212,6 +231,7 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
       ),
       loading,
       refresh,
+      requestRefresh: () => setRefreshToken((n) => n + 1),
     }),
     [
       profile,
@@ -244,4 +264,19 @@ export function useH5Portfolio() {
     throw new Error("useH5Portfolio must be used within H5PortfolioProvider");
   }
   return ctx;
+}
+
+/** Mount inside BrowserRouter — refreshes wallet on Home / Profile / Trade tab navigation. */
+export function PortfolioBalanceRefresh() {
+  const location = useLocation();
+  const { requestRefresh } = useH5Portfolio();
+
+  useEffect(() => {
+    const walletPaths = new Set(["/", "/my", "/trade", "/assets", "/deposit"]);
+    if (walletPaths.has(location.pathname)) {
+      requestRefresh();
+    }
+  }, [location.pathname, requestRefresh]);
+
+  return null;
 }

@@ -10,11 +10,16 @@ const {
   startOfCalendarMonth,
   THIRTY_DAYS_MS,
 } = require("./cron/payouts.cjs");
+const {
+  reconcileAndHealUserWalletBalance,
+} = require("./lib/walletBalanceReconciliation.cjs");
 
 async function getTradeEarnings(userId) {
   await processDuePayouts().catch((err) => {
     console.warn("[payouts] auto-run failed:", err.message);
   });
+
+  await reconcileAndHealUserWalletBalance(userId, { heal: true });
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

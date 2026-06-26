@@ -314,6 +314,211 @@ html:not(.dark) .hover\:bg-white\/\[0\.04\]:hover {
   transform: translateZ(0) scale(0.99);
 }
 
+/* IRON Trade — logo-aligned monochrome (black / white) */
+.trade-card {
+  background: var(--df-glass-solid);
+  border: 1px solid var(--df-border-strong);
+  box-shadow: var(--df-shadow);
+  transition:
+    background-color 300ms ease-in-out,
+    border-color 300ms ease-in-out,
+    box-shadow 300ms ease-in-out;
+}
+
+.trade-metrics-panel {
+  background: linear-gradient(145deg, #f8fafc 0%, #eef2f7 100%);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+html.dark .trade-metrics-panel {
+  background: linear-gradient(145deg, #12161f 0%, #0a0e14 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.trade-metric-cell {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+html.dark .trade-metric-cell {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.trade-accent-value {
+  color: #0a0a0a;
+}
+
+html.dark .trade-accent-value {
+  color: #f8fafc;
+}
+
+.trade-balance-value {
+  color: #0a0a0a;
+  letter-spacing: -0.02em;
+}
+
+html.dark .trade-balance-value {
+  color: #ffffff;
+}
+
+.trade-btn-primary {
+  background: #0a0a0a;
+  color: #ffffff;
+  border: 1px solid #0a0a0a;
+  box-shadow: 0 4px 14px rgba(10, 10, 10, 0.18);
+  transform: translateZ(0);
+  transition:
+    background-color 300ms ease,
+    color 300ms ease,
+    box-shadow 300ms ease,
+    transform 300ms ease,
+    border-color 300ms ease;
+}
+
+html.dark .trade-btn-primary {
+  background: #ffffff;
+  color: #0a0a0a;
+  border-color: #ffffff;
+  box-shadow: 0 4px 18px rgba(255, 255, 255, 0.12);
+}
+
+.trade-btn-primary:not(:disabled):hover {
+  box-shadow: 0 6px 20px rgba(10, 10, 10, 0.24);
+  filter: brightness(1.05);
+}
+
+html.dark .trade-btn-primary:not(:disabled):hover {
+  box-shadow: 0 6px 22px rgba(255, 255, 255, 0.18);
+}
+
+.trade-btn-primary:not(:disabled):active {
+  transform: translateZ(0) scale(0.99);
+}
+
+.trade-notice {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #334155;
+}
+
+html.dark .trade-notice {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+.trade-status-badge {
+  background: #0a0a0a;
+  color: #ffffff;
+}
+
+html.dark .trade-status-badge {
+  background: #ffffff;
+  color: #0a0a0a;
+}
+
+.trade-session-bar {
+  background: #0a0a0a;
+  color: #ffffff;
+}
+
+html.dark .trade-session-bar {
+  background: #ffffff;
+  color: #0a0a0a;
+}
+
+.trade-ai-icon-wrap {
+  background: rgba(10, 10, 10, 0.06);
+  color: #0a0a0a;
+}
+
+html.dark .trade-ai-icon-wrap {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.trade-highlight {
+  color: #0a0a0a;
+  font-weight: 700;
+}
+
+html.dark .trade-highlight {
+  color: #ffffff;
+}
+
+.trade-bot-active {
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(15, 23, 42, 0.04);
+}
+
+html.dark .trade-bot-active {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@keyframes trade-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(10, 10, 10, 0.35);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 12px 3px rgba(10, 10, 10, 0.2);
+  }
+}
+
+html.dark .trade-pulse-dot {
+  animation: trade-pulse-dark 1.5s ease-in-out infinite;
+}
+
+@keyframes trade-pulse-dark {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 12px 3px rgba(255, 255, 255, 0.22);
+  }
+}
+
+.trade-pulse-dot {
+  animation: trade-pulse 1.5s ease-in-out infinite;
+}
+
+.trade-pulse-dot {
+  background: #0a0a0a;
+}
+
+html.dark .trade-pulse-dot {
+  background: #ffffff;
+}
+
+.trade-journal-grid {
+  background: var(--df-glass-solid);
+  border: 1px solid var(--df-border-strong);
+}
+
+html.dark .trade-journal-grid {
+  background: rgba(18, 22, 31, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.trade-level-select {
+  background: var(--df-glass-solid);
+  border: 1px solid var(--df-border-strong);
+}
+
+html.dark .trade-level-select {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Glassmorphic skeleton shimmer */
 @keyframes df-shimmer {
   0% {

@@ -11,6 +11,9 @@ const {
   propagateBrokerRankCheckFromReferral,
 } = require("./lib/brokerProgram.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
+const {
+  reconcileAndHealUserWalletBalance,
+} = require("./lib/walletBalanceReconciliation.cjs");
 
 const userInclude = {
   deposits: { orderBy: { createdAt: "desc" } },
@@ -221,36 +224,60 @@ async function recordDeposit(userId, { amount, txHash, network } = {}) {
     return findUserRecord(userId);
   }
 
-  if (txHash) {
+  const normalizedTxHash = txHash ? String(txHash).trim() : null;
+
+  if (normalizedTxHash) {
     const existing = await prisma.deposit.findFirst({
-      where: { txHash: String(txHash) },
+      where: { txHash: normalizedTxHash },
     });
     if (existing) {
+      await reconcileAndHealUserWalletBalance(userId, { heal: true });
       return findUserRecord(userId);
     }
   }
 
-  await prisma.deposit.create({
-    data: {
-      userId,
-      amount: depositAmount,
-      txHash: txHash ? String(txHash) : null,
-    },
-  });
+  const row = await prisma.$transaction(async (tx) => {
+    if (normalizedTxHash) {
+      const dupe = await tx.deposit.findFirst({
+        where: { txHash: normalizedTxHash },
+      });
+      if (dupe) {
+        return tx.user.findUnique({
+          where: { id: userId },
+          include: userInclude,
+        });
+      }
+    }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  const newBalance = trunc6(decimalToNumber(user.walletBalance) + depositAmount);
+    await tx.deposit.create({
+      data: {
+        userId,
+        amount: depositAmount,
+        txHash: normalizedTxHash,
+      },
+    });
 
-  const row = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      hasDeposited: true,
-      walletBalance: newBalance,
-    },
-    include: userInclude,
+    return tx.user.update({
+      where: { id: userId },
+      data: {
+        hasDeposited: true,
+        walletBalance: { increment: depositAmount },
+      },
+      include: userInclude,
+    });
   });
 
   await evictTrialBalance(userId);
+
+  const referrer = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { referredById: true },
+  });
+  if (referrer?.referredById) {
+    await propagateBrokerRankCheckFromReferral(referrer.referredById).catch((err) => {
+      console.warn("[broker] rank check after deposit:", err.message);
+    });
+  }
 
   return mapUserToLegacy(row);
 }
@@ -259,26 +286,30 @@ async function setWalletBalanceFromChain(userId, onChainBalance) {
   const user = await getOrCreateUser(userId);
   const locked = Number(user.lockedCapital) || 0;
   const onChain = Number(onChainBalance) || 0;
-  const chainAvailable = Math.max(0, onChain - locked);
-  const currentWallet = Number(user.walletBalance) || 0;
   const prevOnChain = Number(user.onChainBalance) || 0;
-  // Never clobber platform ledger credits (admin adjustments) with a lower on-chain read
+  const incomingDelta = trunc6(Math.max(0, onChain - prevOnChain));
+
+  if (incomingDelta > 0) {
+    await recordDeposit(userId, {
+      amount: incomingDelta,
+      network: "EVM",
+    });
+  }
+
+  const refreshed = await getOrCreateUser(userId);
+  const chainAvailable = Math.max(0, onChain - locked);
+  const currentWallet = Number(refreshed.walletBalance) || 0;
   const walletBalance = Math.max(currentWallet, chainAvailable);
-  const incomingDeposit = onChain > prevOnChain && onChain > 0;
 
   const row = await prisma.user.update({
     where: { id: userId },
     data: {
       onChainBalance: onChain,
       walletBalance,
-      hasDeposited: onChain > 0 || user.hasDeposited,
+      hasDeposited: onChain > 0 || refreshed.hasDeposited,
     },
     include: userInclude,
   });
-
-  if (incomingDeposit) {
-    await evictTrialBalance(userId);
-  }
 
   return mapUserToLegacy(row);
 }

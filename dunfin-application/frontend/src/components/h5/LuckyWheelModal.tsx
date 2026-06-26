@@ -208,8 +208,26 @@ export function LuckyWheelModal({ open, onClose }: Props) {
           setWheelStatus((prev) =>
             prev ? { ...prev, spinsRemaining: 0, canSpin: false } : prev
           );
-        } else if (e.code === "NOT_FUNDED") {
-          setError(t("h5SpinNotFunded"));
+        } else if (e.code === "NOT_FUNDED" || e.code === "DEPOSIT_REQUIRED_TO_SPIN") {
+          setError(
+            e.code === "DEPOSIT_REQUIRED_TO_SPIN" && e.errorAr && isRtlLocale(locale)
+              ? e.errorAr
+              : t(
+                  e.code === "DEPOSIT_REQUIRED_TO_SPIN"
+                    ? "h5SpinDepositRequired"
+                    : "h5SpinNotFunded"
+                )
+          );
+          setWheelStatus((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  hasRealDeposit: false,
+                  depositRequired: true,
+                  canSpin: false,
+                }
+              : prev
+          );
         } else {
           setError(e.message);
         }
@@ -227,7 +245,11 @@ export function LuckyWheelModal({ open, onClose }: Props) {
   }
 
   const spinBlocked =
-    spinning || animating || (wheelStatus !== null && !wheelStatus.canSpin);
+    spinning ||
+    animating ||
+    (wheelStatus !== null && !wheelStatus.canSpin);
+
+  const depositLocked = wheelStatus?.depositRequired === true;
 
   if (!open) return null;
 
@@ -406,9 +428,19 @@ export function LuckyWheelModal({ open, onClose }: Props) {
             type="button"
             onClick={handleSpin}
             disabled={spinBlocked}
-            className="absolute left-1/2 top-1/2 z-40 flex h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-[#fef08a]/40 bg-[radial-gradient(circle_at_30%_25%,#fff7c2_0%,#fcd535_35%,#d4a017_70%,#8a6508_100%)] text-[12px] font-bold tracking-wider text-[#1a1208] shadow-[0_0_24px_rgba(252,213,53,0.55),0_4px_16px_rgba(0,0,0,0.45)] transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-55"
+            className={`absolute left-1/2 top-1/2 z-40 flex h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border text-[12px] font-bold tracking-wider transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-55 ${
+              depositLocked
+                ? "border-white/20 bg-slate-700/90 text-white"
+                : "border-[#fef08a]/40 bg-[radial-gradient(circle_at_30%_25%,#fff7c2_0%,#fcd535_35%,#d4a017_70%,#8a6508_100%)] text-[#1a1208] shadow-[0_0_24px_rgba(252,213,53,0.55),0_4px_16px_rgba(0,0,0,0.45)]"
+            }`}
           >
-            {spinning || animating ? t("h5Spinning") : t("h5Spin")}
+            {depositLocked ? (
+              <i className="fa-solid fa-lock text-lg" aria-hidden />
+            ) : spinning || animating ? (
+              t("h5Spinning")
+            ) : (
+              t("h5Spin")
+            )}
           </button>
         </div>
 
@@ -416,6 +448,18 @@ export function LuckyWheelModal({ open, onClose }: Props) {
           <p className="shrink-0 font-medium text-slate-400">{spinsRemainingLabel()}</p>
           <p className="text-end text-slate-300">{t("h5WheelFooterPromo")}</p>
         </div>
+
+        {depositLocked && (
+          <div
+            role="alert"
+            className="mt-3 flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-slate-200"
+          >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
+              <i className="fa-solid fa-lock text-sm text-white" aria-hidden />
+            </span>
+            <p className="leading-snug">{t("h5SpinDepositRequired")}</p>
+          </div>
+        )}
 
         {error && (
           <p className="mt-3 text-center text-xs text-red-400" role="alert">

@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchWheelStatus } from "../api/client";
 import { LuckyWheelModal } from "../components/h5/LuckyWheelModal";
 import { StrategyStarBadge } from "../components/StrategyStarBadge";
 import { useAuth } from "../context/AuthContext";
@@ -40,6 +41,19 @@ export default function H5MyProfile() {
   const { profile, tradeStatus, activeStrategyLabel } = useH5Portfolio();
   const [copied, setCopied] = useState<"uid" | "code" | null>(null);
   const [wheelOpen, setWheelOpen] = useState(false);
+  const [wheelDepositLocked, setWheelDepositLocked] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchWheelStatus()
+      .then((status) => {
+        if (!cancelled) setWheelDepositLocked(status.depositRequired);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const invitationCode = user?.referralCode ?? "—";
 
@@ -157,29 +171,42 @@ export default function H5MyProfile() {
         <button
           type="button"
           onClick={() => setWheelOpen(true)}
-          className="mb-5 flex w-full items-center gap-3 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-[#f0b90b]/10 to-orange-500/10 px-4 py-3.5 text-start shadow-sm transition active:scale-[0.98] dark:from-amber-500/20 dark:via-[#f0b90b]/15 dark:to-orange-600/10"
+          className="mb-5 flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-start shadow-sm transition active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.04]"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#f0b90b]/30 to-amber-700/40 text-[#c99400] dark:text-[#f0b90b]">
+          <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
             <i
-              className="fa-solid fa-gift animate-bounce text-xl"
+              className={`fa-solid ${wheelDepositLocked ? "fa-lock" : "fa-gift"} text-xl`}
               aria-hidden
             />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-bold text-slate-900 dark:text-white">
-              {t("h5DailyLuckyWheel")}
+            <span className="flex items-center gap-2">
+              <span className="block text-sm font-bold text-slate-900 dark:text-white">
+                {t("h5DailyLuckyWheel")}
+              </span>
+              {wheelDepositLocked && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900">
+                  <i className="fa-solid fa-lock text-[8px]" aria-hidden />
+                  {t("h5WheelLockedBadge")}
+                </span>
+              )}
             </span>
             <span className="mt-0.5 block text-[10px] text-slate-600 dark:text-slate-400">
-              {t("h5DailyLuckyWheelSub")}
+              {wheelDepositLocked
+                ? t("h5SpinDepositRequired")
+                : t("h5DailyLuckyWheelSub")}
             </span>
           </span>
           <i
-            className="fa-solid fa-chevron-right shrink-0 text-xs text-amber-700/80 dark:text-[#f0b90b]/80"
+            className="fa-solid fa-chevron-right shrink-0 text-xs text-slate-500 dark:text-slate-400"
             aria-hidden
           />
         </button>
 
-        <LuckyWheelModal open={wheelOpen} onClose={() => setWheelOpen(false)} />
+        <LuckyWheelModal
+          open={wheelOpen}
+          onClose={() => setWheelOpen(false)}
+        />
 
         <Section title={t("h5Finance")} items={FINANCE} onNavigate={navigate} t={t} />
         <Section

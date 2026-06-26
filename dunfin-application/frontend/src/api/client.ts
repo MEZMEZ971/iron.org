@@ -864,6 +864,8 @@ export interface WheelStatusResult {
   spinsRemaining: number;
   maxSpinsPerDay: number;
   canSpin: boolean;
+  hasRealDeposit: boolean;
+  depositRequired: boolean;
   nextSpinAt: string | null;
   prizes: Array<{
     index: number;

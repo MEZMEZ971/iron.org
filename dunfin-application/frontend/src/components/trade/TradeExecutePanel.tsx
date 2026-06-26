@@ -98,13 +98,13 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
     if (!matched || autoLock == null || onCooldown) return null;
     if (matched.id === 0) {
       return (
-        <p className="mb-3 text-center text-xs font-semibold text-[#f0b90b]">
+        <p className="trade-highlight mb-3 text-center text-xs">
           {t("h5TradeLevel0AutoSelected", { amount: autoLock })}
         </p>
       );
     }
     return (
-      <p className="mb-3 text-center text-xs text-slate-600 dark:text-slate-300">
+      <p className="mb-3 text-center text-xs text-df-muted">
         {t("h5TradeAutoTierPreview", {
           strategy: matched.name,
           amount: autoLock,
@@ -118,7 +118,7 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
       <StatWidget
         label={t("activeTeam")}
         value={String(status?.affiliate.totalActiveMembers ?? 0)}
-        accent="gold"
+        accent="default"
       />
 
       <div ref={executeSectionRef} className="glass-card rounded-2xl p-4">
@@ -127,17 +127,17 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
         {!loading && status && belowEntryMinimum && !onCooldown && (
           <div
             role="alert"
-            className="mb-3 rounded-xl border border-amber-500/50 bg-amber-950/40 px-3 py-3 text-center text-xs leading-relaxed text-amber-100 dark:border-amber-400/60 dark:bg-amber-500/15 dark:text-amber-50"
+            className="trade-notice mb-3 rounded-xl px-3 py-3 text-center text-xs leading-relaxed"
           >
             {t("h5TradeMatrixDeniedEntry", { capital: 100 })}
           </div>
         )}
 
         {botActive && (
-          <div className="mb-4 flex items-center justify-center gap-3 rounded-xl border border-[#f0b90b]/35 bg-[#f0b90b]/10 px-4 py-3">
-            <span className="bot-pulse-dot h-3 w-3 rounded-full bg-[#f0b90b]" />
-            <span className="text-sm font-bold text-[#f0b90b]">{t("aiBotActive")}</span>
-            <span className="font-mono text-lg text-[#fcd535]">{countdown}</span>
+          <div className="trade-bot-active mb-4 flex items-center justify-center gap-3 rounded-xl px-4 py-3">
+            <span className="trade-pulse-dot h-3 w-3 rounded-full" />
+            <span className="text-sm font-bold text-df">{t("aiBotActive")}</span>
+            <span className="trade-accent-value font-mono text-lg">{countdown}</span>
           </div>
         )}
 
@@ -149,7 +149,7 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
             onCooldown
               ? "cursor-not-allowed border border-df bg-df-inset text-df-faint"
               : canExecute
-                ? "btn-golden-glow bg-gradient-to-r from-[#f0b90b] via-[#fcd535] to-[#f0b90b] text-[#0a0e1a] shadow-lg shadow-[#f0b90b]/30"
+                ? "trade-btn-primary"
                 : "cursor-not-allowed bg-df-inset text-df-faint"
           }`}
         >
@@ -177,7 +177,7 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
             role="alert"
             className={`mt-3 rounded-xl border px-3 py-3 text-center text-xs leading-relaxed ${
               matrixDenied
-                ? "border-amber-500/50 bg-amber-950/40 text-amber-100 dark:border-amber-400/60 dark:bg-amber-500/15 dark:text-amber-50"
+                ? "trade-notice"
                 : "border-red-500/40 bg-red-950/30 text-red-200"
             }`}
           >

@@ -2,6 +2,11 @@ const { randomInt } = require("crypto");
 const { prisma } = require("../lib/prisma.cjs");
 const { trunc6 } = require("../lib/formatNumbers.cjs");
 const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
+const {
+  hasRealDeposit,
+  DEPOSIT_REQUIRED_SPIN_EN,
+  DEPOSIT_REQUIRED_SPIN_AR,
+} = require("../lib/depositEligibility.cjs");
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 const DAILY_SPINS = 1;
@@ -45,22 +50,24 @@ async function getWheelStatus(req, res) {
     const userId = req.auth.userId;
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { walletBalance: true, lastSpinDate: true },
+      select: { lastSpinDate: true },
     });
 
     if (!user) {
       return sendClientError(res, "NOT_FOUND", "User not found", 404);
     }
 
+    const deposited = await hasRealDeposit(userId);
     const onCooldown = isWithinSpinCooldown(user.lastSpinDate);
-    const funded = trunc6(user.walletBalance) > 0;
     const spinsRemaining = onCooldown ? 0 : DAILY_SPINS;
 
     return res.json({
       success: true,
       spinsRemaining,
       maxSpinsPerDay: DAILY_SPINS,
-      canSpin: spinsRemaining > 0 && funded,
+      hasRealDeposit: deposited,
+      depositRequired: !deposited,
+      canSpin: spinsRemaining > 0 && deposited,
       nextSpinAt:
         onCooldown && user.lastSpinDate
           ? new Date(user.lastSpinDate.getTime() + TWENTY_FOUR_HOURS_MS).toISOString()
@@ -85,7 +92,6 @@ async function spinWheel(req, res) {
       where: { id: userId },
       select: {
         id: true,
-        walletBalance: true,
         lastSpinDate: true,
       },
     });
@@ -94,12 +100,14 @@ async function spinWheel(req, res) {
       return sendClientError(res, "NOT_FOUND", "User not found", 404);
     }
 
-    if (trunc6(user.walletBalance) <= 0) {
+    const deposited = await hasRealDeposit(userId);
+    if (!deposited) {
       return sendApiError(
         res,
         {
-          code: "NOT_FUNDED",
-          message: "Fund your wallet before using the daily lucky wheel.",
+          code: "DEPOSIT_REQUIRED_TO_SPIN",
+          message: DEPOSIT_REQUIRED_SPIN_EN,
+          errorAr: DEPOSIT_REQUIRED_SPIN_AR,
         },
         { status: 403, success: false }
       );

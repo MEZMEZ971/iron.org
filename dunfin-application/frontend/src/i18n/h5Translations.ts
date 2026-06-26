@@ -61,6 +61,9 @@ export const h5En = {
   h5YouWon: "You won",
   h5ClaimReward: "Awesome!",
   h5SpinNotFunded: "Fund your wallet to unlock the daily wheel.",
+  h5SpinDepositRequired:
+    "Deposit USDT to unlock your daily lucky spin!",
+  h5WheelLockedBadge: "Locked",
   h5Close: "Close",
   h5AvailableBalance: "Available Balance",
   h5AvailableBalanceSub: "Liquid USDT for deployment or withdrawal",
@@ -260,6 +263,8 @@ export const h5Ar = {
   h5YouWon: "لقد ربحت",
   h5ClaimReward: "رائع!",
   h5SpinNotFunded: "قم بتمويل محفظتك لفتح العجلة اليومية.",
+  h5SpinDepositRequired: "قم بالإيداع لتفعيل عجلة الحظ اليومية!",
+  h5WheelLockedBadge: "مقفلة",
   h5Close: "إغلاق",
   h5AvailableBalance: "رأس المال المتاح للتداول",
   h5AvailableBalanceSub: "USDT سائل للتداول أو السحب الفوري",

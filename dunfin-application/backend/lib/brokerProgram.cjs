@@ -1,6 +1,10 @@
 const { prisma } = require("./prisma.cjs");
 const { trunc6 } = require("./formatNumbers.cjs");
 const { countDownlineTeamSize } = require("../teamAnalytics.cjs");
+const {
+  isFundedMember,
+  loadDepositTotalsByUserIds,
+} = require("./depositEligibility.cjs");
 
 const BROKER_RANK_NONE = "NONE";
 const BONUS_DESC_PREFIX = "[BROKER_RANK_UPGRADE_BONUS]";
@@ -134,6 +138,21 @@ function countThreeGenDownline(userId, childrenMap) {
   return gen1.length + gen2.length + gen3.length;
 }
 
+function countFundedThreeGenDownline(userId, childrenMap, userById, depositTotals) {
+  const isFunded = (id) => isFundedMember(userById.get(id), depositTotals);
+  const gen1 = (childrenMap.get(userId) || []).filter(isFunded);
+  const gen2 = gen1.flatMap((id) => (childrenMap.get(id) || []).filter(isFunded));
+  const gen3 = gen2.flatMap((id) => (childrenMap.get(id) || []).filter(isFunded));
+  return gen1.length + gen2.length + gen3.length;
+}
+
+async function buildBrokerIndex(users) {
+  const childrenMap = buildReferralChildrenMap(users);
+  const userById = new Map(users.map((user) => [user.id, user]));
+  const depositTotals = await loadDepositTotalsByUserIds(users.map((user) => user.id));
+  return { childrenMap, userById, depositTotals };
+}
+
 async function loadActiveUsersForBrokerIndex() {
   return prisma.user.findMany({
     where: { accountActive: true },
@@ -144,6 +163,8 @@ async function loadActiveUsersForBrokerIndex() {
       displayName: true,
       referredById: true,
       brokerRank: true,
+      hasDeposited: true,
+      onChainBalance: true,
       walletBalance: true,
       brokerSalaryBalance: true,
       lastSalaryPayoutAt: true,
@@ -153,12 +174,17 @@ async function loadActiveUsersForBrokerIndex() {
 
 async function buildBrokerRows() {
   const users = await loadActiveUsersForBrokerIndex();
-  const childrenMap = buildReferralChildrenMap(users);
+  const { childrenMap, userById, depositTotals } = await buildBrokerIndex(users);
   const nowMs = Date.now();
 
   const rows = [];
   for (const user of users) {
-    const totalTeamCount = countThreeGenDownline(user.id, childrenMap);
+    const totalTeamCount = countFundedThreeGenDownline(
+      user.id,
+      childrenMap,
+      userById,
+      depositTotals
+    );
     const brokerRank = resolveRankFromTeamSize(totalTeamCount);
     if (brokerRank === BROKER_RANK_NONE) continue;
 
@@ -262,6 +288,26 @@ async function checkAndUpgradeBrokerRank(userId) {
   }
 
   const currentRank = user.brokerRank || BROKER_RANK_NONE;
+
+  if (rankIndex(targetRank) < rankIndex(currentRank)) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { brokerRank: targetRank },
+    });
+
+    return {
+      upgraded: false,
+      downgraded: true,
+      teamSize,
+      rank: targetRank,
+      broker: buildBrokerProfileSnapshot(
+        teamSize,
+        targetRank,
+        user.lastSalaryPayoutAt
+      ),
+    };
+  }
+
   if (rankIndex(targetRank) <= rankIndex(currentRank)) {
     return {
       upgraded: false,
@@ -355,13 +401,18 @@ async function processBrokerSalaryPayouts() {
 
 async function adminPayoutBrokerSalaries({ force = false } = {}) {
   const users = await loadActiveUsersForBrokerIndex();
-  const childrenMap = buildReferralChildrenMap(users);
+  const { childrenMap, userById, depositTotals } = await buildBrokerIndex(users);
   const nowMs = Date.now();
   const payoutAt = new Date();
 
   const eligible = [];
   for (const user of users) {
-    const totalTeamCount = countThreeGenDownline(user.id, childrenMap);
+    const totalTeamCount = countFundedThreeGenDownline(
+      user.id,
+      childrenMap,
+      userById,
+      depositTotals
+    );
     const brokerRank = resolveRankFromTeamSize(totalTeamCount);
     if (brokerRank === BROKER_RANK_NONE) continue;
 
@@ -448,4 +499,7 @@ module.exports = {
   buildBrokerRows,
   adminPayoutBrokerSalaries,
   isSalaryPayoutDue,
+  countFundedThreeGenDownline,
+  buildBrokerIndex,
+  buildReferralChildrenMap,
 };

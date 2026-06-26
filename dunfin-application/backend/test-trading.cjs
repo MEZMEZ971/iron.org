@@ -114,4 +114,39 @@ assert.strictEqual(mixedSplit.trialBalance, 0);
 assert.strictEqual(mixedSplit.walletBalance, 30);
 assert.strictEqual(mixedSplit.lockedTrialCapital, 100);
 
+const { isFundedMember } = require("./lib/depositEligibility.cjs");
+const {
+  countFundedThreeGenDownline,
+  buildReferralChildrenMap,
+} = require("./lib/brokerProgram.cjs");
+
+const depositTotals = new Map([
+  ["funded-a", 50],
+  ["funded-b", 10],
+]);
+
+const brokerUsers = [
+  { id: "root", referredById: null, hasDeposited: true, onChainBalance: 0 },
+  { id: "funded-a", referredById: "root", hasDeposited: true, onChainBalance: 0 },
+  { id: "trial-b", referredById: "root", hasDeposited: false, onChainBalance: 0 },
+  {
+    id: "funded-c",
+    referredById: "funded-a",
+    hasDeposited: true,
+    onChainBalance: 25,
+  },
+  { id: "trial-d", referredById: "funded-a", hasDeposited: false, onChainBalance: 0 },
+];
+
+const childrenMap = buildReferralChildrenMap(brokerUsers);
+const userById = new Map(brokerUsers.map((user) => [user.id, user]));
+
+assert.strictEqual(isFundedMember(userById.get("funded-a"), depositTotals), true);
+assert.strictEqual(isFundedMember(userById.get("trial-b"), depositTotals), false);
+assert.strictEqual(isFundedMember(userById.get("funded-c"), depositTotals), true);
+assert.strictEqual(
+  countFundedThreeGenDownline("root", childrenMap, userById, depositTotals),
+  2
+);
+
 console.log("All trading unit checks passed.");

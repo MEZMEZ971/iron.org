@@ -72,6 +72,9 @@ const {
 } = require("./profileUpdate.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
 const {
+  reconcileAndHealUserWalletBalance,
+} = require("./lib/walletBalanceReconciliation.cjs");
+const {
   sendApiError,
   sendClientError,
   installProcessHandlers,
@@ -665,6 +668,7 @@ app.post("/api/users/profile/update", requireAuth, async (req, res) => {
 });
 
 async function buildUserProfileResponse(userId) {
+  await reconcileAndHealUserWalletBalance(userId, { heal: true });
   await syncWalletBalanceFromChain(userId).catch(() => null);
   const rankResult = await checkAndUpgradeBrokerRank(userId);
   const user = await db.getOrCreateUser(userId);
@@ -726,17 +730,16 @@ app.get("/api/users/profile", requireAuth, async (req, res) => {
 app.post("/api/users/profile/sync-balance", requireAuth, async (req, res) => {
   try {
     const userId = req.auth.userId;
-    const user = await syncWalletBalanceFromChain(userId);
-    if (!user?.depositAddress) {
-      return sendClientError(res, "NOT_FOUND", "User has no deposit address", 404);
-    }
+    await reconcileAndHealUserWalletBalance(userId, { heal: true });
+    await syncWalletBalanceFromChain(userId).catch(() => null);
+    const user = await db.getOrCreateUser(userId);
     const trialBalance = isTrialCurrentlyActive(user)
     ? Number(user.trialBalance) || 0
     : 0;
     const fundAccount = getEffectiveTradingBalance(user);
     res.json({
       success: true,
-      walletBalance: user.walletBalance,
+      walletBalance: trunc6(Number(user.walletBalance) || 0),
       trialBalance: trunc6(trialBalance),
       isTrialActive: Boolean(user.isTrialActive),
       fundAccount: trunc6(fundAccount),

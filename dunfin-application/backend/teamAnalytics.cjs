@@ -3,6 +3,10 @@ const { decimalToNumber } = require("./lib/userMapper.cjs");
 const { isActiveMember } = require("./affiliate.cjs");
 const { trunc6 } = require("./lib/formatNumbers.cjs");
 const { commissionFromCapital } = require("./teamCommission.cjs");
+const {
+  isFundedMember,
+  loadDepositTotalsByUserIds,
+} = require("./lib/depositEligibility.cjs");
 
 const MEMBER_SELECT = {
   id: true,
@@ -10,6 +14,7 @@ const MEMBER_SELECT = {
   displayName: true,
   createdAt: true,
   hasDeposited: true,
+  onChainBalance: true,
   tradingCapital: true,
   lockedCapital: true,
 };
@@ -254,7 +259,11 @@ function buildGenStats(rows, rebate) {
 
 async function countDownlineTeamSize(userId) {
   const downline = await loadDownlineGenerations(userId);
-  return downline.allIds.length;
+  const members = [...downline.gen1, ...downline.gen2, ...downline.gen3];
+  if (!members.length) return 0;
+
+  const depositTotals = await loadDepositTotalsByUserIds(members.map((member) => member.id));
+  return members.filter((member) => isFundedMember(member, depositTotals)).length;
 }
 
 async function getTeamAnalytics(userId) {

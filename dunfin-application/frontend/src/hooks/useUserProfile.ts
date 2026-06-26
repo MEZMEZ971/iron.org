@@ -62,6 +62,16 @@ export function useUserProfile(userId: string) {
   }, [userId, refresh]);
 
   useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refresh]);
+
+  useEffect(() => {
     return subscribeWalletRefresh((payload) => {
       if (!userId) return;
       if (payload?.userId && payload.userId !== userId && payload.uid !== uid) return;

@@ -7,7 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { SuccessFeedbackProvider } from "./context/SuccessFeedbackContext";
 import { ProfileMenuProvider } from "./context/ProfileMenuContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import { H5PortfolioProvider } from "./context/H5PortfolioContext";
+import { H5PortfolioProvider, PortfolioBalanceRefresh } from "./context/H5PortfolioContext";
 import { UserProvider } from "./context/UserContext";
 import { LocaleProvider } from "./i18n/LocaleContext";
 import { AppLayout } from "./layouts/AppLayout";
@@ -52,6 +52,7 @@ export default function App() {
                   <SuccessFeedbackProvider>
                     <BrowserRouter>
                       <ScrollLockRouteReset />
+                      <PortfolioBalanceRefresh />
                       <MobileLanguageSwitcher />
                       <Routes>
                         <Route path="/login" element={<Login />} />
