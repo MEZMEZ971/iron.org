@@ -18,9 +18,9 @@ const { processDuePayouts, settleUserTradePayout } = require("./cron/payouts.cjs
 const { executeTradeAtomic } = require("./services/tradeService.cjs");
 const { touchUserActivity } = require("./lib/userActivity.cjs");
 const {
-  getEffectiveTradingBalance,
   isTrialCurrentlyActive,
 } = require("./lib/trialBalance.cjs");
+const { resolveTradableBalance } = require("./lib/tradeBalance.cjs");
 
 async function releaseExpiredLock(userId) {
   const row = await prisma.user.findUnique({
@@ -83,9 +83,9 @@ async function executeTrade(userId) {
     };
   }
 
-  const tradingBalance = getEffectiveTradingBalance(user);
   const network = await getAffiliateNetworkFromDb(userId);
   const activeTeamCount = network.totalActiveMembers;
+  const tradingBalance = await resolveTradableBalance(userId, user);
 
   const resolved = autoResolveStrategy(tradingBalance, activeTeamCount);
 
@@ -165,7 +165,7 @@ async function getTradeStatus(userId) {
   const trialBalance = isTrialCurrentlyActive(user)
     ? Number(user.trialBalance) || 0
     : 0;
-  const tradingBalance = getEffectiveTradingBalance(user);
+  const tradingBalance = await resolveTradableBalance(userId, user);
   const lockedCapital = Number(user.lockedCapital) || 0;
   const activeTeamCount = network.totalActiveMembers;
 

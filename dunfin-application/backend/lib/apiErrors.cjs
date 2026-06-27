@@ -69,6 +69,18 @@ function mapPrismaError(error) {
         message: "Referenced record is invalid or missing.",
         status: 400,
       };
+    case "P2028":
+      return {
+        code: "TRANSACTION_TIMEOUT",
+        message: "The request timed out. Please try again.",
+        status: 503,
+      };
+    case "P2034":
+      return {
+        code: "TRADE_LOCK_CONFLICT",
+        message: "Trade could not be locked. Refresh and try again.",
+        status: 409,
+      };
     default:
       return null;
   }

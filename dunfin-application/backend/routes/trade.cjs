@@ -37,10 +37,8 @@ async function postTradeExecuteHandler(req, res) {
       );
     }
 
-    if (typeof req.syncWalletBalance === "function") {
-      await req.syncWalletBalance(userId).catch(() => null);
-    }
-
+    // Ledger-aware execution — skip chain sync to avoid clobbering reward balances
+    // and racing profile hydration writes (P2034) during trade lock.
     const result = await executeTrade(userId);
 
     if (!result.ok) {
@@ -65,6 +63,15 @@ async function postTradeExecuteHandler(req, res) {
 
     res.json(result);
   } catch (error) {
+    if (error?.code === "P2034" || error?.code === "P2028") {
+      console.error("[trade/execute] transaction conflict after retries:", error);
+      return sendClientError(
+        res,
+        "TRADE_LOCK_CONFLICT",
+        "Trade could not be locked. Refresh and try again.",
+        409
+      );
+    }
     sendApiError(res, error);
   }
 }
