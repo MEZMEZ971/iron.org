@@ -26,6 +26,10 @@ import {
   getStrategyTierName,
   resolveActiveStrategyTier,
 } from "../lib/strategyTiers";
+import {
+  resolvePortfolioBalances,
+  type ResolvedPortfolioBalances,
+} from "../lib/portfolioBalances";
 import { subscribeWalletRefresh } from "../lib/walletSync";
 import { useUser } from "./UserContext";
 import { useLocale } from "../i18n/LocaleContext";
@@ -42,6 +46,9 @@ export type H5EarningsSlice = {
   dailyReferral: number;
   monthlyReferral: number;
   accountBalance: number;
+  availableBalance: number;
+  lockedBalance: number;
+  inTrading: number;
   currency: string;
 };
 
@@ -51,6 +58,7 @@ type H5PortfolioValue = {
   tradeStatus: TradeStatus | null;
   walletBalance: number;
   availableBalance: number;
+  totalBalance: number;
   trialBalance: number;
   isTrialActive: boolean;
   trialExpiresAt: string | null;
@@ -70,14 +78,20 @@ type H5PortfolioValue = {
 
 const H5PortfolioContext = createContext<H5PortfolioValue | null>(null);
 
-function mapEarnings(e: TradeEarnings | null): H5EarningsSlice {
+function mapEarnings(
+  e: TradeEarnings | null,
+  balances: ResolvedPortfolioBalances
+): H5EarningsSlice {
   return {
     totalProceeds: e?.totalTransactionProceeds ?? 0,
     pendingIncome: e?.totalIncomeToBeDistributed ?? 0,
     todayEarnings: e?.todayPendingEarnings ?? 0,
     dailyReferral: e?.teamCommissions.dailyReferralEarnings ?? 0,
     monthlyReferral: e?.teamCommissions.monthlyReferralEarnings ?? 0,
-    accountBalance: e?.accountBalance ?? 0,
+    accountBalance: balances.totalBalance,
+    availableBalance: balances.availableBalance,
+    lockedBalance: balances.lockedBalance,
+    inTrading: balances.inTrading,
     currency: e?.currency ?? "USDT",
   };
 }
@@ -263,24 +277,19 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
     });
   }, [refresh, uid, userId]);
 
-  const walletBalance = profile?.walletBalance ?? earnings?.walletBalance ?? 0;
-  const trialBalance =
-    profile?.isTrialActive && profile.trialBalance
-      ? profile.trialBalance
-      : earnings?.trialBalance ?? 0;
-  const isTrialActive = Boolean(profile?.isTrialActive && trialBalance > 0);
+  const balances = useMemo(
+    () => resolvePortfolioBalances({ profile, earnings, tradeStatus }),
+    [profile, earnings, tradeStatus]
+  );
+
+  const walletBalance =
+    profile?.walletBalance ?? earnings?.walletBalance ?? balances.availableBalance ?? 0;
+  const trialBalance = balances.trialBalance;
+  const isTrialActive = balances.isTrialActive;
   const trialExpiresAt = profile?.trialExpiresAt ?? null;
-  const lockedBalance =
-    profile?.ledger?.lockedCapital ??
-    tradeStatus?.lockedCapital ??
-    profile?.lockedCapital ??
-    earnings?.lockedCapital ??
-    0;
-  const availableBalance =
-    profile?.ledger?.availableBalance ??
-    profile?.fundAccount ??
-    tradeStatus?.availableBalance ??
-    walletBalance + (isTrialActive ? trialBalance : 0);
+  const lockedBalance = balances.lockedBalance;
+  const availableBalance = balances.availableBalance;
+  const totalBalance = balances.totalBalance;
   const pendingFunds = lockedBalance;
   const flexibleFunds = availableBalance;
 
@@ -291,14 +300,15 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
       tradeStatus,
       walletBalance,
       availableBalance,
+      totalBalance,
       trialBalance,
       isTrialActive,
       trialExpiresAt,
       lockedBalance,
       pendingFunds,
       flexibleFunds,
-      earningsView: mapEarnings(earnings),
-      isTrading: tradeStatus?.tradeSession?.active ?? false,
+      earningsView: mapEarnings(earnings, balances),
+      isTrading: balances.tradeSessionActive,
       activeStrategyLabel: getStrategyTierName(
         resolveActiveStrategyTier({
           activeStrategy:
@@ -319,6 +329,7 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
       tradeStatus,
       walletBalance,
       availableBalance,
+      totalBalance,
       trialBalance,
       isTrialActive,
       trialExpiresAt,
@@ -329,6 +340,7 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
       syncing,
       refresh,
       locale,
+      balances,
     ]
   );
 

@@ -11,7 +11,13 @@ export default function H5Deposit() {
   const { t, dir } = useLocale();
   const navigate = useNavigate();
   const rtl = dir === "rtl";
-  const { earningsView, refresh } = useH5Portfolio();
+  const {
+    refresh,
+    totalBalance,
+    availableBalance,
+    lockedBalance,
+    loading,
+  } = useH5Portfolio();
 
   const [currency, setCurrency] = useState<DepositCurrency>("USDT");
   const [network, setNetwork] = useState<DepositNetwork>("BEP20");
@@ -38,12 +44,28 @@ export default function H5Deposit() {
           {t("totalBalance")}
         </p>
         <p className="mt-1 font-mono text-2xl font-bold dark:text-[#fcd535]">
-          {earningsView.accountBalance.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}{" "}
+          {loading && totalBalance <= 0 && lockedBalance <= 0
+            ? "—"
+            : totalBalance.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{" "}
           USDT
         </p>
+        {!loading && lockedBalance > 0 && (
+          <p className="mt-2 text-[10px] text-amber-800/80 dark:text-amber-300/90">
+            {t("h5AvailableBalance")}:{" "}
+            {availableBalance.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}{" "}
+            · {t("h5LockedStrategyCapital")}:{" "}
+            {lockedBalance.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
+        )}
         <button
           type="button"
           onClick={() => refresh()}

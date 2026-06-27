@@ -13,7 +13,7 @@ export default function Deposit() {
   const navigate = useNavigate();
   const rtl = dir === "rtl";
   const { userId } = useUser();
-  const { profile, refresh: refreshProfile } = useUserProfile(userId);
+  const { profile, balances, refresh: refreshProfile } = useUserProfile(userId);
 
   const [currency, setCurrency] = useState<DepositCurrency>("USDT");
   const [network, setNetwork] = useState<DepositNetwork>("BEP20");
@@ -21,9 +21,9 @@ export default function Deposit() {
   const { data: deposit, loading: addressLoading, error: addressError } =
     useDepositAddress(currency, network);
 
-  const fund = profile?.fundAccount ?? 0;
-  const trading = profile?.tradingAccount ?? 0;
-  const total = fund + trading;
+  const fund = balances.availableBalance ?? profile?.fundAccount ?? 0;
+  const trading = balances.lockedBalance ?? profile?.tradingAccount ?? 0;
+  const total = balances.totalBalance ?? fund + trading;
 
   return (
     <div className="space-y-4 pb-4">
@@ -52,13 +52,13 @@ export default function Deposit() {
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 text-center text-xs">
           <div className="rounded-xl bg-df-inset py-2.5">
-            <p className="text-df-faint">{t("fundAccount")}</p>
+            <p className="text-df-faint">{t("availableBalance")}</p>
             <p className="mt-0.5 font-semibold text-[#00d4aa]">
               ${fund.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </p>
           </div>
           <div className="rounded-xl bg-df-inset py-2.5">
-            <p className="text-df-faint">{t("tradingAccount")}</p>
+            <p className="text-df-faint">{t("lockedCapital")}</p>
             <p className="mt-0.5 font-semibold text-[#f0b90b]">
               ${trading.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </p>

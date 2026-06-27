@@ -21,6 +21,7 @@ export default function H5Assets() {
     profile,
     availableBalance,
     lockedBalance,
+    totalBalance,
     trialBalance,
     isTrialActive,
     trialExpiresAt,
@@ -33,7 +34,7 @@ export default function H5Assets() {
 
   const ledger = profile?.ledger;
   const usdtAsset = ledger?.assets?.[0] ?? profile?.assets?.find((a) => a.symbol === "USDT");
-  const total = usdtAsset?.total ?? availableBalance + lockedBalance;
+  const total = usdtAsset?.total ?? totalBalance ?? availableBalance + lockedBalance;
   const available = usdtAsset?.available ?? availableBalance;
   const freeze = usdtAsset?.freeze ?? lockedBalance;
   const transactions = ledger?.recentTransactions ?? profile?.transactions ?? [];

@@ -11,6 +11,7 @@ import {
   loadPortfolioCache,
   savePortfolioCache,
 } from "../lib/portfolioCache";
+import { resolvePortfolioBalances } from "../lib/portfolioBalances";
 import { subscribeWalletRefresh } from "../lib/walletSync";
 import { useUser } from "../context/UserContext";
 import { useLocale } from "../i18n/LocaleContext";
@@ -129,5 +130,5 @@ export function useUserProfile(userId: string) {
     });
   }, [refresh, uid, userId]);
 
-  return { profile, loading, syncing, error, refresh };
+  return { profile, loading, syncing, error, refresh, balances: resolvePortfolioBalances({ profile }) };
 }

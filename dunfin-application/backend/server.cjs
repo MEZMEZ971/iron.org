@@ -769,7 +769,10 @@ async function buildUserProfileResponse(userId) {
         cachedFundedDownlineCount: true,
       },
     }),
-    buildUserLedgerBundle(userId, user),
+    buildUserLedgerBundle(userId, user, {
+      preloadedTrades: user.tradeHistory,
+      preloadedDeposits: user.deposits,
+    }),
   ]);
 
   const locked = ledger.lockedCapital;
@@ -842,7 +845,12 @@ app.get("/api/transactions/ledger", requireAuth, async (req, res) => {
       return sendClientError(res, "NOT_FOUND", "User not found", 404);
     }
     scheduleProfileBackgroundSync(userId);
-    res.json(await buildUserLedgerBundle(userId, user));
+    res.json(
+      await buildUserLedgerBundle(userId, user, {
+        preloadedTrades: user.tradeHistory,
+        preloadedDeposits: user.deposits,
+      })
+    );
   } catch (error) {
     sendApiError(res, error);
   }

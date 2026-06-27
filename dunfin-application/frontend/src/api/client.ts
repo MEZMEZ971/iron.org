@@ -335,7 +335,9 @@ export interface TransactionRow {
 export interface LedgerSummary {
   availableBalance: number;
   lockedCapital: number;
+  inTrading?: number;
   totalBalance: number;
+  tradeSessionActive?: boolean;
   totalDeposits: number;
   totalWithdrawals: number;
   pendingWithdrawals: number;
