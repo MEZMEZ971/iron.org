@@ -5,6 +5,11 @@ import { useAuth } from "../context/AuthContext";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { useLocale } from "../i18n/LocaleContext";
 import { resolveUserFacingError } from "../lib/userFacingError";
+import {
+  clearRememberedIdentity,
+  loadRememberedIdentity,
+  persistRememberedIdentity,
+} from "../lib/rememberedIdentity";
 
 export default function Login() {
   const { t, locale } = useLocale();
@@ -17,9 +22,18 @@ export default function Login() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [forgotOpen, setForgotOpen] = useState(false);
+
+  useEffect(() => {
+    const remembered = loadRememberedIdentity();
+    if (remembered) {
+      setIdentifier(remembered.identifier);
+      setRememberMe(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) navigate(from, { replace: true });
@@ -30,8 +44,14 @@ export default function Login() {
     if (loading) return;
     setLoading(true);
     setError(null);
+    const trimmedIdentifier = identifier.trim();
     try {
-      await login(identifier.trim(), password);
+      await login(trimmedIdentifier, password);
+      if (rememberMe) {
+        persistRememberedIdentity(trimmedIdentifier);
+      } else {
+        clearRememberedIdentity();
+      }
       navigate(from, { replace: true });
     } catch (err) {
       setError(
@@ -69,15 +89,31 @@ export default function Login() {
           <label className="mb-1.5 block text-xs font-medium text-df-muted">
             {t("authPassword")}
           </label>
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-df-strong bg-df-inset px-3 py-2.5 text-base text-df focus:border-[#f0b90b]/50 focus:outline-none transition-all duration-300 disabled:opacity-50"
-            disabled={loading}
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-xl border border-df-strong bg-df-inset py-2.5 pe-11 ps-3 text-base text-df focus:border-[#f0b90b]/50 focus:outline-none transition-all duration-300 disabled:opacity-50"
+              disabled={loading}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              disabled={loading}
+              className="absolute end-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-df-faint transition-colors duration-200 hover:bg-white/[0.06] hover:text-[#f0b90b] disabled:opacity-50"
+              aria-label={
+                showPassword ? t("settingsHidePassword") : t("settingsShowPassword")
+              }
+            >
+              <i
+                className={`fa-solid text-sm ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                aria-hidden
+              />
+            </button>
+          </div>
         </div>
 
         <div className="mb-5 flex items-center justify-between px-1">
