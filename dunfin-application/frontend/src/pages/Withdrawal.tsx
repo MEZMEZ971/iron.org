@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ApiError,
   fetchWithdrawPreflight,
   fetchWithdrawalHistory,
   submitWithdrawal,
@@ -15,6 +14,7 @@ import { useUser } from "../context/UserContext";
 import { emitWalletRefresh } from "../lib/walletSync";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 const PANEL =
   "rounded-xl border border-slate-200/90 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-300 ease-in-out dark:border-white/[0.06] dark:bg-[rgba(26,31,46,0.65)] dark:shadow-none";
@@ -133,26 +133,12 @@ export default function Withdrawal() {
   }
 
   function resolveWithdrawError(e: unknown): string {
-    if (e instanceof ApiError) {
-      if (e.code === "WRONG_PAYMENT_PASSWORD" || e.code === "WRONG_PAYMENT_PIN") {
-        return locale === "ar"
-          ? e.errorAr || t("h5PaymentWrongPinAr")
-          : t("h5PaymentWrongPin");
-      }
-      if (e.code === "PAYMENT_PASSWORD_NOT_SET") {
-        return locale === "ar"
-          ? e.errorAr || t("h5PaymentPinNotSetupAr")
-          : t("h5PaymentPinNotSetup");
-      }
-      if (
-        e.code === "PAYMENT_PASSWORD_REQUIRED" ||
-        e.code === "PAYMENT_PIN_REQUIRED"
-      ) {
-        return t("h5PaymentVerifySubtitle");
-      }
-      return e.message;
-    }
-    return e instanceof Error ? e.message : t("withdrawFailed");
+    return resolveUserFacingError(e, t, {
+      fallbackKey: "withdrawFailed",
+      blockchainKey: "errorSecuringConnection",
+      locale,
+      context: "withdraw",
+    });
   }
 
   async function executeWithdraw(paymentPassword: string) {

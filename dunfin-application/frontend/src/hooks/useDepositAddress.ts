@@ -5,6 +5,7 @@ import type {
   DepositCurrency,
   DepositNetwork,
 } from "../types/deposit";
+import { resolveUserFacingError } from "../lib/userFacingError";
 import { useLocale } from "../i18n/LocaleContext";
 
 export function useDepositAddress(
@@ -24,7 +25,13 @@ export function useDepositAddress(
       setData(result);
     } catch (e) {
       setData(null);
-      setError(e instanceof Error ? e.message : t("errorLoadDepositAddress"));
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorLoadDepositAddress",
+          blockchainKey: "errorSecuringConnection",
+          context: "deposit-address",
+        })
+      );
     } finally {
       setLoading(false);
     }

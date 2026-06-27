@@ -324,6 +324,12 @@ const en = {
     successGenericTitle: "Action Confirmed",
     successGenericMessage: "Your request was processed successfully.",
     errorGeneric: "Something went wrong. Please try again.",
+    errorNetworkBusy:
+      "Network is a bit busy. Optimizing your portfolio connection — please refresh in a few seconds.",
+    errorSecuringConnection:
+      "Securing connection to the blockchain… Please wait a moment and try again.",
+    errorBoundaryTitle: "We hit a small bump",
+    errorBoundaryRefresh: "Refresh page",
     errorLoadProfile: "Failed to load profile.",
     errorLoadEarnings: "Failed to load earnings.",
     errorLoadStatus: "Failed to load trading status.",
@@ -656,6 +662,12 @@ const ar = {
     successGenericTitle: "تم تأكيد الإجراء",
     successGenericMessage: "تمت معالجة طلبك بنجاح.",
     errorGeneric: "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    errorNetworkBusy:
+      "الشبكة مشغولة قليلاً. جاري تحسين اتصال محفظتك — يرجى التحديث خلال ثوانٍ.",
+    errorSecuringConnection:
+      "جاري تأمين الاتصال بالبلوكشين… يرجى الانتظار لحظة ثم المحاولة مجدداً.",
+    errorBoundaryTitle: "واجهنا عطلاً بسيطاً",
+    errorBoundaryRefresh: "تحديث الصفحة",
     errorLoadProfile: "تعذر تحميل الملف الشخصي.",
     errorLoadEarnings: "تعذر تحميل الأرباح.",
     errorLoadStatus: "تعذر تحميل حالة التداول.",

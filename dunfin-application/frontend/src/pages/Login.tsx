@@ -1,13 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ApiError } from "../api/client";
 import { ForgotPasswordSupportModal } from "../components/auth/ForgotPasswordSupportModal";
 import { useAuth } from "../context/AuthContext";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 export default function Login() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,11 +34,13 @@ export default function Login() {
       await login(identifier.trim(), password);
       navigate(from, { replace: true });
     } catch (err) {
-      if (err instanceof ApiError && err.code === "ACCOUNT_DEACTIVATED") {
-        setError(t("authAccountDeactivated"));
-      } else {
-        setError(err instanceof Error ? err.message : t("authLoginFailed"));
-      }
+      setError(
+        resolveUserFacingError(err, t, {
+          fallbackKey: "authLoginFailed",
+          locale,
+          context: "login",
+        })
+      );
     } finally {
       setLoading(false);
     }

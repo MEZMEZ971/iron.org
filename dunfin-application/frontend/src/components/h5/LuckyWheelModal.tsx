@@ -17,6 +17,7 @@ import { useH5Portfolio } from "../../context/H5PortfolioContext";
 import { useLocale } from "../../i18n/LocaleContext";
 import { isRtlLocale } from "../../i18n/locales";
 import { emitWalletRefresh } from "../../lib/walletSync";
+import { resolveUserFacingError } from "../../lib/userFacingError";
 import { useUser } from "../../context/UserContext";
 
 const SPIN_MS = 5000;
@@ -229,10 +230,22 @@ export function LuckyWheelModal({ open, onClose }: Props) {
               : prev
           );
         } else {
-          setError(e.message);
+          setError(
+            resolveUserFacingError(e, t, {
+              fallbackKey: "h5SpinFailed",
+              locale,
+              context: "lucky-wheel",
+            })
+          );
         }
       } else {
-        setError(e instanceof Error ? e.message : t("h5SpinFailed"));
+        setError(
+          resolveUserFacingError(e, t, {
+            fallbackKey: "h5SpinFailed",
+            locale,
+            context: "lucky-wheel",
+          })
+        );
       }
     }
   }

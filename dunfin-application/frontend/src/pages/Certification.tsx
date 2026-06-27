@@ -5,9 +5,10 @@ import { PageHeader } from "../components/PageHeader";
 import { useUser } from "../context/UserContext";
 import { useKyc } from "../hooks/useKyc";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 export default function Certification() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { userId } = useUser();
   const { data, loading, error, refresh } = useKyc(userId);
 
@@ -39,7 +40,13 @@ export default function Certification() {
       setBackFile(null);
       await refresh();
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : t("kycSubmitFailed"));
+      setSubmitError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "kycSubmitFailed",
+          locale,
+          context: "kyc-submit",
+        })
+      );
     } finally {
       setSubmitting(false);
     }

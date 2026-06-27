@@ -11,9 +11,10 @@ import {
 import { CountryCodeSelect } from "../components/auth/CountryCodeSelect";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 export default function Register() {
-  const { t, dir } = useLocale();
+  const { t, dir, locale } = useLocale();
   const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { codeFromUrl, resolvedCode, hasUrlCode, hasReferralContext } =
@@ -64,7 +65,13 @@ export default function Register() {
       clearStoredReferralCode();
       navigate("/", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("authRegisterFailed"));
+      setError(
+        resolveUserFacingError(err, t, {
+          fallbackKey: "authRegisterFailed",
+          locale,
+          context: "register",
+        })
+      );
     } finally {
       setLoading(false);
     }

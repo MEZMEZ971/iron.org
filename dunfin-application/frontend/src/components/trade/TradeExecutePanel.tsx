@@ -3,6 +3,7 @@ import { ApiError, executeTrade } from "../../api/client";
 import { useSuccessFeedback } from "../../context/SuccessFeedbackContext";
 import { useLocale } from "../../i18n/LocaleContext";
 import type { TranslationKey } from "../../i18n/translations";
+import { resolveUserFacingError } from "../../lib/userFacingError";
 import { useCountdownTo } from "../../hooks/useCountdown";
 import { useTradeStatus } from "../../hooks/useTradeStatus";
 import Strategies from "../../pages/Strategies";
@@ -18,11 +19,7 @@ function resolveTradeErrorMessage(
   t: (key: TranslationKey, vars?: Record<string, string | number>) => string,
   locale: string
 ) {
-  if (!(e instanceof ApiError)) {
-    return e instanceof Error ? e.message : t("tradeExecuteFailed");
-  }
-
-  if (e.code === "QUALIFICATION_DENIED") {
+  if (e instanceof ApiError && e.code === "QUALIFICATION_DENIED") {
     const team = e.requiredTeam ?? 0;
     if (team === 0) {
       return t("h5TradeMatrixDeniedEntry", {
@@ -35,8 +32,11 @@ function resolveTradeErrorMessage(
     });
   }
 
-  if (locale === "ar" && e.errorAr) return e.errorAr;
-  return e.message || t("tradeExecuteFailed");
+  return resolveUserFacingError(e, t, {
+    fallbackKey: "tradeExecuteFailed",
+    locale,
+    context: "trade-execute",
+  });
 }
 
 export function TradeExecutePanel({ userId, onTradeSettled }: Props) {

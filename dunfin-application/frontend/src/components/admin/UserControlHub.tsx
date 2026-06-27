@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useH5Portfolio } from "../../context/H5PortfolioContext";
 import { useLocale } from "../../i18n/LocaleContext";
 import { emitWalletRefresh } from "../../lib/walletSync";
+import { resolveUserFacingError } from "../../lib/userFacingError";
 import { useUser } from "../../context/UserContext";
 import {
   ADMIN_DESC,
@@ -95,7 +96,12 @@ export function UserControlHub({ onNotice }: Props) {
       setUser(lookedUp);
       setUidQuery(lookedUp.uid);
     } catch (err) {
-      onNotice(err instanceof Error ? err.message : t("adminUserNotFound"));
+      onNotice(
+        resolveUserFacingError(err, t, {
+          fallbackKey: "adminUserNotFound",
+          context: "admin-user-lookup",
+        })
+      );
     } finally {
       setSearching(false);
     }
@@ -128,7 +134,10 @@ export function UserControlHub({ onNotice }: Props) {
       onNotice(t("adminCreditSuccess"));
     } catch (error) {
       onNotice(
-        error instanceof Error ? error.message : t("adminBalanceAdjustFailed")
+        resolveUserFacingError(error, t, {
+          fallbackKey: "adminBalanceAdjustFailed",
+          context: "admin-credit",
+        })
       );
       try {
         const rollback = await fetchTargetUserAdminLookup(user.uid);
@@ -168,7 +177,10 @@ export function UserControlHub({ onNotice }: Props) {
       onNotice(t("adminDebitSuccess"));
     } catch (error) {
       onNotice(
-        error instanceof Error ? error.message : t("adminBalanceAdjustFailed")
+        resolveUserFacingError(error, t, {
+          fallbackKey: "adminBalanceAdjustFailed",
+          context: "admin-credit",
+        })
       );
       try {
         const rollback = await fetchTargetUserAdminLookup(user.uid);
@@ -193,7 +205,12 @@ export function UserControlHub({ onNotice }: Props) {
         nextActive ? t("adminAccountActivated") : t("adminAccountSuspended")
       );
     } catch (err) {
-      onNotice(err instanceof Error ? err.message : t("errorGeneric"));
+      onNotice(
+        resolveUserFacingError(err, t, {
+          fallbackKey: "errorGeneric",
+          context: "admin-user-status",
+        })
+      );
     } finally {
       setBusy(null);
     }

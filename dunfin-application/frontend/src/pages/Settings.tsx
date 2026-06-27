@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { useUser } from "../context/UserContext";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 type SettingsView = "hub" | "login-password" | "payment-password";
 
@@ -121,7 +122,7 @@ function PasswordField({
 }
 
 export default function Settings() {
-  const { t, dir } = useLocale();
+  const { t, dir, locale } = useLocale();
   const rtl = dir === "rtl";
   const { user, patchUser } = useAuth();
   const { userId, displayName, setDisplayName } = useUser();
@@ -171,7 +172,13 @@ export default function Settings() {
       setNotice(t("settingsOtpSent"));
       window.setTimeout(() => setNotice(null), 3000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("settingsUpdateFailed"));
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "settingsUpdateFailed",
+          locale,
+          context: "settings-otp",
+        })
+      );
     } finally {
       setBusy(false);
     }
@@ -194,7 +201,13 @@ export default function Settings() {
       setNotice(t("settingsUpdateSuccess"));
       window.setTimeout(() => setNotice(null), 2500);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("settingsUpdateFailed"));
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "settingsUpdateFailed",
+          locale,
+          context: "settings-otp",
+        })
+      );
     } finally {
       setBusy(false);
     }
@@ -215,7 +228,13 @@ export default function Settings() {
       setNotice(t("settingsUpdateSuccess"));
       window.setTimeout(() => setNotice(null), 2500);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("settingsUpdateFailed"));
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "settingsUpdateFailed",
+          locale,
+          context: "settings-otp",
+        })
+      );
     } finally {
       setBusy(false);
     }
@@ -234,7 +253,13 @@ export default function Settings() {
       setNotice(t("settingsUpdateSuccess"));
       window.setTimeout(() => setNotice(null), 2500);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("settingsUpdateFailed"));
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "settingsUpdateFailed",
+          locale,
+          context: "settings-otp",
+        })
+      );
     } finally {
       setBusy(false);
     }

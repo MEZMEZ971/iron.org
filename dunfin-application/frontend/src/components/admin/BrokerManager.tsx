@@ -8,6 +8,7 @@ import {
 import { useLocale } from "../../i18n/LocaleContext";
 import type { TranslationKey } from "../../i18n/translations";
 import { formatAmount, formatUsdt, safeNumber } from "../../lib/formatNumbers";
+import { resolveUserFacingError } from "../../lib/userFacingError";
 import {
   ADMIN_DESC,
   ADMIN_GHOST_BTN,
@@ -69,7 +70,12 @@ export function BrokerManager({ onNotice }: Props) {
       setBrokers(res.brokers);
       setSummary(res.summary);
     } catch (e) {
-      onNotice(e instanceof Error ? e.message : t("adminAccessDenied"));
+      onNotice(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "adminAccessDenied",
+          context: "admin-brokers",
+        })
+      );
       setBrokers([]);
       setSummary(null);
     } finally {
@@ -109,7 +115,12 @@ export function BrokerManager({ onNotice }: Props) {
       setPayoutModalOpen(false);
       await load();
     } catch (e) {
-      onNotice(e instanceof Error ? e.message : t("errorGeneric"));
+      onNotice(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorGeneric",
+          context: "admin-broker-payout",
+        })
+      );
     } finally {
       setPayoutBusy(false);
     }

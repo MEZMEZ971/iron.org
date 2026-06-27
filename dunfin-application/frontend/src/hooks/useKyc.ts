@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchKycStatus, type KycStatusResponse } from "../api/client";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 export function useKyc(userId: string) {
   const { t } = useLocale();
@@ -14,7 +15,12 @@ export function useKyc(userId: string) {
       const result = await fetchKycStatus(userId);
       setData(result);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("errorLoadKyc"));
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorLoadKyc",
+          context: "kyc",
+        })
+      );
     } finally {
       setLoading(false);
     }

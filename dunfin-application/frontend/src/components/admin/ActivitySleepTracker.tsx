@@ -7,6 +7,7 @@ import {
 } from "../../api/client";
 import { useLocale } from "../../i18n/LocaleContext";
 import type { TranslationKey } from "../../i18n/translations";
+import { resolveUserFacingError } from "../../lib/userFacingError";
 import { ADMIN_LABEL, ADMIN_MUTED, ADMIN_PANEL } from "./adminUi";
 
 const GOLD_BTN =
@@ -43,7 +44,12 @@ export function ActivitySleepTracker({ onNotice }: Props) {
       const res = await fetchAdminActivityAnalytics();
       setData(res);
     } catch (e) {
-      onNotice(e instanceof Error ? e.message : t("adminAccessDenied"));
+      onNotice(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "adminAccessDenied",
+          context: "admin-activity",
+        })
+      );
     } finally {
       setLoading(false);
     }
@@ -66,7 +72,12 @@ export function ActivitySleepTracker({ onNotice }: Props) {
       }
       await load();
     } catch (e) {
-      onNotice(e instanceof Error ? e.message : t("errorGeneric"));
+      onNotice(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorGeneric",
+          context: "admin-wakeup",
+        })
+      );
     } finally {
       setWaking(false);
     }

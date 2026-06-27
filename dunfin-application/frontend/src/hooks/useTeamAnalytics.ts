@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  ApiNetworkError,
-  fetchTeamAnalytics,
-  type TeamAnalytics,
-} from "../api/client";
+import { fetchTeamAnalytics, type TeamAnalytics } from "../api/client";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 export function useTeamAnalytics(userId: string) {
   const { t } = useLocale();
@@ -23,13 +20,12 @@ export function useTeamAnalytics(userId: string) {
       const result = await fetchTeamAnalytics(userId);
       setData(result);
     } catch (e) {
-      if (e instanceof ApiNetworkError) {
-        setError(e.message);
-      } else {
-        setError(
-          e instanceof Error ? e.message : t("errorLoadTeam")
-        );
-      }
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorLoadTeam",
+          context: "team-analytics",
+        })
+      );
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchInviteInfo, type InviteInfo } from "../api/client";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 export function useInviteInfo(userId: string) {
   const { t } = useLocale();
@@ -14,7 +15,12 @@ export function useInviteInfo(userId: string) {
       const result = await fetchInviteInfo(userId);
       setData(result);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("errorLoadInvite"));
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorLoadInvite",
+          context: "invite",
+        })
+      );
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ApiNetworkError,
   fetchUserProfile,
   registerUser,
   syncBalance,
@@ -12,6 +11,7 @@ import {
   savePortfolioCache,
 } from "../lib/portfolioCache";
 import { resolvePortfolioBalances } from "../lib/portfolioBalances";
+import { resolveUserFacingError } from "../lib/userFacingError";
 import { subscribeWalletRefresh } from "../lib/walletSync";
 import { useUser } from "../context/UserContext";
 import { useLocale } from "../i18n/LocaleContext";
@@ -59,11 +59,12 @@ export function useUserProfile(userId: string) {
       setProfile(data);
       savePortfolioCache(activeUserId, { profile: data });
     } catch (e) {
-      if (e instanceof ApiNetworkError) {
-        setError(e.message);
-      } else {
-        setError(e instanceof Error ? e.message : t("errorLoadProfile"));
-      }
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorLoadProfile",
+          context: "profile",
+        })
+      );
     } finally {
       if (userIdRef.current === activeUserId) {
         setLoading(false);

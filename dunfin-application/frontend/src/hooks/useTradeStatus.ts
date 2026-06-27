@@ -7,6 +7,7 @@ import {
 import { getAuthenticatedUserId } from "../lib/authStorage";
 import { subscribeWalletRefresh } from "../lib/walletSync";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 export function getUserId(): string {
   return getAuthenticatedUserId() || "";
@@ -29,7 +30,12 @@ export function useTradeStatus(userId: string) {
         const data = await fetchTradeStatus(userId);
         setStatus(data);
       } catch (e) {
-        setError(e instanceof Error ? e.message : t("errorLoadStatus"));
+        setError(
+          resolveUserFacingError(e, t, {
+            fallbackKey: "errorLoadStatus",
+            context: "trade-status",
+          })
+        );
       } finally {
         setLoading(false);
       }

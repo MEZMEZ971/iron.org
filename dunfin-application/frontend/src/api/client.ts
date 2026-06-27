@@ -114,8 +114,8 @@ export class ApiError extends Error {
 }
 
 export class ApiNetworkError extends Error {
-  constructor(message = "Unable to reach API server") {
-    super(message);
+  constructor() {
+    super("NETWORK_UNAVAILABLE");
     this.name = "ApiNetworkError";
   }
 }
@@ -161,10 +161,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers,
       credentials: "include",
     });
-  } catch {
-    throw new ApiNetworkError(
-      "Cannot connect to API. Start the backend with `npm run server` from the repo root."
-    );
+  } catch (networkErr) {
+    console.error("[api] network error:", path, networkErr);
+    throw new ApiNetworkError();
   }
 
   const raw = await res.text();
@@ -179,18 +178,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     try {
       data = JSON.parse(raw) as typeof data;
     } catch {
-      throw new ApiError(
-        res.ok ? "Invalid JSON response from server" : `Request failed (${res.status})`,
-        res.status
-      );
+      console.error("[api] invalid JSON:", path, res.status, raw.slice(0, 200));
+      throw new ApiError("INVALID_JSON_RESPONSE", res.status, "INVALID_RESPONSE");
     }
   }
 
   if (!res.ok) {
+    const technicalDetail =
+      (typeof data.error === "string" && data.error) ||
+      res.statusText ||
+      `HTTP_${res.status}`;
+    console.error("[api] request failed:", path, res.status, technicalDetail);
     throw new ApiError(
-      data.error || res.statusText || `Request failed (${res.status})`,
+      technicalDetail,
       res.status,
-      data.code,
+      typeof data.code === "string" ? data.code : undefined,
       typeof data.errorAr === "string" ? data.errorAr : undefined,
       {
         requiredCapital:

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchTradeEarnings, type TradeEarnings } from "../api/client";
 import { useLocale } from "../i18n/LocaleContext";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 export function useTradeEarnings(userId: string) {
   const { t } = useLocale();
@@ -15,7 +16,12 @@ export function useTradeEarnings(userId: string) {
       const data = await fetchTradeEarnings(userId);
       setEarnings(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("errorLoadEarnings"));
+      setError(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorLoadEarnings",
+          context: "trade-earnings",
+        })
+      );
     } finally {
       setLoading(false);
     }

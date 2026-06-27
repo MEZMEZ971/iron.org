@@ -5,6 +5,7 @@ import {
 } from "../../api/client";
 import { useLocale } from "../../i18n/LocaleContext";
 import { formatUsdt as formatUsdtSafe } from "../../lib/formatNumbers";
+import { resolveUserFacingError } from "../../lib/userFacingError";
 import {
   ADMIN_DESC,
   ADMIN_INPUT,
@@ -42,7 +43,12 @@ export function UserWalletsAuditor({ onNotice }: Props) {
       });
       setRows(res.users);
     } catch (e) {
-      onNotice(e instanceof Error ? e.message : t("adminAccessDenied"));
+      onNotice(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "adminAccessDenied",
+          context: "admin-finance",
+        })
+      );
       setRows([]);
     } finally {
       setLoading(false);

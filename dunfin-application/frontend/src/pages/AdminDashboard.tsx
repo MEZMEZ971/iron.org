@@ -25,6 +25,7 @@ import {
 } from "../components/admin/adminUi";
 import { useLocale } from "../i18n/LocaleContext";
 import type { TranslationKey } from "../i18n/translations";
+import { resolveUserFacingError } from "../lib/userFacingError";
 
 type AdminTab =
   | "withdrawals"
@@ -92,7 +93,7 @@ function KycDocThumb({
 }
 
 export default function AdminDashboard() {
-  const { t, dir } = useLocale();
+  const { t, dir, locale } = useLocale();
   const rtl = dir === "rtl";
 
   const [activeTab, setActiveTab] = useState<AdminTab>("users");
@@ -153,7 +154,13 @@ export default function AdminDashboard() {
       await refresh();
       flash(t("adminApproveClear"));
     } catch (e) {
-      flash(e instanceof Error ? e.message : t("errorGeneric"));
+      flash(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorGeneric",
+          locale,
+          context: "admin-withdrawal",
+        })
+      );
     } finally {
       setBusyId(null);
     }
@@ -179,7 +186,13 @@ export default function AdminDashboard() {
       setRejectReason("");
       await refresh();
     } catch (e) {
-      flash(e instanceof Error ? e.message : t("errorGeneric"));
+      flash(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorGeneric",
+          locale,
+          context: "admin-withdrawal",
+        })
+      );
     } finally {
       setBusyId(null);
     }
@@ -191,7 +204,13 @@ export default function AdminDashboard() {
       await adminKycAction(id, { action: "approve" });
       await refresh();
     } catch (e) {
-      flash(e instanceof Error ? e.message : t("errorGeneric"));
+      flash(
+        resolveUserFacingError(e, t, {
+          fallbackKey: "errorGeneric",
+          locale,
+          context: "admin-withdrawal",
+        })
+      );
     } finally {
       setBusyId(null);
     }

@@ -29,6 +29,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import { resetBodyScrollLock } from "./lib/scrollLock";
+import { AppErrorBoundary } from "./components/feedback/AppErrorBoundary";
 import { MobileLanguageSwitcher } from "./components/layout/MobileLanguageSwitcher";
 
 function ScrollLockRouteReset() {
@@ -41,7 +42,8 @@ function ScrollLockRouteReset() {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <AppErrorBoundary>
+      <ThemeProvider>
       <LocaleProvider>
         <AuthProvider>
           <UserProvider>
@@ -90,6 +92,7 @@ export default function App() {
           </UserProvider>
         </AuthProvider>
       </LocaleProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </AppErrorBoundary>
   );
 }
