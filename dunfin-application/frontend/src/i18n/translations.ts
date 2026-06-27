@@ -289,6 +289,11 @@ const en = {
     authIdentifier: "Username, email, or phone",
     authIdentifierPlaceholder: "Username or Email",
     authRememberMe: "Remember me",
+    authForgotPassword: "Forgot password?",
+    authForgotPasswordTitle: "Account recovery",
+    authForgotPasswordBody:
+      "For your security, password resets are handled by our official support team. Contact us on Telegram with your registered email or UID — we will verify your identity and restore access right away.",
+    authTelegramSupportButton: "Contact {handle} on Telegram",
     authSigningIn: "Signing in…",
     authCreatingAccount: "Creating account…",
     authNoAccount: "Don't have an account?",
@@ -616,6 +621,11 @@ const ar = {
     authIdentifier: "اسم المستخدم أو البريد أو الهاتف",
     authIdentifierPlaceholder: "ادخل اسم المستخدم أو البريد",
     authRememberMe: "تذكرني",
+    authForgotPassword: "نسيت كلمة المرور؟",
+    authForgotPasswordTitle: "استعادة الحساب",
+    authForgotPasswordBody:
+      "لحماية حسابك، تتم إعادة تعيين كلمة المرور عبر فريق الدعم الرسمي. تواصل معنا على تيليغرام مع بريدك المسجل أو رقم العضوية — سنتحقق من هويتك ونستعيد الوصول فوراً.",
+    authTelegramSupportButton: "تواصل مع {handle} على تيليغرام",
     authSigningIn: "جاري تسجيل الدخول…",
     authCreatingAccount: "جاري إنشاء الحساب…",
     authNoAccount: "ليس لديك حساب؟",

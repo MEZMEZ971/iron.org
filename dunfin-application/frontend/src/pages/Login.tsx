@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ApiError } from "../api/client";
+import { ForgotPasswordSupportModal } from "../components/auth/ForgotPasswordSupportModal";
 import { useAuth } from "../context/AuthContext";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { useLocale } from "../i18n/LocaleContext";
@@ -18,6 +19,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) navigate(from, { replace: true });
@@ -89,6 +91,13 @@ export default function Login() {
               {t("authRememberMe")}
             </span>
           </label>
+          <button
+            type="button"
+            onClick={() => setForgotOpen(true)}
+            className="text-sm font-medium text-[#f0b90b] transition hover:text-[#fcd535] hover:underline"
+          >
+            {t("authForgotPassword")}
+          </button>
         </div>
 
         {error && (
@@ -112,6 +121,11 @@ export default function Login() {
           </Link>
         </p>
       </form>
+
+      <ForgotPasswordSupportModal
+        open={forgotOpen}
+        onClose={() => setForgotOpen(false)}
+      />
     </AuthLayout>
   );
 }
