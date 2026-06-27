@@ -2,7 +2,6 @@ const { Prisma } = require("@prisma/client");
 const { prisma } = require("../lib/prisma.cjs");
 const { trunc6 } = require("../lib/formatNumbers.cjs");
 const { decimalToNumber } = require("../lib/userMapper.cjs");
-const { getAffiliateNetworkFromDb } = require("../lib/affiliateStats.cjs");
 const {
   autoResolveStrategy,
   getCooldownState,
@@ -12,7 +11,7 @@ const {
 const { isTrialCurrentlyActive } = require("../lib/trialBalance.cjs");
 const {
   syncTradableWalletInTx,
-  tradableBalanceFromUserRow,
+  buildTradeBalanceSnapshot,
 } = require("../lib/tradeBalance.cjs");
 
 const TX_RETRYABLE_CODES = new Set(["P2034", "P2028"]);
@@ -72,9 +71,7 @@ function computeCapitalSplit(user, capitalAmount, now = new Date()) {
 
 /**
  * Atomically lock trading capital: eligibility + balance checks + trade row inside one TX.
- * @param {string} userId
- * @param {number} activeTeamCount — pre-fetched affiliate active count
- * @param {ReturnType<typeof autoResolveStrategy>} resolved — pre-validated strategy resolution
+ * walletBalance and lockedCapital are reconciled via syncTradableWalletInTx before and after lock.
  */
 async function executeTradeAtomic(userId, activeTeamCount, resolved) {
   const capital = resolved.capitalAmount;
@@ -125,7 +122,8 @@ async function executeTradeAtomic(userId, activeTeamCount, resolved) {
       }
 
       user = await syncTradableWalletInTx(userId, user, tx);
-      const tradingBalance = tradableBalanceFromUserRow(user);
+      let snapshot = await buildTradeBalanceSnapshot(userId, user, tx);
+      const tradingBalance = snapshot.availableBalance;
 
       if (capital > tradingBalance) {
         return {
@@ -133,6 +131,7 @@ async function executeTradeAtomic(userId, activeTeamCount, resolved) {
           status: 400,
           code: "INSUFFICIENT_BALANCE",
           error: "Insufficient wallet balance for the requested trading capital.",
+          balances: snapshot,
         };
       }
 
@@ -184,11 +183,13 @@ async function executeTradeAtomic(userId, activeTeamCount, resolved) {
         };
       }
 
-      const refreshed = await tx.user.findUnique({
+      let refreshed = await tx.user.findUnique({
         where: { id: userId },
-        select: { walletBalance: true },
+        select: TRADE_LOCK_SELECT,
       });
-      const walletBalanceAfter = trunc6(decimalToNumber(refreshed?.walletBalance));
+
+      refreshed = await syncTradableWalletInTx(userId, refreshed, tx);
+      snapshot = await buildTradeBalanceSnapshot(userId, refreshed, tx);
 
       const tradeRow = await tx.trade.create({
         data: {
@@ -196,7 +197,7 @@ async function executeTradeAtomic(userId, activeTeamCount, resolved) {
           capitalAmount: capital,
           strategyId: resolved.strategy.id,
           teamActiveAtExecution: activeTeamCount,
-          walletBalanceAfter,
+          walletBalanceAfter: snapshot.availableWallet,
           executedAt: tradeNow,
         },
       });
@@ -205,8 +206,13 @@ async function executeTradeAtomic(userId, activeTeamCount, resolved) {
         ok: true,
         tradeNow,
         sessionEnds,
-        walletBalanceAfter,
+        walletBalanceAfter: snapshot.availableWallet,
+        lockedCapitalAfter: snapshot.lockedCapital,
+        availableBalanceAfter: snapshot.availableBalance,
+        totalBalanceAfter: snapshot.totalBalance,
+        trialBalanceAfter: snapshot.trialBalance,
         tradeRowId: tradeRow.id,
+        balances: snapshot,
       };
     }, TX_OPTIONS)
   );

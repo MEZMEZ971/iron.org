@@ -244,6 +244,9 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
             trialBalance: trial,
             isTrialActive: payload.isTrialActive ?? prev.isTrialActive,
             fundAccount,
+            ...(payload.lockedCapital != null
+              ? { lockedCapital: payload.lockedCapital, tradingAccount: payload.lockedCapital }
+              : {}),
           };
           savePortfolioCache(userId, { profile: next });
           return next;
@@ -269,7 +272,21 @@ export function H5PortfolioProvider({ children }: { children: ReactNode }) {
           return next;
         });
         setTradeStatus((prev) =>
-          prev ? { ...prev, walletBalance: payload.walletBalance! } : prev
+          prev
+            ? {
+                ...prev,
+                walletBalance: payload.walletBalance!,
+                ...(payload.availableBalance != null
+                  ? { availableBalance: payload.availableBalance }
+                  : {}),
+                ...(payload.lockedCapital != null
+                  ? { lockedCapital: payload.lockedCapital }
+                  : {}),
+                ...(payload.totalBalance != null
+                  ? { totalBalance: payload.totalBalance }
+                  : {}),
+              }
+            : prev
         );
       }
 

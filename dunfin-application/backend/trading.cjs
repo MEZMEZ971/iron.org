@@ -18,9 +18,10 @@ const { processDuePayouts, settleUserTradePayout } = require("./cron/payouts.cjs
 const { executeTradeAtomic } = require("./services/tradeService.cjs");
 const { touchUserActivity } = require("./lib/userActivity.cjs");
 const {
-  isTrialCurrentlyActive,
-} = require("./lib/trialBalance.cjs");
-const { resolveTradableBalance } = require("./lib/tradeBalance.cjs");
+  resolveTradableBalance,
+  buildTradeBalanceSnapshot,
+  activeTrialSpendable,
+} = require("./lib/tradeBalance.cjs");
 
 async function releaseExpiredLock(userId) {
   const row = await prisma.user.findUnique({
@@ -49,9 +50,13 @@ async function releaseExpiredLock(userId) {
   return null;
 }
 
-async function executeTrade(userId) {
+/**
+ * Ledger-aware pre-flight: resolveTradableBalance + strategy matrix before TX.
+ * Exported for trade route explicit validation.
+ */
+async function validateTradeExecute(userId) {
   if (!userId) {
-    return { ok: false, status: 400, error: "userId required" };
+    return { ok: false, status: 400, error: "userId required", code: "INVALID_REQUEST" };
   }
 
   const accountRow = await prisma.user.findUnique({
@@ -79,15 +84,17 @@ async function executeTrade(userId) {
       ok: false,
       status: 429,
       error: "Trading is locked for 24 hours after your last execution.",
+      code: "COOLDOWN_ACTIVE",
       cooldown,
     };
   }
 
   const network = await getAffiliateNetworkFromDb(userId);
   const activeTeamCount = network.totalActiveMembers;
-  const tradingBalance = await resolveTradableBalance(userId, user);
+  const tradableBalance = await resolveTradableBalance(userId, user);
+  const snapshot = await buildTradeBalanceSnapshot(userId, user);
 
-  const resolved = autoResolveStrategy(tradingBalance, activeTeamCount);
+  const resolved = autoResolveStrategy(tradableBalance, activeTeamCount);
 
   if (!resolved.ok) {
     return {
@@ -98,22 +105,49 @@ async function executeTrade(userId) {
       errorAr: resolved.errorAr,
       requiredCapital: resolved.requiredCapital ?? ENTRY_STRATEGY.minCapital,
       requiredTeam: resolved.requiredTeam ?? ENTRY_STRATEGY.minTeam,
+      tradableBalance: trunc6(tradableBalance),
+      balances: snapshot,
       network: {
         totalActiveMembers: activeTeamCount,
-        walletBalance: trunc6(tradingBalance),
+        walletBalance: trunc6(tradableBalance),
       },
     };
   }
 
   const capital = resolved.capitalAmount;
-  if (capital > tradingBalance) {
+  if (capital > tradableBalance) {
     return {
       ok: false,
       status: 400,
       error: "Insufficient wallet balance for the requested trading capital.",
       code: "INSUFFICIENT_BALANCE",
+      tradableBalance: trunc6(tradableBalance),
+      balances: snapshot,
     };
   }
+
+  return {
+    ok: true,
+    userId,
+    user,
+    tradableBalance: trunc6(tradableBalance),
+    activeTeamCount,
+    resolved,
+    capital,
+    balances: snapshot,
+    network,
+  };
+}
+
+async function executeTrade(userId, options = {}) {
+  const preflight = options.preflight ?? (await validateTradeExecute(userId));
+
+  if (!preflight.ok) {
+    return preflight;
+  }
+
+  const { activeTeamCount, resolved, capital, network, balances: preflightBalances } =
+    preflight;
 
   const txResult = await executeTradeAtomic(userId, activeTeamCount, resolved);
 
@@ -123,13 +157,21 @@ async function executeTrade(userId) {
 
   const now = txResult.tradeNow.toISOString();
   const sessionEndsAt = txResult.sessionEnds.toISOString();
-  const newWalletBalance = txResult.walletBalanceAfter;
+  const balances = txResult.balances ?? {
+    availableWallet: txResult.walletBalanceAfter,
+    availableBalance: txResult.availableBalanceAfter,
+    lockedCapital: txResult.lockedCapitalAfter,
+    totalBalance: txResult.totalBalanceAfter,
+    trialBalance: txResult.trialBalanceAfter,
+  };
 
   touchUserActivity(userId);
 
   propagateAffiliateCacheRefresh(userId).catch((err) => {
     console.warn("[affiliate-stats] propagate after trade:", err.message);
   });
+
+  const tradeStatus = await getTradeStatus(userId);
 
   return {
     ok: true,
@@ -138,8 +180,11 @@ async function executeTrade(userId) {
       capitalAmount: capital,
       strategy: resolved.strategy,
       executedAt: now,
-      walletBalance: newWalletBalance,
-      lockedCapital: capital,
+      walletBalance: balances.availableWallet,
+      availableBalance: balances.availableBalance,
+      lockedCapital: balances.lockedCapital,
+      totalBalance: balances.totalBalance,
+      trialBalance: balances.trialBalance,
       lockedUntil: sessionEndsAt,
       sessionEndsAt,
       network: {
@@ -151,8 +196,17 @@ async function executeTrade(userId) {
         },
       },
     },
+    balances: {
+      availableBalance: balances.availableBalance,
+      lockedCapital: balances.lockedCapital,
+      totalBalance: balances.totalBalance,
+      walletBalance: balances.availableWallet,
+      trialBalance: balances.trialBalance,
+      before: preflightBalances,
+      after: balances,
+    },
     cooldown: getCooldownState(now),
-    user: await getTradeStatus(userId),
+    user: tradeStatus,
   };
 }
 
@@ -161,13 +215,11 @@ async function getTradeStatus(userId) {
   const user = await db.getOrCreateUser(userId);
 
   const network = await getAffiliateNetworkFromDb(userId);
-  const walletBalance = Number(user.walletBalance) || 0;
-  const trialBalance = isTrialCurrentlyActive(user)
-    ? Number(user.trialBalance) || 0
-    : 0;
-  const tradingBalance = await resolveTradableBalance(userId, user);
-  const lockedCapital = Number(user.lockedCapital) || 0;
+  const snapshot = await buildTradeBalanceSnapshot(userId, user);
+  const trialBalance = activeTrialSpendable(user);
+  const lockedCapital = snapshot.lockedCapital;
   const activeTeamCount = network.totalActiveMembers;
+  const tradingBalance = snapshot.availableBalance;
 
   const cooldown = getCooldownState(user.last_trade_time);
   const tradeSession = getTradeSessionState({
@@ -189,10 +241,11 @@ async function getTradeStatus(userId) {
 
   return {
     userId,
-    walletBalance: trunc6(walletBalance),
+    walletBalance: trunc6(snapshot.availableWallet),
     trialBalance: trunc6(trialBalance),
     availableBalance: trunc6(tradingBalance),
     lockedCapital: trunc6(lockedCapital),
+    totalBalance: trunc6(snapshot.totalBalance),
     tradingCapital: trunc6(user.tradingCapital),
     activeStrategy,
     estimatedProceeds,
@@ -229,4 +282,5 @@ async function getTradeStatus(userId) {
 module.exports = {
   executeTrade,
   getTradeStatus,
+  validateTradeExecute,
 };

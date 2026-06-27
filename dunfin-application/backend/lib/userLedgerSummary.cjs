@@ -166,7 +166,7 @@ function computeTradingPnl(trades, session, locked, latestTrade) {
 }
 
 /**
- * Locked capital from User row, or latest Trade row when a bot session is active.
+ * Locked capital from User row, or latest active Trade row when a bot session is running.
  */
 function resolveLockedCapital(user, latestTrade, session) {
   const stored = safeNum(user?.lockedCapital);
@@ -177,32 +177,42 @@ function resolveLockedCapital(user, latestTrade, session) {
   return 0;
 }
 
-/**
- * Liquid available = confirmed deposits + rewards + settled PnL − withdrawals − debits − locked.
- * Falls back to walletBalance row when ledger components are incomplete.
- */
-function computeAvailableBalance(user, totals, lockedCapital) {
-  const walletStored = safeNum(user?.walletBalance);
-
-  const ledgerDerived = trunc6(
+/** Total Inflow = deposits + rewards + settled trade profits */
+function computeTotalInflow(totals) {
+  return trunc6(
     safeNum(totals.totalDeposits) +
       safeNum(totals.totalRewards) +
-      safeNum(totals.totalTradingPnl) -
-      safeNum(totals.totalWithdrawals) -
-      safeNum(totals.totalAdminDebits) -
-      safeNum(totals.pendingWithdrawals) -
-      safeNum(lockedCapital)
+      safeNum(totals.totalTradingPnl)
   );
+}
 
-  if (walletStored > 0) {
-    return trunc6(Math.max(0, walletStored));
-  }
+/** Total Outflow = completed withdrawals + admin debits + pending withdrawal holds */
+function computeTotalOutflow(totals) {
+  return trunc6(
+    safeNum(totals.totalWithdrawals) +
+      safeNum(totals.totalAdminDebits) +
+      safeNum(totals.pendingWithdrawals)
+  );
+}
 
-  if (ledgerDerived > 0) {
-    return ledgerDerived;
-  }
+/** Net Assets = Total Inflow − Total Outflow */
+function computeNetAssets(totals) {
+  return trunc6(Math.max(0, computeTotalInflow(totals) - computeTotalOutflow(totals)));
+}
 
-  return trunc6(Math.max(0, walletStored));
+/**
+ * Systemic Available Balance = Net Assets − Locked Capital.
+ * Never returns raw walletBalance without subtracting active locks.
+ */
+function computeAvailableBalance(_user, totals, lockedCapital) {
+  const netAssets = computeNetAssets(totals);
+  const locked = safeNum(lockedCapital);
+  return trunc6(Math.max(0, netAssets - locked));
+}
+
+/** Systemic Account Balance (Total) = Available + Locked Capital */
+function computeTotalBalance(availableBalance, lockedCapital) {
+  return trunc6(safeNum(availableBalance) + safeNum(lockedCapital));
 }
 
 function deriveBalanceSnapshot(user, totals = null) {
@@ -215,9 +225,9 @@ function deriveBalanceSnapshot(user, totals = null) {
     ? computeAvailableBalance(user, totals, lockedCapital)
     : trunc6(Math.max(0, safeNum(user?.walletBalance)));
 
+  const totalBalance = computeTotalBalance(availableBalance, lockedCapital);
   const inTrading =
     sessionState.active && lockedCapital > 0 ? lockedCapital : 0;
-  const totalBalance = trunc6(availableBalance + lockedCapital);
 
   return {
     availableBalance,
@@ -228,6 +238,13 @@ function deriveBalanceSnapshot(user, totals = null) {
     walletStored: safeNum(user?.walletBalance),
     session: sessionState,
     latestTrade,
+    ...(totals
+      ? {
+          netAssets: computeNetAssets(totals),
+          totalInflow: computeTotalInflow(totals),
+          totalOutflow: computeTotalOutflow(totals),
+        }
+      : {}),
   };
 }
 
@@ -269,13 +286,13 @@ function computeAccruedYields(user, balances, totals) {
   };
 }
 
-async function fetchTradeHistory(userId, user, session, locked) {
+async function fetchTradeHistory(userId, user, session, locked, client = prisma) {
   if (Array.isArray(user?.tradeHistory) && user.tradeHistory.length > 0) {
     const normalized = normalizeTradeRows(user.tradeHistory);
     if (normalized.length > 0) return normalized;
   }
 
-  return prisma.trade
+  return client.trade
     .findMany({
       where: { userId },
       orderBy: { executedAt: "desc" },
@@ -285,7 +302,7 @@ async function fetchTradeHistory(userId, user, session, locked) {
     .then(normalizeTradeRows);
 }
 
-async function aggregateLedgerTotals(userId, user, balanceSnapshot) {
+async function aggregateLedgerTotals(userId, user, balanceSnapshot, client = prisma) {
   const locked = balanceSnapshot.lockedCapital;
   const session = balanceSnapshot.session;
 
@@ -299,23 +316,23 @@ async function aggregateLedgerTotals(userId, user, balanceSnapshot) {
     adminDebitAgg,
     trades,
   ] = await Promise.all([
-    prisma.deposit.aggregate({
+    client.deposit.aggregate({
       where: { userId },
       _sum: { amount: true },
     }),
-    prisma.withdrawalRecord.aggregate({
+    client.withdrawalRecord.aggregate({
       where: { userId, status: COMPLETED_WITHDRAWAL_STATUS },
       _sum: { amount: true },
     }),
-    prisma.withdrawalRecord.aggregate({
+    client.withdrawalRecord.aggregate({
       where: { userId, status: { in: ["PROCESSING", "PENDING_REVIEW"] } },
       _sum: { amount: true },
     }),
-    prisma.teamCommissionPayout.aggregate({
+    client.teamCommissionPayout.aggregate({
       where: { beneficiaryUserId: userId },
       _sum: { amount: true },
     }),
-    prisma.transactionRecord.aggregate({
+    client.transactionRecord.aggregate({
       where: {
         userId,
         status: "SUCCESS",
@@ -323,15 +340,15 @@ async function aggregateLedgerTotals(userId, user, balanceSnapshot) {
       },
       _sum: { amount: true },
     }),
-    prisma.balanceLedgerEntry.aggregate({
+    client.balanceLedgerEntry.aggregate({
       where: { userId, kind: "ADMIN_CREDIT" },
       _sum: { amount: true },
     }),
-    prisma.balanceLedgerEntry.aggregate({
+    client.balanceLedgerEntry.aggregate({
       where: { userId, kind: "ADMIN_DEBIT" },
       _sum: { amount: true },
     }),
-    fetchTradeHistory(userId, user, session, locked),
+    fetchTradeHistory(userId, user, session, locked, client),
   ]);
 
   const latestTrade = trades[0] ?? null;
@@ -524,11 +541,18 @@ async function buildUnifiedTransactionFeed(userId, user, preloaded = {}) {
 
 function buildFallbackLedgerBundle(user) {
   const balances = deriveBalanceSnapshot(user);
+  const computedAvailableBalance = balances.availableBalance;
+  const computedTotalBalance = balances.totalBalance;
   return {
-    availableBalance: balances.availableBalance,
+    availableBalance: computedAvailableBalance,
     lockedCapital: balances.lockedCapital,
     inTrading: balances.inTrading,
-    totalBalance: balances.totalBalance,
+    totalBalance: computedTotalBalance,
+    computedAvailableBalance,
+    computedTotalBalance,
+    netAssets: computedTotalBalance,
+    totalInflow: computedTotalBalance,
+    totalOutflow: 0,
     tradeSessionActive: balances.tradeSessionActive,
     totalDeposits: 0,
     totalWithdrawals: 0,
@@ -542,8 +566,8 @@ function buildFallbackLedgerBundle(user) {
     assets: [
       {
         symbol: "USDT",
-        total: balances.totalBalance,
-        available: balances.availableBalance,
+        total: computedTotalBalance,
+        available: computedAvailableBalance,
         freeze: balances.lockedCapital,
       },
     ],
@@ -553,12 +577,19 @@ function buildFallbackLedgerBundle(user) {
 
 function assembleLedgerBundle(user, balances, totals, recentTransactions) {
   const yields = computeAccruedYields(user, balances, totals);
+  const computedAvailableBalance = balances.availableBalance;
+  const computedTotalBalance = balances.totalBalance;
 
   return {
-    availableBalance: balances.availableBalance,
+    availableBalance: computedAvailableBalance,
     lockedCapital: balances.lockedCapital,
     inTrading: balances.inTrading,
-    totalBalance: balances.totalBalance,
+    totalBalance: computedTotalBalance,
+    computedAvailableBalance,
+    computedTotalBalance,
+    netAssets: balances.netAssets ?? computeNetAssets(totals),
+    totalInflow: balances.totalInflow ?? computeTotalInflow(totals),
+    totalOutflow: balances.totalOutflow ?? computeTotalOutflow(totals),
     tradeSessionActive: balances.tradeSessionActive,
     totalDeposits: totals.totalDeposits,
     totalWithdrawals: totals.totalWithdrawals,
@@ -572,11 +603,25 @@ function assembleLedgerBundle(user, balances, totals, recentTransactions) {
     assets: [
       {
         symbol: "USDT",
-        total: balances.totalBalance,
-        available: balances.availableBalance,
+        total: computedTotalBalance,
+        available: computedAvailableBalance,
         freeze: balances.lockedCapital,
       },
     ],
+  };
+}
+
+async function compileLedgerBalances(userId, user, options = {}) {
+  const client = options.prismaClient || prisma;
+  const initialBalances = deriveBalanceSnapshot(user);
+  const totals = await aggregateLedgerTotals(userId, user, initialBalances, client);
+  const balances = deriveBalanceSnapshot(user, totals);
+
+  return {
+    ...balances,
+    computedAvailableBalance: balances.availableBalance,
+    computedTotalBalance: balances.totalBalance,
+    totals,
   };
 }
 
@@ -597,10 +642,13 @@ async function buildUserLedgerBundle(userId, user, options = {}) {
   };
 
   try {
+    const client = options.prismaClient || prisma;
     const initialBalances = deriveBalanceSnapshot(user);
     const [totals, recentTransactions] = await Promise.all([
-      aggregateLedgerTotals(userId, user, initialBalances),
-      buildUnifiedTransactionFeed(userId, user, preloaded),
+      aggregateLedgerTotals(userId, user, initialBalances, client),
+      options.skipFeed
+        ? Promise.resolve([])
+        : buildUnifiedTransactionFeed(userId, user, preloaded),
     ]);
 
     const balances = deriveBalanceSnapshot(user, totals);
@@ -620,8 +668,14 @@ async function buildUserLedgerBundle(userId, user, options = {}) {
 module.exports = {
   deriveBalanceSnapshot,
   buildUserLedgerBundle,
+  compileLedgerBalances,
   buildUnifiedTransactionFeed,
   aggregateLedgerTotals,
   buildFallbackLedgerBundle,
+  computeTotalInflow,
+  computeTotalOutflow,
+  computeNetAssets,
+  computeAvailableBalance,
+  computeTotalBalance,
   safeNum,
 };

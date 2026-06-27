@@ -1,10 +1,9 @@
-const { executeTrade, getTradeStatus } = require("../trading.cjs");
+const { executeTrade, getTradeStatus, validateTradeExecute } = require("../trading.cjs");
 const { TRADING_LEVELS } = require("../lib/tradingLevels.cjs");
 const { sendApiError, sendClientError } = require("../lib/apiErrors.cjs");
 
 /**
  * GET /api/trade/status/:userId
- * Optional sync hook supplied by server (chain balance refresh).
  */
 async function getTradeStatusHandler(req, res) {
   try {
@@ -37,9 +36,31 @@ async function postTradeExecuteHandler(req, res) {
       );
     }
 
-    // Ledger-aware execution — skip chain sync to avoid clobbering reward balances
-    // and racing profile hydration writes (P2034) during trade lock.
-    const result = await executeTrade(userId);
+    // Ledger pre-flight — resolveTradableBalance before atomic lock TX
+    const preflight = await validateTradeExecute(userId);
+    if (!preflight.ok) {
+      return sendApiError(
+        res,
+        {
+          code: preflight.code || "TRADE_EXECUTION_FAILED",
+          message: preflight.error || "Trade execution failed.",
+          errorAr: preflight.errorAr,
+        },
+        {
+          status: preflight.status || 400,
+          extra: {
+            requiredCapital: preflight.requiredCapital,
+            requiredTeam: preflight.requiredTeam,
+            cooldown: preflight.cooldown,
+            network: preflight.network,
+            tradableBalance: preflight.tradableBalance,
+            balances: preflight.balances,
+          },
+        }
+      );
+    }
+
+    const result = await executeTrade(userId, { preflight });
 
     if (!result.ok) {
       return sendApiError(
@@ -56,6 +77,8 @@ async function postTradeExecuteHandler(req, res) {
             requiredTeam: result.requiredTeam,
             cooldown: result.cooldown,
             network: result.network,
+            tradableBalance: result.tradableBalance,
+            balances: result.balances,
           },
         }
       );

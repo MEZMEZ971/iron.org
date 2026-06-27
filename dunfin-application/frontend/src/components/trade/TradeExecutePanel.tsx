@@ -4,6 +4,7 @@ import { useSuccessFeedback } from "../../context/SuccessFeedbackContext";
 import { useLocale } from "../../i18n/LocaleContext";
 import type { TranslationKey } from "../../i18n/translations";
 import { resolveUserFacingError } from "../../lib/userFacingError";
+import { emitWalletRefresh } from "../../lib/walletSync";
 import { useCountdownTo } from "../../hooks/useCountdown";
 import { useTradeStatus } from "../../hooks/useTradeStatus";
 import Strategies from "../../pages/Strategies";
@@ -72,6 +73,16 @@ export function TradeExecutePanel({ userId, onTradeSettled }: Props) {
     setExecuting(true);
     try {
       const result = await executeTrade(userId);
+      if (result.balances) {
+        emitWalletRefresh({
+          userId,
+          walletBalance: result.balances.walletBalance,
+          availableBalance: result.balances.availableBalance,
+          lockedCapital: result.balances.lockedCapital,
+          totalBalance: result.balances.totalBalance,
+          trialBalance: result.balances.trialBalance,
+        });
+      }
       showTradeSuccess(
         t("tradeSuccessDetail", {
           strategy: result.trade.strategy.name,

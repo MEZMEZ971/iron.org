@@ -43,6 +43,10 @@ const CLIENT_ERROR_CODES = new Set([
   "SELF_SUSPEND",
   "QUALIFICATION_DENIED",
   "KYC_FILES_REQUIRED",
+  "TRADE_ALREADY_ACTIVE",
+  "TRADE_LOCK_CONFLICT",
+  "COOLDOWN_ACTIVE",
+  "TRADE_EXECUTION_FAILED",
 ]);
 
 const GENERIC_INTERNAL_MESSAGE =
@@ -118,6 +122,14 @@ function resolveError(error, overrides = {}) {
   }
   if (code === "WRONG_PAYMENT_PASSWORD" || code === "WRONG_PAYMENT_PIN") {
     status = 403;
+  }
+  if (code === "COOLDOWN_ACTIVE") status = 429;
+  if (
+    code === "TRADE_ALREADY_ACTIVE" ||
+    code === "TRADE_LOCK_CONFLICT" ||
+    code === "DUPLICATE_RECORD"
+  ) {
+    status = 409;
   }
 
   if (status >= 500 && IS_PRODUCTION) {

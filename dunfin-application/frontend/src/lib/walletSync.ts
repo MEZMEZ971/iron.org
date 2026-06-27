@@ -2,6 +2,9 @@ export type WalletRefreshPayload = {
   userId?: string;
   uid?: string;
   walletBalance?: number;
+  availableBalance?: number;
+  lockedCapital?: number;
+  totalBalance?: number;
   trialBalance?: number;
   isTrialActive?: boolean;
   fundAccount?: number;

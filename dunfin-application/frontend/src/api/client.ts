@@ -22,6 +22,8 @@ export interface TradeStatus {
   walletBalance: number;
   availableBalance: number;
   lockedCapital: number;
+  totalBalance?: number;
+  trialBalance?: number;
   tradingCapital: number;
   activeStrategy: number | null;
   estimatedProceeds?: number | null;
@@ -276,7 +278,21 @@ export function fetchTradeStatus(userId: string) {
 export function executeTrade(userId: string) {
   return request<{
     ok: boolean;
-    trade: { strategy: { name: string }; capitalAmount: number };
+    trade: {
+      strategy: { name: string };
+      capitalAmount: number;
+      availableBalance?: number;
+      lockedCapital?: number;
+      totalBalance?: number;
+      walletBalance?: number;
+    };
+    balances?: {
+      availableBalance: number;
+      lockedCapital: number;
+      totalBalance: number;
+      walletBalance: number;
+      trialBalance?: number;
+    };
     user: TradeStatus;
   }>("/api/trade/execute", {
     method: "POST",
