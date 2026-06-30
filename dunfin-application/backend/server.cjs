@@ -13,13 +13,12 @@ const {
   getStartupSummary,
   validateRpcChainId,
 } = require("./config/crypto.cjs");
-const { prisma } = require("./lib/prisma.cjs");
+const { prisma, withQueryTimeout } = require("./lib/prisma.cjs");
 const {
   getTradeStatusHandler,
   postTradeExecuteHandler,
   getTradeLevelsHandler,
 } = require("./routes/trade.cjs");
-const { getTradeStatus } = require("./trading.cjs");
 const { getTradeEarnings } = require("./earnings.cjs");
 const { processDuePayouts } = require("./cron/payouts.cjs");
 const { runSleepAccountWakeUpCron } = require("./cron/sleepAccounts.cjs");
@@ -82,6 +81,7 @@ const {
   reconcileAndHealUserWalletBalance,
 } = require("./lib/walletBalanceReconciliation.cjs");
 const { buildUserLedgerBundle } = require("./lib/userLedgerSummary.cjs");
+const { getAffiliateNetworkFromDb } = require("./lib/affiliateStats.cjs");
 const {
   sendApiError,
   sendClientError,
@@ -354,7 +354,12 @@ app.post("/api/auth/login", async (req, res) => {
       );
     }
 
-    const result = await loginUser({ identifier, password }, depositClients());
+    const result = await withQueryTimeout(
+      loginUser({ identifier, password }, depositClients()),
+      Number(process.env.AUTH_LOGIN_TIMEOUT_MS) > 0
+        ? Number(process.env.AUTH_LOGIN_TIMEOUT_MS)
+        : 15_000
+    );
     res.json(result);
   } catch (error) {
     sendApiError(res, error);
@@ -745,6 +750,16 @@ function scheduleProfileBackgroundSync(userId) {
   });
 }
 
+function mapAffiliateForProfile(network) {
+  return {
+    totalActiveMembers: network.totalActiveMembers,
+    totalMembers: network.totalMembers,
+    gen1Active: network.generations.gen1.activeCount,
+    gen2Active: network.generations.gen2.activeCount,
+    gen3Active: network.generations.gen3.activeCount,
+  };
+}
+
 async function buildUserProfileResponse(userId) {
   scheduleProfileBackgroundSync(userId);
 
@@ -759,8 +774,8 @@ async function buildUserProfileResponse(userId) {
     throw err;
   }
 
-  const [trade, brokerRow, ledger] = await Promise.all([
-    getTradeStatus(userId),
+  const [affiliateNetwork, brokerRow, ledger] = await Promise.all([
+    getAffiliateNetworkFromDb(userId),
     prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -772,8 +787,12 @@ async function buildUserProfileResponse(userId) {
     buildUserLedgerBundle(userId, user, {
       preloadedTrades: user.tradeHistory,
       preloadedDeposits: user.deposits,
+      skipFeed: true,
+      skipCache: true,
     }),
   ]);
+
+  const affiliate = mapAffiliateForProfile(affiliateNetwork);
 
   const locked = ledger.lockedCapital;
   const walletOnly = Number(user.walletBalance) || 0;
@@ -811,7 +830,7 @@ async function buildUserProfileResponse(userId) {
     tradingAccount: trunc6(locked),
     todayPnl: trunc6(todayPnl),
     totalPnl: trunc6(totalPnl),
-    affiliate: trade.affiliate,
+    affiliate,
     tradeHistory: user.tradeHistory || [],
     deposits: user.deposits || [],
     transactions: ledger.recentTransactions,

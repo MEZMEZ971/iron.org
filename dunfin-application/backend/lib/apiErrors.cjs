@@ -47,6 +47,7 @@ const CLIENT_ERROR_CODES = new Set([
   "TRADE_LOCK_CONFLICT",
   "COOLDOWN_ACTIVE",
   "TRADE_EXECUTION_FAILED",
+  "SERVICE_BUSY",
 ]);
 
 const GENERIC_INTERNAL_MESSAGE =
@@ -84,6 +85,13 @@ function mapPrismaError(error) {
         code: "TRADE_LOCK_CONFLICT",
         message: "Trade could not be locked. Refresh and try again.",
         status: 409,
+      };
+    case "PRISMA_QUERY_TIMEOUT":
+    case "SERVICE_BUSY":
+      return {
+        code: "SERVICE_BUSY",
+        message: "The platform is busy. Please try again in a few seconds.",
+        status: 503,
       };
     default:
       return null;

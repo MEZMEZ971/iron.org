@@ -253,8 +253,14 @@ async function loginUser({ identifier, password }, depositClients) {
     throw err;
   }
 
+  // Non-blocking: forwarder provisioning must not hold a pool slot during login.
   if (depositClients) {
-    await ensureForwardersForUser(row.id, depositClients);
+    const userId = row.id;
+    setImmediate(() => {
+      ensureForwardersForUser(userId, depositClients).catch((err) => {
+        console.warn(`[auth] deferred forwarders for ${userId}:`, err.message);
+      });
+    });
   }
 
   await prisma.user.update({
@@ -265,9 +271,9 @@ async function loginUser({ identifier, password }, depositClients) {
   const refreshed = await prisma.user.findUnique({
     where: { id: row.id },
     include: {
-      deposits: { orderBy: { createdAt: "desc" } },
-      trades: { orderBy: { executedAt: "desc" } },
-      networkAddresses: true,
+      deposits: { orderBy: { createdAt: "desc" }, take: 5 },
+      trades: { orderBy: { executedAt: "desc" }, take: 5 },
+      networkAddresses: { take: 5 },
     },
   });
 

@@ -3,8 +3,10 @@ const { TRON_STABLECOINS } = require("../lib/depositStablecoins.cjs");
 const {
   deriveTronWallet,
   createTronWeb,
+  configureTronSigner,
   getTronTreasuryAddress,
   getGasFunderPrivateKey,
+  isValidTronBase58Address,
   waitForTxConfirmation,
   getTrxBalanceTrx,
   getTrc20BalanceRaw,
@@ -44,6 +46,7 @@ async function loadActiveTronDepositWallets() {
       tron: true,
       network: "TRC20",
       user: { accountActive: true },
+      address: { not: "" },
     },
     select: {
       userId: true,
@@ -51,8 +54,12 @@ async function loadActiveTronDepositWallets() {
       network: true,
     },
     orderBy: { updatedAt: "asc" },
+    take: Number(process.env.TRON_SWEEPER_BATCH_SIZE) > 0
+      ? Number(process.env.TRON_SWEEPER_BATCH_SIZE)
+      : 50,
   });
-  return rows;
+
+  return rows.filter((row) => isValidTronBase58Address(row.address));
 }
 
 async function fundTrxIfNeeded({ funderTron, subAddress, readOnlyTron }) {
@@ -76,6 +83,7 @@ async function fundTrxIfNeeded({ funderTron, subAddress, readOnlyTron }) {
 
 async function sweepToken({
   subTron,
+  signerAddress,
   treasuryAddress,
   token,
   holderAddress,
@@ -89,11 +97,16 @@ async function sweepToken({
     return { swept: false, amount: 0, symbol: token.symbol };
   }
 
+  if (typeof subTron.setAddress === "function") {
+    subTron.setAddress(signerAddress);
+  }
+
   const contract = await subTron.contract().at(token.contract);
   const receipt = await contract.transfer(treasuryAddress, rawBalance).send({
     feeLimit: 100_000_000,
     callValue: 0,
     shouldPollResponse: true,
+    from: signerAddress,
   });
 
   const txId =
@@ -114,7 +127,25 @@ async function sweepToken({
   };
 }
 
+function validateWalletRow(row) {
+  if (!row?.userId || !row?.network) {
+    return { ok: false, reason: "missing_user_or_network" };
+  }
+  if (!isValidTronBase58Address(row.address)) {
+    return { ok: false, reason: "invalid_address" };
+  }
+  return { ok: true };
+}
+
 async function sweepWalletRow(row, context) {
+  const validation = validateWalletRow(row);
+  if (!validation.ok) {
+    console.warn(
+      `[tron-sweeper] skip wallet user=${row?.userId || "?"}: ${validation.reason}`
+    );
+    return { skipped: true, reason: validation.reason };
+  }
+
   const lockKey = `${row.userId}:${row.network}:${row.address}`;
   if (cycleLocks.has(lockKey)) {
     return { skipped: true, reason: "locked" };
@@ -122,8 +153,19 @@ async function sweepWalletRow(row, context) {
 
   cycleLocks.add(lockKey);
   try {
-    const { address: derivedAddress, privateKey, tronWeb: subTron } =
-      deriveTronWallet(row.userId, row.network);
+    let derivedAddress;
+    let subTron;
+
+    try {
+      const derived = deriveTronWallet(row.userId, row.network);
+      derivedAddress = derived.address;
+      subTron = derived.tronWeb;
+    } catch (err) {
+      console.warn(
+        `[tron-sweeper] skip ${row.address}: wallet derivation failed — ${err.message}`
+      );
+      return { skipped: true, reason: "derivation_failed", error: err.message };
+    }
 
     if (derivedAddress !== row.address) {
       console.warn(
@@ -136,14 +178,21 @@ async function sweepWalletRow(row, context) {
     let hasTokenBalance = false;
 
     for (const token of TRON_STABLECOINS) {
-      const raw = await getTrc20BalanceRaw(
-        readOnlyTron,
-        token.contract,
-        derivedAddress
-      );
-      if (raw > 0n) {
-        hasTokenBalance = true;
-        break;
+      try {
+        const raw = await getTrc20BalanceRaw(
+          readOnlyTron,
+          token.contract,
+          derivedAddress
+        );
+        if (raw > 0n) {
+          hasTokenBalance = true;
+          break;
+        }
+      } catch (err) {
+        console.warn(
+          `[tron-sweeper] balance probe ${token.symbol} for ${derivedAddress}:`,
+          err.message
+        );
       }
     }
 
@@ -169,6 +218,7 @@ async function sweepWalletRow(row, context) {
       try {
         const result = await sweepToken({
           subTron,
+          signerAddress: derivedAddress,
           treasuryAddress: context.treasuryAddress,
           token,
           holderAddress: derivedAddress,
@@ -193,6 +243,14 @@ async function sweepWalletRow(row, context) {
       fuelTx: fuel.funded ? fuel.txId : null,
       sweeps,
     };
+  } catch (err) {
+    console.warn(`[tron-sweeper] wallet ${row.address} failed:`, err.message);
+    return {
+      skipped: true,
+      address: row.address,
+      userId: row.userId,
+      error: err.message,
+    };
   } finally {
     cycleLocks.delete(lockKey);
   }
@@ -213,9 +271,15 @@ async function runTronSweepCycle() {
 
   try {
     const treasuryAddress = getTronTreasuryAddress();
+    if (!isValidTronBase58Address(treasuryAddress)) {
+      console.warn("[tron-sweeper] skip cycle: invalid treasury address");
+      return { enabled: true, skipped: true, reason: "invalid_treasury" };
+    }
+
     const funderKey = getGasFunderPrivateKey();
     const readOnlyTron = createTronWeb();
     const funderTron = createTronWeb({ privateKey: funderKey });
+    const funderAddress = configureTronSigner(funderTron, funderKey);
 
     const wallets = await loadActiveTronDepositWallets();
     let sweptWallets = 0;
@@ -223,26 +287,15 @@ async function runTronSweepCycle() {
     const results = [];
 
     for (const row of wallets) {
-      try {
-        const outcome = await sweepWalletRow(row, {
-          treasuryAddress,
-          funderTron,
-          readOnlyTron,
-        });
-        results.push(outcome);
-        if (outcome.sweeps?.length) sweptWallets += 1;
-        if (outcome.skipped) skipped += 1;
-      } catch (err) {
-        console.warn(
-          `[tron-sweeper] wallet ${row.address} failed:`,
-          err.message
-        );
-        results.push({
-          address: row.address,
-          userId: row.userId,
-          error: err.message,
-        });
-      }
+      const outcome = await sweepWalletRow(row, {
+        treasuryAddress,
+        funderTron,
+        funderAddress,
+        readOnlyTron,
+      });
+      results.push(outcome);
+      if (outcome.sweeps?.length) sweptWallets += 1;
+      if (outcome.skipped) skipped += 1;
     }
 
     const summary = {
@@ -261,6 +314,13 @@ async function runTronSweepCycle() {
     }
 
     return { ...summary, results };
+  } catch (err) {
+    console.warn("[tron-sweeper] cycle failed:", err.message);
+    return {
+      enabled: true,
+      error: err.message,
+      durationMs: Date.now() - startedAt,
+    };
   } finally {
     cycleRunning = false;
   }
@@ -269,4 +329,6 @@ async function runTronSweepCycle() {
 module.exports = {
   runTronSweepCycle,
   isSweeperConfigured,
+  validateWalletRow,
+  isValidTronBase58Address,
 };

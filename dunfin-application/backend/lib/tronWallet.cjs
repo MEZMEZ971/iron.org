@@ -8,6 +8,8 @@ const TRON_API_BASE = (
 const TRON_API_KEY =
   process.env.TRONGRID_API_KEY || process.env.TRON_API_KEY || "";
 
+const TRON_BASE58_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
+
 function networkUserSalt(userId, network) {
   return `${userId}::${network}`;
 }
@@ -25,6 +27,40 @@ function sanitizeHexKey(raw) {
     return null;
   }
   return key.toLowerCase();
+}
+
+function isValidTronBase58Address(address) {
+  const value = String(address || "").trim();
+  return TRON_BASE58_RE.test(value);
+}
+
+/**
+ * Ensures TronWeb has a signer address before contract/TRX writes (fixes owner_address errors).
+ */
+function configureTronSigner(tronWeb, privateKey) {
+  const key = sanitizeHexKey(privateKey);
+  if (!key) {
+    const err = new Error("Invalid Tron private key for signer configuration");
+    err.code = "TRON_SIGNER_INVALID";
+    throw err;
+  }
+
+  if (typeof tronWeb.setPrivateKey === "function") {
+    tronWeb.setPrivateKey(key);
+  }
+
+  const address = tronWeb.address.fromPrivateKey(key);
+  if (!address || !isValidTronBase58Address(address)) {
+    const err = new Error("Could not derive a valid Tron signer address");
+    err.code = "TRON_SIGNER_ADDRESS_MISSING";
+    throw err;
+  }
+
+  if (typeof tronWeb.setAddress === "function") {
+    tronWeb.setAddress(address);
+  }
+
+  return address;
 }
 
 /**
@@ -45,7 +81,7 @@ function deriveTronWallet(userId, network = "TRC20") {
     .digest("hex");
 
   const tronWeb = createTronWeb({ privateKey });
-  const address = tronWeb.address.fromPrivateKey(privateKey);
+  const address = configureTronSigner(tronWeb, privateKey);
   return { address, privateKey, tronWeb };
 }
 
@@ -54,10 +90,11 @@ function createTronWeb({ privateKey } = {}) {
     fullHost: TRON_API_BASE,
     headers: tronHeaders(),
   };
+  const tronWeb = new TronWeb(options);
   if (privateKey) {
-    options.privateKey = privateKey;
+    configureTronSigner(tronWeb, privateKey);
   }
-  return new TronWeb(options);
+  return tronWeb;
 }
 
 function getTronTreasuryAddress() {
@@ -111,11 +148,21 @@ async function waitForTxConfirmation(tronWeb, txId, timeoutMs = 120_000) {
 }
 
 async function getTrxBalanceTrx(tronWeb, address) {
+  if (!isValidTronBase58Address(address)) {
+    const err = new Error("Invalid Tron address for balance lookup");
+    err.code = "TRON_ADDRESS_INVALID";
+    throw err;
+  }
   const sun = await tronWeb.trx.getBalance(address);
   return Number(sun) / 1_000_000;
 }
 
 async function getTrc20BalanceRaw(tronWeb, contractAddress, holderAddress) {
+  if (!isValidTronBase58Address(holderAddress)) {
+    const err = new Error("Invalid holder address for TRC20 balance lookup");
+    err.code = "TRON_ADDRESS_INVALID";
+    throw err;
+  }
   const contract = await tronWeb.contract().at(contractAddress);
   const raw = await contract.balanceOf(holderAddress).call();
   return BigInt(String(raw));
@@ -125,6 +172,8 @@ module.exports = {
   networkUserSalt,
   deriveTronWallet,
   createTronWeb,
+  configureTronSigner,
+  isValidTronBase58Address,
   getTronTreasuryAddress,
   getGasFunderPrivateKey,
   sanitizeHexKey,
