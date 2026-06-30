@@ -15,7 +15,7 @@ function networkUserSalt(userId, network) {
 }
 
 function tronHeaders() {
-  const headers = {};
+  const headers = { Accept: "application/json" };
   if (TRON_API_KEY) headers["TRON-PRO-API-KEY"] = TRON_API_KEY;
   return headers;
 }
@@ -32,6 +32,28 @@ function sanitizeHexKey(raw) {
 function isValidTronBase58Address(address) {
   const value = String(address || "").trim();
   return TRON_BASE58_RE.test(value);
+}
+
+function isValidTronContractAddress(address) {
+  return isValidTronBase58Address(address);
+}
+
+function isOwnerAddressError(err) {
+  const msg = String(err?.message || err || "").toLowerCase();
+  return (
+    msg.includes("owner_address") ||
+    msg.includes("invalidparameterexception") ||
+    msg.includes("invalid parameter")
+  );
+}
+
+function getTronSignerAddress(tronWeb) {
+  const base58 =
+    tronWeb?.defaultAddress?.base58 ||
+    tronWeb?.defaultAddress?.hex ||
+    tronWeb?.address?.fromPrivateKey?.(tronWeb?.defaultPrivateKey);
+  if (base58 && isValidTronBase58Address(base58)) return base58;
+  return null;
 }
 
 /**
@@ -64,8 +86,46 @@ function configureTronSigner(tronWeb, privateKey) {
 }
 
 /**
+ * Read-only TRC20 balance via TronGrid HTTP — never requires owner_address on TronWeb.
+ */
+async function fetchTrc20BalanceFromTronGrid(holderAddress, contractAddress) {
+  if (!isValidTronBase58Address(holderAddress)) {
+    const err = new Error("Invalid holder address for TRC20 balance lookup");
+    err.code = "TRON_ADDRESS_INVALID";
+    throw err;
+  }
+  if (!isValidTronContractAddress(contractAddress)) {
+    const err = new Error("Invalid TRC20 contract address");
+    err.code = "TRON_CONTRACT_INVALID";
+    throw err;
+  }
+
+  const url = `${TRON_API_BASE}/v1/accounts/${encodeURIComponent(holderAddress)}`;
+  const res = await fetch(url, { headers: tronHeaders() });
+  if (!res.ok) {
+    throw new Error(`TronGrid account lookup failed (${res.status})`);
+  }
+
+  const body = await res.json();
+  const account = Array.isArray(body?.data) ? body.data[0] : null;
+  if (!account) return 0n;
+
+  const contract = String(contractAddress).trim();
+  const trc20 = account.trc20;
+  if (Array.isArray(trc20)) {
+    for (const entry of trc20) {
+      if (!entry || typeof entry !== "object") continue;
+      if (Object.prototype.hasOwnProperty.call(entry, contract)) {
+        return BigInt(String(entry[contract] || 0));
+      }
+    }
+  }
+
+  return 0n;
+}
+
+/**
  * Deterministic Tron deposit wallet from TRON_DEPOSIT_MASTER_SECRET.
- * Private keys are derived on demand and never persisted to the database.
  */
 function deriveTronWallet(userId, network = "TRC20") {
   const secret = String(process.env.TRON_DEPOSIT_MASTER_SECRET || "").trim();
@@ -157,12 +217,31 @@ async function getTrxBalanceTrx(tronWeb, address) {
   return Number(sun) / 1_000_000;
 }
 
+/**
+ * TRC20 balance read — prefers TronGrid HTTP (no owner_address). Falls back to TronWeb only when signer is set.
+ */
 async function getTrc20BalanceRaw(tronWeb, contractAddress, holderAddress) {
   if (!isValidTronBase58Address(holderAddress)) {
     const err = new Error("Invalid holder address for TRC20 balance lookup");
     err.code = "TRON_ADDRESS_INVALID";
     throw err;
   }
+
+  const signer = getTronSignerAddress(tronWeb);
+  if (!signer) {
+    return fetchTrc20BalanceFromTronGrid(holderAddress, contractAddress);
+  }
+
+  if (typeof tronWeb.setAddress === "function") {
+    tronWeb.setAddress(signer);
+  }
+
+  if (!isValidTronContractAddress(contractAddress)) {
+    const err = new Error("Invalid TRC20 contract address");
+    err.code = "TRON_CONTRACT_INVALID";
+    throw err;
+  }
+
   const contract = await tronWeb.contract().at(contractAddress);
   const raw = await contract.balanceOf(holderAddress).call();
   return BigInt(String(raw));
@@ -174,6 +253,10 @@ module.exports = {
   createTronWeb,
   configureTronSigner,
   isValidTronBase58Address,
+  isValidTronContractAddress,
+  isOwnerAddressError,
+  getTronSignerAddress,
+  fetchTrc20BalanceFromTronGrid,
   getTronTreasuryAddress,
   getGasFunderPrivateKey,
   sanitizeHexKey,

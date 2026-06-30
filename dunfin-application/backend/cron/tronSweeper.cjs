@@ -7,6 +7,9 @@ const {
   getTronTreasuryAddress,
   getGasFunderPrivateKey,
   isValidTronBase58Address,
+  isValidTronContractAddress,
+  isOwnerAddressError,
+  fetchTrc20BalanceFromTronGrid,
   waitForTxConfirmation,
   getTrxBalanceTrx,
   getTrc20BalanceRaw,
@@ -23,8 +26,29 @@ const TRX_FUEL_AMOUNT =
     ? Number(process.env.TRON_SWEEP_FUEL_TRX)
     : 20;
 
+/** Minimum gap between completed sweep cycles (default 5 min). */
+const MIN_CYCLE_INTERVAL_MS =
+  Number(process.env.TRON_SWEEPER_MIN_INTERVAL_MS) > 0
+    ? Number(process.env.TRON_SWEEPER_MIN_INTERVAL_MS)
+    : 5 * 60_000;
+
+/** Mandatory cool-down after any probe/sweep failure (default 60s). */
+const FAILURE_COOLDOWN_MS =
+  Number(process.env.TRON_SWEEPER_FAILURE_COOLDOWN_MS) > 0
+    ? Number(process.env.TRON_SWEEPER_FAILURE_COOLDOWN_MS)
+    : 60_000;
+
+/** Delay between TronGrid balance probes to avoid CPU/RPC stampedes. */
+const PROBE_DELAY_MS =
+  Number(process.env.TRON_SWEEPER_PROBE_DELAY_MS) > 0
+    ? Number(process.env.TRON_SWEEPER_PROBE_DELAY_MS)
+    : 400;
+
 const cycleLocks = new Set();
 let cycleRunning = false;
+let nextCycleAllowedAt = 0;
+let circuitOpenUntil = 0;
+let consecutiveFailures = 0;
 
 function isSweeperConfigured() {
   return (
@@ -38,6 +62,42 @@ function isSweeperConfigured() {
           !String(process.env.MAIN_PARTNER_WALLET_ADDRESS).startsWith("0x"))
     )
   );
+}
+
+function isCooldownActive() {
+  const now = Date.now();
+  return now < nextCycleAllowedAt || now < circuitOpenUntil;
+}
+
+function openFailureCircuit(reason, cooldownMs = FAILURE_COOLDOWN_MS) {
+  const until = Date.now() + cooldownMs;
+  circuitOpenUntil = until;
+  nextCycleAllowedAt = Math.max(nextCycleAllowedAt, until);
+  consecutiveFailures += 1;
+  console.warn(
+    `[tron-sweeper] circuit open (${reason}) — pausing ${Math.round(cooldownMs / 1000)}s (failures=${consecutiveFailures})`
+  );
+}
+
+function markCycleSuccess() {
+  consecutiveFailures = 0;
+  circuitOpenUntil = 0;
+  nextCycleAllowedAt = Date.now() + MIN_CYCLE_INTERVAL_MS;
+}
+
+function validateSweeperRuntimeConfig({ treasuryAddress, funderAddress }) {
+  if (!isValidTronBase58Address(treasuryAddress)) {
+    return { ok: false, reason: "invalid_treasury" };
+  }
+  if (!isValidTronBase58Address(funderAddress)) {
+    return { ok: false, reason: "invalid_owner_address" };
+  }
+  for (const token of TRON_STABLECOINS) {
+    if (!isValidTronContractAddress(token.contract)) {
+      return { ok: false, reason: `invalid_contract_${token.symbol}` };
+    }
+  }
+  return { ok: true };
 }
 
 async function loadActiveTronDepositWallets() {
@@ -54,18 +114,45 @@ async function loadActiveTronDepositWallets() {
       network: true,
     },
     orderBy: { updatedAt: "asc" },
-    take: Number(process.env.TRON_SWEEPER_BATCH_SIZE) > 0
-      ? Number(process.env.TRON_SWEEPER_BATCH_SIZE)
-      : 50,
+    take:
+      Number(process.env.TRON_SWEEPER_BATCH_SIZE) > 0
+        ? Number(process.env.TRON_SWEEPER_BATCH_SIZE)
+        : 25,
   });
 
   return rows.filter((row) => isValidTronBase58Address(row.address));
 }
 
-async function fundTrxIfNeeded({ funderTron, subAddress, readOnlyTron }) {
+async function probeTokenBalance(holderAddress, token) {
+  if (!isValidTronBase58Address(holderAddress)) {
+    return { ok: false, reason: "invalid_holder", raw: 0n };
+  }
+  if (!isValidTronContractAddress(token.contract)) {
+    return { ok: false, reason: "invalid_contract", raw: 0n };
+  }
+
+  try {
+    const raw = await fetchTrc20BalanceFromTronGrid(holderAddress, token.contract);
+    return { ok: true, raw };
+  } catch (err) {
+    return { ok: false, reason: err.message, raw: 0n, error: err };
+  }
+}
+
+async function fundTrxIfNeeded({ funderTron, funderAddress, subAddress, readOnlyTron }) {
+  if (!isValidTronBase58Address(subAddress) || !isValidTronBase58Address(funderAddress)) {
+    const err = new Error("Missing or invalid owner_address for TRX fuel transfer");
+    err.code = "TRON_OWNER_ADDRESS_MISSING";
+    throw err;
+  }
+
   const balanceTrx = await getTrxBalanceTrx(readOnlyTron, subAddress);
   if (balanceTrx >= MIN_TRX_FOR_SWEEP) {
     return { funded: false, balanceTrx };
+  }
+
+  if (typeof funderTron.setAddress === "function") {
+    funderTron.setAddress(funderAddress);
   }
 
   const fuelSun = readOnlyTron.toSun(TRX_FUEL_AMOUNT);
@@ -88,6 +175,10 @@ async function sweepToken({
   token,
   holderAddress,
 }) {
+  if (!isValidTronBase58Address(signerAddress) || !isValidTronBase58Address(treasuryAddress)) {
+    throw new Error("Missing or invalid owner_address for TRC20 sweep");
+  }
+
   const rawBalance = await getTrc20BalanceRaw(
     subTron,
     token.contract,
@@ -140,9 +231,6 @@ function validateWalletRow(row) {
 async function sweepWalletRow(row, context) {
   const validation = validateWalletRow(row);
   if (!validation.ok) {
-    console.warn(
-      `[tron-sweeper] skip wallet user=${row?.userId || "?"}: ${validation.reason}`
-    );
     return { skipped: true, reason: validation.reason };
   }
 
@@ -161,38 +249,35 @@ async function sweepWalletRow(row, context) {
       derivedAddress = derived.address;
       subTron = derived.tronWeb;
     } catch (err) {
-      console.warn(
-        `[tron-sweeper] skip ${row.address}: wallet derivation failed — ${err.message}`
-      );
       return { skipped: true, reason: "derivation_failed", error: err.message };
     }
 
     if (derivedAddress !== row.address) {
-      console.warn(
-        `[tron-sweeper] skip ${row.address}: stored address does not match derived wallet (legacy deposit address)`
-      );
       return { skipped: true, reason: "address_mismatch" };
     }
 
-    const readOnlyTron = context.readOnlyTron;
     let hasTokenBalance = false;
 
     for (const token of TRON_STABLECOINS) {
-      try {
-        const raw = await getTrc20BalanceRaw(
-          readOnlyTron,
-          token.contract,
-          derivedAddress
-        );
-        if (raw > 0n) {
-          hasTokenBalance = true;
-          break;
+      await sleep(PROBE_DELAY_MS);
+
+      const probe = await probeTokenBalance(derivedAddress, token);
+      if (!probe.ok) {
+        const fatal = probe.error && isOwnerAddressError(probe.error);
+        if (fatal) {
+          openFailureCircuit("owner_address_probe");
         }
-      } catch (err) {
-        console.warn(
-          `[tron-sweeper] balance probe ${token.symbol} for ${derivedAddress}:`,
-          err.message
-        );
+        return {
+          skipped: true,
+          reason: "probe_failed",
+          error: probe.reason,
+          token: token.symbol,
+        };
+      }
+
+      if (probe.raw > 0n) {
+        hasTokenBalance = true;
+        break;
       }
     }
 
@@ -202,8 +287,9 @@ async function sweepWalletRow(row, context) {
 
     const fuel = await fundTrxIfNeeded({
       funderTron: context.funderTron,
+      funderAddress: context.funderAddress,
       subAddress: derivedAddress,
-      readOnlyTron,
+      readOnlyTron: context.readOnlyTron,
     });
 
     if (fuel.funded) {
@@ -230,6 +316,15 @@ async function sweepWalletRow(row, context) {
           );
         }
       } catch (err) {
+        if (isOwnerAddressError(err)) {
+          openFailureCircuit("owner_address_sweep");
+          return {
+            skipped: true,
+            reason: "sweep_owner_address",
+            error: err.message,
+            token: token.symbol,
+          };
+        }
         console.warn(
           `[tron-sweeper] sweep ${token.symbol} failed for ${derivedAddress}:`,
           err.message
@@ -244,7 +339,9 @@ async function sweepWalletRow(row, context) {
       sweeps,
     };
   } catch (err) {
-    console.warn(`[tron-sweeper] wallet ${row.address} failed:`, err.message);
+    if (isOwnerAddressError(err)) {
+      openFailureCircuit("owner_address_wallet");
+    }
     return {
       skipped: true,
       address: row.address,
@@ -261,8 +358,15 @@ async function runTronSweepCycle() {
     return { enabled: false, scanned: 0, swept: 0 };
   }
 
+  if (isCooldownActive()) {
+    return {
+      skipped: true,
+      reason: "cooldown",
+      retryAfterMs: Math.max(nextCycleAllowedAt, circuitOpenUntil) - Date.now(),
+    };
+  }
+
   if (cycleRunning) {
-    console.log("[tron-sweeper] skip: previous cycle still running");
     return { skipped: true, reason: "cycle_running" };
   }
 
@@ -271,15 +375,19 @@ async function runTronSweepCycle() {
 
   try {
     const treasuryAddress = getTronTreasuryAddress();
-    if (!isValidTronBase58Address(treasuryAddress)) {
-      console.warn("[tron-sweeper] skip cycle: invalid treasury address");
-      return { enabled: true, skipped: true, reason: "invalid_treasury" };
-    }
-
     const funderKey = getGasFunderPrivateKey();
     const readOnlyTron = createTronWeb();
     const funderTron = createTronWeb({ privateKey: funderKey });
     const funderAddress = configureTronSigner(funderTron, funderKey);
+
+    const configCheck = validateSweeperRuntimeConfig({
+      treasuryAddress,
+      funderAddress,
+    });
+    if (!configCheck.ok) {
+      openFailureCircuit(configCheck.reason, FAILURE_COOLDOWN_MS);
+      return { enabled: true, skipped: true, reason: configCheck.reason };
+    }
 
     const wallets = await loadActiveTronDepositWallets();
     let sweptWallets = 0;
@@ -287,6 +395,10 @@ async function runTronSweepCycle() {
     const results = [];
 
     for (const row of wallets) {
+      if (isCooldownActive()) {
+        break;
+      }
+
       const outcome = await sweepWalletRow(row, {
         treasuryAddress,
         funderTron,
@@ -294,8 +406,19 @@ async function runTronSweepCycle() {
         readOnlyTron,
       });
       results.push(outcome);
+
       if (outcome.sweeps?.length) sweptWallets += 1;
       if (outcome.skipped) skipped += 1;
+
+      if (
+        outcome.reason === "probe_failed" ||
+        outcome.reason === "sweep_owner_address" ||
+        outcome.reason === "owner_address"
+      ) {
+        break;
+      }
+
+      await sleep(PROBE_DELAY_MS);
     }
 
     const summary = {
@@ -313,8 +436,10 @@ async function runTronSweepCycle() {
       );
     }
 
+    markCycleSuccess();
     return { ...summary, results };
   } catch (err) {
+    openFailureCircuit(err.message || "cycle_failed");
     console.warn("[tron-sweeper] cycle failed:", err.message);
     return {
       enabled: true,
@@ -326,9 +451,34 @@ async function runTronSweepCycle() {
   }
 }
 
+/** Guarded entry for cron/server — never hammers on failure. */
+async function safeRunTronSweepCycle() {
+  try {
+    return await runTronSweepCycle();
+  } catch (err) {
+    openFailureCircuit(err.message || "unhandled");
+    console.warn("[tron-sweeper] unhandled:", err.message);
+    return { enabled: true, error: err.message };
+  }
+}
+
+function getSweeperCooldownState() {
+  return {
+    cycleRunning,
+    consecutiveFailures,
+    nextCycleAllowedAt,
+    circuitOpenUntil,
+    cooldownActive: isCooldownActive(),
+  };
+}
+
 module.exports = {
   runTronSweepCycle,
+  safeRunTronSweepCycle,
   isSweeperConfigured,
   validateWalletRow,
   isValidTronBase58Address,
+  getSweeperCooldownState,
+  FAILURE_COOLDOWN_MS,
+  MIN_CYCLE_INTERVAL_MS,
 };
